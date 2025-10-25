@@ -110,6 +110,74 @@
             z-index: -1;
             overflow: hidden;
             background-color: transparent;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* Hide dynamic background when simple background is active */
+        body.simple-bg .dynamic-background {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Simple 2-blob dynamic background */
+        .simple-dynamic-background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        body.simple-bg .simple-dynamic-background {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .simple-liquid-blob {
+            position: absolute;
+            filter: blur(120px);
+            opacity: 0.6;
+            width: 50vmax;
+            height: 50vmax;
+        }
+        
+        #simple-liquid-blue {
+            background: hsla(212, 100%, 30%, 0.7);
+            top: 0;
+            left: 0;
+            animation: simple-liquid-blue-flow 20s infinite alternate ease-in-out;
+        }
+        
+        #simple-liquid-green {
+            background: hsla(135, 60%, 25%, 0.7);
+            bottom: 0;
+            right: 0;
+            animation: simple-liquid-green-flow 20s infinite alternate ease-in-out;
+        }
+        
+        @keyframes simple-liquid-blue-flow {
+            from {
+                transform: translate(-20%, -20%) rotate(0deg);
+                border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            }
+            to {
+                transform: translate(40%, 40%) rotate(180deg);
+                border-radius: 70% 30% 40% 60% / 60% 40% 50% 50%;
+            }
+        }
+        
+        @keyframes simple-liquid-green-flow {
+            from {
+                transform: translate(20%, 20%) rotate(0deg);
+                border-radius: 60% 40% 30% 70% / 50% 50% 70% 50%;
+            }
+            to {
+                transform: translate(-40%, -40%) rotate(-180deg);
+                border-radius: 30% 70% 50% 50% / 50% 30% 70% 40%;
+            }
         }
 
         /* Base Material Style - V6 with Glassmorphism */
@@ -226,7 +294,8 @@
         /* Modal Styles */
         .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
         .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
-        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; border-radius: 1.5rem; /* Match material */ width: calc(100% - 32px); max-width: 520px; padding: 24px; }
+        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; border-radius: 1.5rem; /* Match material */ width: calc(100% - 32px); max-width: 520px; max-height: calc(100vh - 64px); padding: 24px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .modal-content::-webkit-scrollbar { display: none; }
         .modal-backdrop.visible .modal-content { transform: scale(1); }
 
         /* Ticker Styles */
@@ -716,7 +785,7 @@
         }
         .signal-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
         .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
-        .timestamp { font-size: 0.8rem; color: var(--text-secondary); }
+        .timestamp { font-size: 0.875rem; color: var(--text-secondary); font-weight: 500; }
         
         /* Add gap between card sections */
         .card-section-gap { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--material-border); }
@@ -763,6 +832,30 @@
             50% { transform: scale(1.05); opacity: 0.9; }
             100% { transform: scale(1); opacity: 1; }
         }
+        
+        /* Logo Spin Zoom Animation */
+        @keyframes logo-spin-zoom {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+        
+        /* Container Feedback Animation */
+        @keyframes container-bounce {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            75% { transform: scale(0.98); }
+        }
+        
+        .logo-spin-zoom-animation {
+            animation: logo-spin-zoom 0.8s ease-in-out;
+        }
+        
+        .container-feedback-animation {
+            animation: container-bounce 0.8s ease-in-out;
+        }
+        
         #loginLogoContainer, #headerLogoContainer {
             animation: logo-pulse 2s ease-in-out infinite;
         }
@@ -839,6 +932,12 @@
         <div id="liquid-green" class="liquid-blob"></div>
         <div id="liquid-purple" class="liquid-blob"></div>
     </div>
+    
+    <!-- Simple 2-blob dynamic background -->
+    <div class="simple-dynamic-background">
+        <div id="simple-liquid-blue" class="simple-liquid-blob"></div>
+        <div id="simple-liquid-green" class="simple-liquid-blob"></div>
+    </div>
 
     <!--Login View Redesigned (and adapted for OTP)-->
     <div id="loginView" class="min-h-screen flex items-center justify-center p-4 animate-in relative z-10 transition-opacity duration-500 overflow-hidden">
@@ -902,6 +1001,13 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4">
+                 <!-- Background Toggle Button -->
+                <button id="bg-toggle" class="material material-regular header-button flex-shrink-0 flex items-center justify-center rounded-full text-lg interactive" title="Toggle Background">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <path d="M12 1v6m0 6v6m6-6h6M1 12h6"></path>
+                    </svg>
+                </button>
                  <!-- Main Tabs (Adapted IDs) -->
                 <div id="main-tabs" class="material material-regular p-1.5 flex space-x-2 rounded-full segmented-control">
                     <div id="main-tab-slider" class="liquid-slider"></div>
@@ -1137,6 +1243,7 @@
          const AppState = {
             theme: localStorage.getItem('theme') || 'dark',
             narrationEnabled: localStorage.getItem('narration') !== 'false',
+            background: localStorage.getItem('background') || 'complex',
             sessionToken: localStorage.getItem('sessionToken') || null,
             otpTimer: null,
             userInfo: null,
@@ -1178,6 +1285,7 @@
             DOM.logos = { login: document.getElementById('loginLogoContainer'), header: document.getElementById('headerLogoContainer') };
             DOM.headerDate = document.getElementById('headerDate');
             DOM.volumeToggle = document.getElementById('volume-toggle');
+            DOM.bgToggle = document.getElementById('bg-toggle');
             DOM.geminiChatToggle = document.getElementById('gemini-chat-toggle');
             DOM.geminiFloatButton = document.getElementById('gemini-float-button');
             DOM.geminiChatPanel = document.getElementById('gemini-chat-panel');
@@ -1231,6 +1339,7 @@
         function initializeApp() {
             // Don't show loading on init - causes buffering effect
             applyTheme(AppState.theme);
+            applyBackground(AppState.background);
             injectIcons();
             setupEventListeners();
             initializeOTPInputs(); // Call OTP setup
@@ -1238,6 +1347,14 @@
             checkExistingSession(); // Check for existing session first
             updateClock();
             setInterval(updateClock, 1000); // Start clock
+        }
+        
+        function applyBackground(background) {
+            if (background === 'simple') {
+                document.body.classList.add('simple-bg');
+            } else {
+                document.body.classList.remove('simple-bg');
+            }
         }
 
         // --- ICONS & THEME ---
@@ -1281,6 +1398,7 @@
             });
 
             addSafeEventListener(DOM.volumeToggle, 'click', toggleNarration);
+            addSafeEventListener(DOM.bgToggle, 'click', toggleBackground);
             // Gemini chat toggle removed from header
             addSafeEventListener(DOM.geminiFloatButton, 'click', toggleGeminiChat);
             addSafeEventListener(DOM.closeGeminiChat, 'click', toggleGeminiChat);
@@ -1340,11 +1458,11 @@
             if (logoContainer.classList.contains('container-feedback-animation')) return;
 
             logoContainer.classList.add('container-feedback-animation');
-            if(logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
+            if (logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
 
             const onAnimationEnd = () => {
                 logoContainer.classList.remove('container-feedback-animation');
-                 if(logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
+                if (logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
             };
 
             logoContainer.addEventListener('animationend', onAnimationEnd, { once: true });
@@ -1413,7 +1531,6 @@
             DOM.generateOTPBtn.disabled = true;
             DOM.loginButtonText.textContent = 'Sending...';
             DOM.loginSpinner.classList.remove('hidden');
-            showLoginMessage('Sending OTP...', 'info');
             console.log("Generating OTP for:", email);
 
             google.script.run
@@ -1661,6 +1778,20 @@
             DOM.volumeToggle.addEventListener('animationend', () => DOM.volumeToggle.classList.remove('volume-icon-animation'), { once: true });
             if (AppState.narrationEnabled) speakText('Narration enabled', true);
         }
+        
+        function toggleBackground() {
+            const body = document.body;
+            body.classList.toggle('simple-bg');
+            const isSimple = body.classList.contains('simple-bg');
+            localStorage.setItem('background', isSimple ? 'simple' : 'complex');
+            
+            // Add animation effect to button
+            if (DOM.bgToggle) {
+                DOM.bgToggle.classList.add('theme-icon-animation');
+                setTimeout(() => DOM.bgToggle.classList.remove('theme-icon-animation'), 500);
+            }
+        }
+        
         function speakSymbol(symbol) {
              if (!symbol) return;
             const parts = symbol.split(/[\s-]+/);
@@ -1910,8 +2041,6 @@
              container.innerHTML = signals.map(signal => {
                  const latestReason = signal.ind2Reasons[0] || {};
                  const secondReason = signal.ind2Reasons[1] || null;
-                 const thirdReason = signal.ind2Reasons[2] || null;
-                 const hasMoreReasons = signal.ind2Reasons.length > 3;
                  
                  const latestReasonText = formatReason(latestReason.reason);
                  const latestReasonColor = getReasonColor(latestReason.reason);
@@ -1929,12 +2058,6 @@
                                     ${secondReason ? `<p class="text-xs font-medium mt-1" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.75rem; opacity: 0.8;">${formatReason(secondReason.reason)}</p>` : ''}
                                 </div>
                             </div>
-                            ${(secondReason || thirdReason) ? `
-                            <div class="flex justify-end gap-2 mt-2">
-                                ${thirdReason ? `<p class="text-xs" style="color: ${getReasonColor(thirdReason.reason)}; font-size: 0.65rem; opacity: 0.7; ${hasMoreReasons ? 'background: linear-gradient(to right, currentColor 70%, transparent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;' : ''}">${formatReason(thirdReason.reason)}</p>` : ''}
-                                ${secondReason ? `<p class="text-xs" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.65rem; opacity: 0.75;">${formatReason(secondReason.reason)}</p>` : ''}
-                            </div>
-                            ` : ''}
                         </div>`;
               }).join('');
         }
@@ -2005,7 +2128,6 @@
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
                  const latestReason = signal.reasons[0];
                  const secondReason = signal.reasons[1] || null;
-                 const hasMoreReasons = signal.reasons.length > 2;
                  const reasonColor = getReasonColor(latestReason.reason);
                  
                  return `<div class="signal-card material material-regular interactive" onclick="showLiveFeedDetail('${signal.symbol}')">
@@ -2014,7 +2136,6 @@
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
                                     <p class="text-sm font-semibold mb-1" style="color: ${reasonColor};">${latestReason.reason}</p>
                                     ${secondReason ? `<p class="text-xs font-medium" style="color: ${getReasonColor(secondReason.reason)}; opacity: 0.75;">${secondReason.reason}</p>` : ''}
-                                    ${hasMoreReasons ? `<p class="text-xs mt-1" style="color: var(--text-secondary); opacity: 0.6;">+${signal.reasons.length - 2} more (click to view)</p>` : ''}
                                 </div>
                                 <div class="flex flex-col items-end gap-3">
                                     <span class="status-light ${statusLightClass}"></span>
@@ -2317,27 +2438,6 @@
                  </div>
              `).join('');
              
-             // Build sync events if synced (get all from dashboardSyncedList)
-             let syncEventsHTML = '';
-             if (hasSync) {
-                 const syncedSignal = (AppState.data.dashboardSyncedList || []).find(s => s.symbol === symbol);
-                 if (syncedSignal && syncedSignal.ind2Reasons && syncedSignal.ind2Reasons.length > 0) {
-                     syncEventsHTML = `
-                         <div class="sync-events-section p-4 material material-regular mb-4">
-                             <h3 class="font-semibold mb-3">Sync Events</h3>
-                             ${syncedSignal.ind2Reasons.map(sync => `
-                                 <div class="sync-event-item">
-                                     <div class="flex justify-between items-center">
-                                         <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${sync.reason}</span>
-                                         <span class="sync-event-time">${sync.time}</span>
-                                     </div>
-                                 </div>
-                             `).join('')}
-                         </div>
-                     `;
-                 }
-             }
-             
              const content = `
                 <div class="flex justify-between items-start mb-4">
                     <div><h2 class="text-2xl font-bold tracking-tight">${symbol}</h2></div>
@@ -2346,8 +2446,7 @@
                 <div class="trigger-events-section p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Trigger Events</h3>
                     ${triggerEventsHTML}
-                </div>
-                ${syncEventsHTML}`;
+                </div>`;
              showModal(content);
         }
 
