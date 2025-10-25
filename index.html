@@ -101,7 +101,7 @@
         }
         
         html.dark body {
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1e 100%);
+            background: #000000;
         }
 
         .dynamic-background {
@@ -835,9 +835,9 @@
         
         /* Logo Spin Zoom Animation */
         @keyframes logo-spin-zoom {
-            0% { transform: scale(1) rotate(0deg); }
-            50% { transform: scale(1.2) rotate(180deg); }
-            100% { transform: scale(1) rotate(360deg); }
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.2) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(360deg); }
         }
         
         /* Container Feedback Animation */
@@ -2273,35 +2273,28 @@
 
              let signals = sortSignals(data.signals, 'historical');
              container.innerHTML = signals.map(signal => {
-                  const statusClass = signal.status === 'Synced' ? 'status-synced' : 'status-unsynced';
-                  const statusText = signal.status === 'Synced' ? 'Synced' : 'Unsynced';
                   const ind2Reasons = signal.ind2Reasons || [];
-                  const latestReason = ind2Reasons[0] || null;
+                  const latestReason = ind2Reasons[0] || {};
                   const secondReason = ind2Reasons[1] || null;
-                  const thirdReason = ind2Reasons[2] || null;
-                  const hasMoreReasons = ind2Reasons.length > 3;
+                  
+                  const latestReasonText = formatReason(latestReason.reason);
+                  const latestReasonColor = getReasonColor(latestReason.reason);
                   const ind1Color = getReasonColor(signal.reason);
                   
                   return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol}', '${signal.time}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
-                                    <p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.reason}</p>
+                                    ${signal.reason ? `<p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.reason}</p>` : ''}
                                 </div>
-                                ${signal.status === 'Synced' && latestReason ? `
+                                ${signal.status === 'Synced' && latestReason.reason ? `
                                 <div class="text-right flex-shrink-0 ml-4">
                                     <p class="text-xs text-secondary mb-1">${latestReason.time || ''}</p>
-                                    <p class="text-xs font-semibold" style="color: ${getReasonColor(latestReason.reason)}; font-size: 0.875rem;">${formatReason(latestReason.reason)}</p>
+                                    <p class="text-xs font-semibold" style="color: ${latestReasonColor}; font-size: 0.875rem;">${latestReasonText}</p>
                                     ${secondReason ? `<p class="text-xs font-medium mt-1" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.75rem; opacity: 0.8;">${formatReason(secondReason.reason)}</p>` : ''}
                                 </div>
-                                ` : `<span class="status-badge ${statusClass}">${statusText}</span>`}
+                                ` : ''}
                             </div>
-                            ${signal.status === 'Synced' && (secondReason || thirdReason) ? `
-                            <div class="flex justify-end gap-2 mt-2">
-                                ${thirdReason ? `<p class="text-xs" style="color: ${getReasonColor(thirdReason.reason)}; font-size: 0.65rem; opacity: 0.7; ${hasMoreReasons ? 'background: linear-gradient(to right, currentColor 70%, transparent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;' : ''}">${formatReason(thirdReason.reason)}</p>` : ''}
-                                ${secondReason ? `<p class="text-xs" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.65rem; opacity: 0.75;">${formatReason(secondReason.reason)}</p>` : ''}
-                            </div>
-                            ` : ''}
                         </div>`;
               }).join('');
              if(DOM.historical.dates) DOM.historical.dates.classList.add('hidden');
