@@ -987,14 +987,6 @@ function getSignalsForDate(dateStr) {
     return { error: `Server error in getSignalsForDate: ${err.message}`, stack: err.stack };
   }
 }
-    Logger.log(`getSignalsForDate: Found ${signals.length} signals for ${dateStr}`);
-    return { date: dateStr, signals: signals };
-  } catch (err) {
-    Logger.log(`getSignalsForDate CRITICAL ERROR for ${dateStr}: ${err.message} Stack: ${err.stack}`);
-    _logErrorToSheet(null, 'getSignalsForDate Error', err, `Date: ${dateStr}`);
-    return { error: `Server error in getSignalsForDate: ${err.message}`, stack: err.stack };
-  }
-}
 
 // --- GEMINI API FUNCTIONS ---
 
