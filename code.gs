@@ -1140,22 +1140,25 @@ function testDynamicRowMapping() {
   try {
     Logger.log('=== Testing Dynamic Row Mapping ===');
     
-    // Simulate POST requests
+    // Simulate POST requests with new format
     const testData = [
-      { symbol: 'RELIANCE', source: 'Indicator1', reason: 'Volume Surge' },
-      { symbol: 'HDFCBANK', source: 'Indicator1', reason: 'Price Breakout' },
-      { symbol: 'RELIANCE', source: 'Indicator2', reason: 'Bullish Engulfing', capital_deployed_cr: '150' },
-      { symbol: 'HDFCBANK', source: 'Indicator1', reason: 'MACD Cross' },
-      { symbol: 'RELIANCE', source: 'Indicator1', reason: '52 Week High' }
+      { scrip: 'RELIANCE', reason: 'Volume Surge' },
+      { ticker: 'HDFCBANK', reason: 'Bullish Engulfing', capital_deployed_cr: '150' },
+      { scrip: 'RELIANCE', reason: '52 Week High' },
+      { ticker: 'RELIANCE', reason: 'HVD', capital_deployed_cr: '250' },
+      { scrip: 'HDFCBANK', reason: 'MACD Cross' },
+      { ticker: 'NIFTY', reason: 'Gap Up Opening' },
+      { ticker: 'Nifty1!', reason: 'Resistance Break' }
     ];
     
     const ss = SpreadsheetApp.openById(SHEET_ID);
     const scriptTimeZone = Session.getScriptTimeZone();
     const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
     const ind1Sheet = ss.getSheetByName(`Indicator1_${today}`);
+    const ind2Sheet = ss.getSheetByName(`Indicator2_${today}`);
     
-    if (!ind1Sheet) {
-      throw new Error(`Sheet not found: Indicator1_${today}. Run testDailySetup() first.`);
+    if (!ind1Sheet || !ind2Sheet) {
+      throw new Error(`Sheets not found. Run testDailySetup() first.`);
     }
     
     // Clear cache for testing
@@ -1166,6 +1169,9 @@ function testDynamicRowMapping() {
     if (ind1Sheet.getLastRow() > 1) {
       ind1Sheet.getRange(2, 1, ind1Sheet.getLastRow() - 1, ind1Sheet.getMaxColumns()).clearContent();
     }
+    if (ind2Sheet.getLastRow() > 1) {
+      ind2Sheet.getRange(2, 1, ind2Sheet.getLastRow() - 1, ind2Sheet.getMaxColumns()).clearContent();
+    }
     
     // Process test signals
     testData.forEach((data, index) => {
@@ -1174,10 +1180,26 @@ function testDynamicRowMapping() {
       // Simulate the doPost logic
       const time = Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss');
       
-      if (data.source === 'Indicator2') {
-        const ind2Sheet = ss.getSheetByName(`Indicator2_${today}`);
-        if (ind2Sheet) {
-          ind2Sheet.appendRow([today, time, data.symbol, data.reason, data.capital_deployed_cr || '']);
+      // Determine indicator type by JSON keys
+      let indicatorType = null;
+      let symbol = null;
+      
+      if (data.scrip) {
+        indicatorType = 'Indicator1';
+        symbol = data.scrip;
+      } else if (data.ticker) {
+        indicatorType = 'Indicator2';
+        symbol = data.ticker;
+      }
+      
+      // Handle Indicator2 signals
+      if (indicatorType === 'Indicator2') {
+        ind2Sheet.appendRow([today, time, symbol, data.reason, data.capital_deployed_cr || '']);
+        
+        // Skip row mapping for Nifty
+        if (symbol === 'NIFTY' || symbol === 'Nifty1!') {
+          Logger.log(`  → Nifty signal processed: ${symbol}`);
+          return;
         }
       }
       
@@ -1186,7 +1208,6 @@ function testDynamicRowMapping() {
       const cachedMap = cache.get(cacheKey);
       let symbolMap = {};
       
-      // Parse cached map with error handling
       if (cachedMap !== null) {
         try {
           symbolMap = JSON.parse(cachedMap);
@@ -1196,23 +1217,26 @@ function testDynamicRowMapping() {
         }
       }
       
-      let targetRow = symbolMap[data.symbol];
+      let targetRow = symbolMap[symbol];
       
       if (targetRow === undefined) {
         targetRow = ind1Sheet.getLastRow() + 1;
-        ind1Sheet.getRange(targetRow, 1).setValue(data.symbol);
-        symbolMap[data.symbol] = targetRow;
+        ind1Sheet.getRange(targetRow, 1).setValue(symbol);
+        symbolMap[symbol] = targetRow;
         cache.put(cacheKey, JSON.stringify(symbolMap), 86400);
-        Logger.log(`  → New symbol "${data.symbol}" assigned to row ${targetRow}`);
+        Logger.log(`  → New symbol "${symbol}" assigned to row ${targetRow}`);
       } else {
-        Logger.log(`  → Using existing row ${targetRow} for symbol "${data.symbol}"`);
+        Logger.log(`  → Using existing row ${targetRow} for symbol "${symbol}"`);
       }
       
-      writeDataToRow(ind1Sheet, targetRow, data.source, data.reason, time);
+      writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
     });
     
     Logger.log('=== Test completed ===');
-    Logger.log('Please check the Indicator1 sheet to verify row mapping.');
+    Logger.log('Please check the Indicator1 and Indicator2 sheets to verify:');
+    Logger.log('- Row mapping worked correctly');
+    Logger.log('- Nifty signals appear only in Indicator2 sheet');
+    Logger.log('- Non-Nifty signals appear in both sheets');
     
   } catch (err) {
     Logger.log(`TEST ERROR: ${err.message} Stack: ${err.stack}`);
@@ -1238,15 +1262,13 @@ function populateLargeMockData() {
     
     const ind1SheetName = `Indicator1_${dateSuffix}`;
     const ind2SheetName = `Indicator2_${dateSuffix}`;
-    const niftySheetName = `Nifty_${dateSuffix}`;
     
     logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
     
     let ind1Sheet = ss.getSheetByName(ind1SheetName);
     let ind2Sheet = ss.getSheetByName(ind2SheetName);
-    let niftySheet = ss.getSheetByName(niftySheetName);
     
-    if (!ind1Sheet || !ind2Sheet || !niftySheet) {
+    if (!ind1Sheet || !ind2Sheet) {
       throw new Error(`Required sheets not found. Please run dailySetupAndMaintenance() first.`);
     }
     
@@ -1281,9 +1303,6 @@ function populateLargeMockData() {
     }
     if (ind2Sheet.getLastRow() > 1) {
       ind2Sheet.getRange(2, 1, ind2Sheet.getLastRow() - 1, ind2Sheet.getMaxColumns()).clearContent();
-    }
-    if (niftySheet.getLastRow() > 1) {
-      niftySheet.getRange(2, 1, niftySheet.getLastRow() - 1, niftySheet.getMaxColumns()).clearContent();
     }
     
     // Generate data for each symbol
@@ -1331,7 +1350,7 @@ function populateLargeMockData() {
       totalSignals += numInd2Signals;
     });
     
-    // Add some Nifty signals
+    // Add some Nifty signals to Indicator2 sheet
     for (let i = 0; i < 10; i++) {
       const hour = 9 + Math.floor(Math.random() * 6);
       const minute = Math.floor(Math.random() * 60);
@@ -1339,17 +1358,18 @@ function populateLargeMockData() {
       const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
       const niftyReasons = ['Gap Up Opening', 'Approaching Resistance', 'Support Test', 'Trend Reversal'];
       const reason = niftyReasons[Math.floor(Math.random() * niftyReasons.length)];
-      niftySheet.appendRow([dateSuffix, timeStr, 'NIFTY', reason]);
+      const ticker = i % 2 === 0 ? 'NIFTY' : 'Nifty1!';
+      ind2Sheet.appendRow([dateSuffix, timeStr, ticker, reason, '']);
     }
     
     // Clear cache to force fresh data load
-    cache.removeAll([`sheetData_${ind1SheetName}`, `sheetData_${ind2SheetName}`, `sheetData_${niftySheetName}`]);
+    cache.removeAll([`sheetData_${ind1SheetName}`, `sheetData_${ind2SheetName}`]);
     
     const message = `Large mock data populated successfully!\n` +
                     `- Symbols: ${symbols.length}\n` +
                     `- Total signals: ${totalSignals}\n` +
                     `- Average signals per symbol: ${(totalSignals / symbols.length).toFixed(1)}\n` +
-                    `- Nifty signals: 10`;
+                    `- Nifty signals: 10 (in Indicator2 sheet)`;
     Logger.log(message);
     SpreadsheetApp.flush();
     return message;
@@ -1364,7 +1384,7 @@ function populateLargeMockData() {
 
 /**
  * Erases all mock data from today's sheets while preserving headers.
- * Clears Indicator1, Indicator2, and Nifty sheets for the current date.
+ * Clears Indicator1 and Indicator2 sheets for the current date.
  */
 function eraseMockData() {
   let logSheet;
@@ -1376,15 +1396,13 @@ function eraseMockData() {
     
     const ind1SheetName = `Indicator1_${dateSuffix}`;
     const ind2SheetName = `Indicator2_${dateSuffix}`;
-    const niftySheetName = `Nifty_${dateSuffix}`;
     
     logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
     
     let ind1Sheet = ss.getSheetByName(ind1SheetName);
     let ind2Sheet = ss.getSheetByName(ind2SheetName);
-    let niftySheet = ss.getSheetByName(niftySheetName);
     
-    if (!ind1Sheet || !ind2Sheet || !niftySheet) {
+    if (!ind1Sheet || !ind2Sheet) {
       throw new Error(`Required sheets not found. Nothing to erase.`);
     }
     
@@ -1406,26 +1424,18 @@ function eraseMockData() {
       Logger.log(`Cleared ${rowCount} rows from ${ind2SheetName}`);
     }
     
-    if (niftySheet.getLastRow() > 1) {
-      const rowCount = niftySheet.getLastRow() - 1;
-      niftySheet.getRange(2, 1, rowCount, niftySheet.getMaxColumns()).clearContent();
-      clearedRows += rowCount;
-      Logger.log(`Cleared ${rowCount} rows from ${niftySheetName}`);
-    }
-    
     // Clear cache
     const cache = CacheService.getScriptCache();
     cache.removeAll([
       `symbolRowMap_${dateSuffix}`,
       `sheetData_${ind1SheetName}`,
-      `sheetData_${ind2SheetName}`,
-      `sheetData_${niftySheetName}`
+      `sheetData_${ind2SheetName}`
     ]);
     Logger.log('Cleared all relevant caches');
     
     const message = `Mock data erased successfully!\n` +
                     `- Total rows cleared: ${clearedRows}\n` +
-                    `- Sheets cleaned: Indicator1, Indicator2, Nifty\n` +
+                    `- Sheets cleaned: Indicator1, Indicator2\n` +
                     `- Cache cleared: Yes`;
     Logger.log(message);
     SpreadsheetApp.flush();
