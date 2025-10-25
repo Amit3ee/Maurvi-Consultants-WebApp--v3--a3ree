@@ -1458,11 +1458,11 @@
             if (logoContainer.classList.contains('container-feedback-animation')) return;
 
             logoContainer.classList.add('container-feedback-animation');
-            if(logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
+            if (logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
 
             const onAnimationEnd = () => {
                 logoContainer.classList.remove('container-feedback-animation');
-                 if(logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
+                if (logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
             };
 
             logoContainer.addEventListener('animationend', onAnimationEnd, { once: true });
