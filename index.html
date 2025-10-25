@@ -1260,7 +1260,15 @@
             
             <!-- Calculator Display -->
             <div class="material material-regular p-4 rounded-2xl mb-4 overflow-hidden">
-                <div id="calc-history" class="text-xs text-secondary text-right mb-2 h-6 overflow-y-auto hide-scrollbar"></div>
+                <div class="flex items-center justify-between mb-2">
+                    <div id="calc-history" class="text-xs text-secondary text-right h-6 overflow-y-auto hide-scrollbar flex-1"></div>
+                    <button id="calc-clear-screen" class="ml-2 w-6 h-6 flex items-center justify-center rounded-full text-xs interactive hover:bg-red-500/20 transition-colors" title="Clear Screen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
                 <input type="text" id="calc-display" inputmode="decimal" class="w-full text-right text-3xl font-bold bg-transparent border-none outline-none" value="0">
             </div>
             
@@ -1360,6 +1368,7 @@
             DOM.calcHistory = document.getElementById('calc-history');
             DOM.calcHistoryList = document.getElementById('calc-history-list');
             DOM.calcClear = document.getElementById('calc-clear');
+            DOM.calcClearScreen = document.getElementById('calc-clear-screen');
             DOM.bgToggleLogin = document.getElementById('bg-toggle-login');
             DOM.userInfo = { name: document.getElementById('user-name') };
             DOM.mainTabs = document.getElementById('main-tabs');
@@ -1477,6 +1486,7 @@
             addSafeEventListener(DOM.calculatorFloatButton, 'click', toggleCalculator);
             addSafeEventListener(DOM.closeCalculator, 'click', toggleCalculator);
             addSafeEventListener(DOM.calcClear, 'click', clearCalculator);
+            addSafeEventListener(DOM.calcClearScreen, 'click', clearCalculatorScreen);
             addSafeEventListener(DOM.calcDisplay, 'keydown', handleCalculatorInput);
             addSafeEventListener(DOM.modal.backdrop, 'click', (e) => { if (e.target === DOM.modal.backdrop) hideZoomedCard(); });
             addSafeEventListener(DOM.dashboard.niftyCard, 'click', showNiftyDetail);
@@ -1874,17 +1884,116 @@
         
         function speakSymbol(symbol) {
              if (!symbol) return;
+            
+            // Smart narration rules for specific symbols
+            const upperSymbol = symbol.toUpperCase();
+            const narrationRules = {
+                // Forex pairs - spell each currency separately
+                'GBPUSD': 'G, B, P, U, S, D',
+                'EURUSD': 'E, U, R, U, S, D',
+                'USDJPY': 'U, S, D, J, P, Y',
+                'AUDUSD': 'A, U, D, U, S, D',
+                'USDCAD': 'U, S, D, C, A, D',
+                'NZDUSD': 'N, Z, D, U, S, D',
+                'USDCHF': 'U, S, D, C, H, F',
+                'GBPJPY': 'G, B, P, J, P, Y',
+                'EURJPY': 'E, U, R, J, P, Y',
+                'EURGBP': 'E, U, R, G, B, P',
+                
+                // Crypto pairs - speak crypto name then spell USD
+                'BTCUSD': 'bitcoin, U, S, D',
+                'ETHUSD': 'ethereum, U, S, D',
+                'DOGEUSD': 'doge, U, S, D',
+                'SHIBAUSD': 'shiba, U, S, D',
+                'ADAUSD': 'cardano, U, S, D',
+                'SOLUSD': 'solana, U, S, D',
+                'DOTUSD': 'polkadot, U, S, D',
+                
+                // Indian stocks - speak as word if recognizable, else spell
+                'TATA': 'tata',
+                'TATAMOTORS': 'tata motors',
+                'TATAPOWER': 'tata power',
+                'TATASTEEL': 'tata steel',
+                'TCS': 'T, C, S',
+                'HDFC': 'H, D, F, C',
+                'HDFCBANK': 'H, D, F, C, bank',
+                'ICICI': 'I, C, I, C, I',
+                'ICICIBANK': 'I, C, I, C, I, bank',
+                'SBI': 'S, B, I',
+                'SBIN': 'S, B, I, N',
+                'RELIANCE': 'reliance',
+                'INFY': 'infosys',
+                'WIPRO': 'wipro',
+                'HINDALCO': 'hindalco',
+                'JINDAL': 'jindal',
+                'VEDANTA': 'vedanta',
+                'SAIL': 'sail',
+                'BHARTIARTL': 'bharti airtel',
+                'JIO': 'jio',
+                'JIOFIN': 'jio, fin',
+                'ADANI': 'adani',
+                'ADANIPORTS': 'adani ports',
+                'ADANIGREEN': 'adani green',
+                'ITC': 'I, T, C',
+                'LT': 'L, T',
+                'MARUTI': 'maruti',
+                'BAJAJ': 'bajaj',
+                'BAJFINANCE': 'bajaj finance',
+                'BAJAJFINSV': 'bajaj financial services',
+                'KOTAKBANK': 'kotak bank',
+                'AXISBANK': 'axis bank',
+                'YESBANK': 'yes bank',
+                'PNB': 'P, N, B',
+                'BANKBARODA': 'bank of baroda',
+                'ONGC': 'O, N, G, C',
+                'NTPC': 'N, T, P, C',
+                'POWERGRID': 'power grid',
+                'INDIGO': 'indigo',
+                'SPICEJET': 'spice jet',
+                'DABUR': 'dabur',
+                'BRITANNIA': 'britannia',
+                'NESTLE': 'nestle',
+                'HUL': 'H, U, L',
+                'GODREJCP': 'godrej consumer products',
+                'MARICO': 'marico',
+                'PIDILITE': 'pidilite',
+                'ASIAN': 'asian',
+                'ASIANPAINT': 'asian paints',
+                'TITAN': 'titan',
+                'DMART': 'D, mart',
+                'ZOMATO': 'zomato',
+                'PAYTM': 'paytm',
+                'NYKAA': 'nykaa'
+            };
+            
+            // Check if we have a custom rule for this symbol
+            if (narrationRules[upperSymbol]) {
+                speakText(narrationRules[upperSymbol], false);
+                return;
+            }
+            
+            // Check if symbol starts with any known pattern
+            for (const [key, value] of Object.entries(narrationRules)) {
+                if (upperSymbol.startsWith(key)) {
+                    const remaining = symbol.substring(key.length);
+                    const textToSpeak = value + (remaining ? ', ' + remaining : '');
+                    speakText(textToSpeak, false);
+                    return;
+                }
+            }
+            
+            // Default behavior for other symbols
             const parts = symbol.split(/[\s-]+/);
             let textToSpeak = '';
             if (parts.length > 0) {
                 const firstWord = parts[0];
-                // Always spell out first word if it has 4 or fewer letters
+                // Spell out first word if it has 4 or fewer letters and is all uppercase
                 if (firstWord.length <= 4 && /^[A-Z]+$/.test(firstWord)) { 
                     textToSpeak = firstWord.split('').join(', '); 
                 } else { 
                     textToSpeak = firstWord; 
                 }
-                // Always speak the second word (if exists) as a word, not spelled out
+                // Speak the second word (if exists) as a word, not spelled out
                 if (parts.length > 1) { 
                     textToSpeak += ' ' + parts.slice(1).join(' '); 
                 }
@@ -3046,6 +3155,15 @@
                 localStorage.setItem('calculatorHistory', JSON.stringify([]));
                 updateCalculatorDisplay();
                 updateCalculatorHistory();
+            }
+        }
+        
+        function clearCalculatorScreen() {
+            AppState.calculatorExpression = '';
+            DOM.calcHistory.textContent = '';
+            updateCalculatorDisplay();
+            if (DOM.calcDisplay) {
+                DOM.calcDisplay.focus();
             }
         }
     </script>
