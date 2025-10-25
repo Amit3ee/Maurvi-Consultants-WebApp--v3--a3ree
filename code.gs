@@ -194,7 +194,7 @@ function doPost(e) {
       throw new Error("Missing required field: source");
     }
     
-    // --- Handle Indicator2 signals (normal appendRow) ---
+    // --- Handle Indicator2 signals (append to Indicator2 sheet for logs) ---
     if (data.source === "Indicator2") {
       const ind2Sheet = ss.getSheetByName(`Indicator2_${dateSuffix}`);
       if (!ind2Sheet) {
@@ -207,7 +207,8 @@ function doPost(e) {
         data.reason || '',
         data.capital_deployed_cr || ''
       ]);
-      Logger.log(`Indicator2 signal appended: ${data.symbol} at ${time}`);
+      Logger.log(`Indicator2 signal appended to Indicator2 sheet: ${data.symbol} at ${time}`);
+      // Note: Will also sync to Indicator1 sheet below
     }
     
     // --- Handle Nifty signals (if symbol is NIFTY) ---
