@@ -5,7 +5,6 @@ const SHEET_ID = '1L87XM1Ob1_aUiImsEMhl2_p6mV5U_ZHuXiWm0WclCW8'; // Updated Shee
 // Legacy sheet names - kept for mock data function compatibility
 const SHEET_INDICATOR_1 = 'Indicator1';
 const SHEET_INDICATOR_2 = 'Indicator2';
-const SHEET_NIFTY = 'Nifty';
 const SHEET_LOGS = 'DebugLogs'; // Optional: for logging errors
 
 const OTP_VALIDITY_MINUTES = 3;
@@ -48,7 +47,6 @@ function dailySetupAndMaintenance() {
     const sheetNames = [
       `Indicator1_${currentDateSuffix}`,
       `Indicator2_${currentDateSuffix}`,
-      `Nifty_${currentDateSuffix}`,
       `DebugLogs_${currentDateSuffix}`
     ];
     
@@ -72,9 +70,8 @@ function dailySetupAndMaintenance() {
           }
           sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
         } else if (sheetName.startsWith('Indicator2_')) {
-          sheet.getRange('A1:E1').setValues([['Date', 'Time', 'Symbol', 'Reason', 'Capital (Cr)']]);
-        } else if (sheetName.startsWith('Nifty_')) {
-          sheet.getRange('A1:D1').setValues([['Date', 'Time', 'Ticker', 'Reason']]);
+          // Indicator2 sheet now includes Nifty data
+          sheet.getRange('A1:E1').setValues([['Date', 'Time', 'Ticker', 'Reason', 'Capital (Cr)']]);
         } else if (sheetName.startsWith('DebugLogs_')) {
           sheet.getRange('A1:E1').setValues([['Timestamp', 'Context', 'Error Message', 'Details', 'Stack']]);
         }
@@ -179,8 +176,11 @@ function doGet(e) {
  * Handles all POST requests (TradingView alerts) with Dynamic Row Mapping.
  * Supports multiple alert message formats:
  * - Indicator1: {"scrip": "...", "timestamp": "...", "reason": "..."}
- * - Indicator2: {"timestamp": "...", "ticker": "...", "reason": "...", "capital_deployed_cr": "..."}
- * - Nifty: {"timestamp": "...", "ticker": "...", "reason": "..."}
+ * - Indicator2 HVD: {"timestamp": "...", "ticker": "...", "reason": "HVD", "capital_deployed_cr": "..."}
+ * - Indicator2 Pattern: {"timestamp": "...", "ticker": "...", "reason": "..."}
+ * - Indicator2 Standalone: {"timestamp": "...", "ticker": "...", "reason": "..."}
+ * 
+ * NOTE: Timestamps from indicators are IGNORED. Server time is used for all signals.
  */
 function doPost(e) {
   let logSheet;
@@ -196,7 +196,7 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.openById(SHEET_ID);
     
-    // Get current date suffix
+    // Get current date suffix and time (ALWAYS use server time, ignore indicator timestamps)
     const scriptTimeZone = Session.getScriptTimeZone();
     const timestamp = new Date();
     const dateSuffix = Utilities.formatDate(timestamp, scriptTimeZone, 'yyyy-MM-dd');
@@ -204,86 +204,65 @@ function doPost(e) {
     
     logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
     
-    // Normalize alert message format to internal format
-    // Handle different field names: "scrip" or "ticker" or "symbol"
-    let symbol = data.symbol || data.ticker || data.scrip;
+    // Determine indicator type by JSON keys
+    // Indicator 1 uses "scrip" key
+    // Indicator 2 uses "ticker" key
+    let indicatorType = null;
+    let symbol = null;
     
-    // Handle timestamp field (might come from alert or use current time)
-    let alertTime = time;
-    if (data.timestamp) {
-      // If timestamp is provided in alert, try to parse it
-      try {
-        // Handle both epoch and ISO string formats
-        const parsedTime = new Date(data.timestamp);
-        if (!isNaN(parsedTime.getTime())) {
-          alertTime = Utilities.formatDate(parsedTime, scriptTimeZone, 'HH:mm:ss');
-        }
-      } catch (err) {
-        Logger.log(`Could not parse timestamp from alert: ${data.timestamp}. Using current time.`);
-      }
+    if (data.scrip) {
+      // This is Indicator 1
+      indicatorType = 'Indicator1';
+      symbol = data.scrip;
+    } else if (data.ticker) {
+      // This is Indicator 2
+      indicatorType = 'Indicator2';
+      symbol = data.ticker;
+    } else {
+      throw new Error("Missing required field: must have either 'scrip' or 'ticker'");
     }
     
-    // Validate required fields
-    if (!symbol) {
-      throw new Error("Missing required field: symbol/ticker/scrip");
+    // Validate reason is present
+    if (!data.reason) {
+      throw new Error("Missing required field: reason");
     }
     
-    // Determine source based on available fields
-    // If capital_deployed_cr exists, it's Indicator2
-    // If only basic fields exist, need to check if source is explicitly provided
-    let source = data.source;
-    if (!source) {
-      // Auto-detect source based on available fields
-      if (data.capital_deployed_cr) {
-        source = "Indicator2";
-      } else if (data.scrip) {
-        source = "Indicator1";
-      } else {
-        // Default to Indicator1 if can't determine
-        source = "Indicator1";
-      }
-    }
+    Logger.log(`Received ${indicatorType} signal: ${symbol}, Reason: ${data.reason}, Time: ${time}`);
     
-    // --- Handle Indicator2 signals (append to Indicator2 sheet for logs) ---
-    if (source === "Indicator2") {
+    // --- Handle Indicator2 signals (append to Indicator2 sheet) ---
+    if (indicatorType === 'Indicator2') {
       const ind2Sheet = ss.getSheetByName(`Indicator2_${dateSuffix}`);
       if (!ind2Sheet) {
         throw new Error(`Sheet not found: Indicator2_${dateSuffix}`);
       }
+      
+      // Append to Indicator2 sheet (includes Nifty data now)
       ind2Sheet.appendRow([
         dateSuffix,
-        alertTime,
+        time,
         symbol,
-        data.reason || '',
+        data.reason,
         data.capital_deployed_cr || ''
       ]);
-      Logger.log(`Indicator2 signal appended to Indicator2 sheet: ${symbol} at ${alertTime}`);
-      // Note: Will also sync to Indicator1 sheet below
-    }
-    
-    // --- Handle Nifty signals (if symbol is NIFTY) ---
-    if (symbol && symbol.includes('NIFTY')) {
-      const niftySheet = ss.getSheetByName(`Nifty_${dateSuffix}`);
-      if (!niftySheet) {
-        throw new Error(`Sheet not found: Nifty_${dateSuffix}`);
-      }
-      niftySheet.appendRow([
-        dateSuffix,
-        alertTime,
-        symbol,
-        data.reason || ''
-      ]);
-      Logger.log(`Nifty signal appended: ${symbol} at ${alertTime}`);
       
-      // Nifty doesn't need row mapping, so we can return here
-      return ContentService.createTextOutput(JSON.stringify({ 
-        status: 'success', 
-        received: data,
-        type: 'nifty'
-      })).setMimeType(ContentService.MimeType.JSON);
+      Logger.log(`Indicator2 signal appended: ${symbol} at ${time}`);
+      
+      // Check if this is a Nifty signal - if so, we're done (no row mapping needed)
+      if (symbol === 'NIFTY' || symbol === 'Nifty' || symbol === 'Nifty1!' || symbol === 'NIFTY1!') {
+        Logger.log(`Nifty signal processed: ${symbol}`);
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: 'success', 
+          indicator: indicatorType,
+          symbol: symbol,
+          time: time
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // For non-Nifty Indicator2 signals, continue to sync with Indicator1 sheet
     }
     
     // --- Handle Dynamic Row Mapping for Indicator1 sheet ---
+    // Both Indicator1 and Indicator2 (non-Nifty) signals go to Indicator1 sheet
     const ind1Sheet = ss.getSheetByName(`Indicator1_${dateSuffix}`);
     if (!ind1Sheet) {
       throw new Error(`Sheet not found: Indicator1_${dateSuffix}`);
@@ -324,13 +303,15 @@ function doPost(e) {
       Logger.log(`Using existing row ${targetRow} for symbol "${symbol}"`);
     }
     
-    // Write data to the correct row
-    writeDataToRow(ind1Sheet, targetRow, source, data.reason || '', alertTime);
+    // Write data to the correct row based on indicator type
+    writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'success', 
-      received: data,
-      row: targetRow 
+      indicator: indicatorType,
+      symbol: symbol,
+      row: targetRow,
+      time: time
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
@@ -672,19 +653,17 @@ function getDashboardData() {
     const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
     Logger.log(`getDashboardData: Today's date is ${today}`);
 
-    // Use date-suffixed sheet names
+    // Use date-suffixed sheet names (no separate Nifty sheet anymore)
     const ind1SheetName = `Indicator1_${today}`;
     const ind2SheetName = `Indicator2_${today}`;
-    const niftySheetName = `Nifty_${today}`;
 
     const ind1FullData = _getSheetData(ind1SheetName);
     const ind2FullData = _getSheetData(ind2SheetName);
-    const niftyFullData = _getSheetData(niftySheetName);
 
-    if (ind1FullData.error || ind2FullData.error || niftyFullData.error) { 
-      throw new Error(`Error fetching sheet data: Ind1(${ind1FullData.error}), Ind2(${ind2FullData.error}), Nifty(${niftyFullData.error})`); 
+    if (ind1FullData.error || ind2FullData.error) { 
+      throw new Error(`Error fetching sheet data: Ind1(${ind1FullData.error}), Ind2(${ind2FullData.error})`); 
     }
-    if (!Array.isArray(ind1FullData) || !Array.isArray(ind2FullData) || !Array.isArray(niftyFullData)) { 
+    if (!Array.isArray(ind1FullData) || !Array.isArray(ind2FullData)) { 
       throw new Error("_getSheetData did not return arrays."); 
     }
 
@@ -692,12 +671,16 @@ function getDashboardData() {
     const ind1Data = ind1FullData.slice(ind1FullData.length > 0 ? 1 : 0);
     // Process Indicator2 data (skip header row)
     const ind2Data = ind2FullData.slice(ind2FullData.length > 0 ? 1 : 0);
-    // Process Nifty data (skip header row)
-    const niftyData = niftyFullData.slice(niftyFullData.length > 0 ? 1 : 0);
 
-    Logger.log(`getDashboardData: Data counts - Ind1: ${ind1Data.length}, Ind2: ${ind2Data.length}, Nifty: ${niftyData.length}`);
+    Logger.log(`getDashboardData: Data counts - Ind1: ${ind1Data.length}, Ind2: ${ind2Data.length}`);
 
-    // Build live feed from Indicator1 data
+    // Extract Nifty data from Indicator2 sheet
+    const niftyData = ind2Data.filter(row => {
+      const ticker = (row[2] || '').toUpperCase();
+      return ticker === 'NIFTY' || ticker === 'NIFTY1!';
+    });
+
+    // Build live feed from Indicator1 data (signals from indicator 1 only)
     const liveFeed = [];
     ind1Data.forEach(row => {
       if (!row[0]) return; // Skip empty rows
@@ -706,13 +689,22 @@ function getDashboardData() {
       // Collect all Indicator1 signals (reason/time pairs starting from column B)
       for (let i = 1; i < 11; i += 2) {
         if (row[i] && row[i] !== '') {
+          // Check if this symbol has any sync events (columns L onwards)
+          let hasSyncEvents = false;
+          for (let j = 11; j < 53; j += 2) {
+            if (row[j] && row[j] !== '') {
+              hasSyncEvents = true;
+              break;
+            }
+          }
+          
           liveFeed.push({
             symbol: symbol,
             time: row[i + 1] || '',
             reason: row[i],
-            status: 'Awaiting', // Default status
-            syncTime: '',
-            syncReason: ''
+            status: hasSyncEvents ? 'Synced' : 'Awaiting',
+            syncTime: hasSyncEvents ? (row[12] || '') : '', // First sync time
+            syncReason: hasSyncEvents ? (row[11] || '') : '' // First sync reason
           });
         }
       }
@@ -721,28 +713,56 @@ function getDashboardData() {
     // Sort by time descending
     liveFeed.sort((a, b) => b.time.localeCompare(a.time));
 
-    // Build logs from Indicator2 data
+    // Build logs from Indicator2 data (categorize by reason pattern)
     const logs = { hvd: [], bullish: [], bearish: [], oversold: [], overbought: [] };
+    
     ind2Data.forEach(row => {
+      const ticker = (row[2] || '').toUpperCase();
+      // Skip Nifty entries in logs
+      if (ticker === 'NIFTY' || ticker === 'NIFTY1!') return;
+      
       const reason = (row[3] || '').toLowerCase();
       const symbol = row[2];
       const time = row[1];
+      
+      // Check if this signal is synced with Indicator1
+      const ind1Row = ind1Data.find(r => r[0] === symbol);
+      let syncStatus = 'Awaiting';
+      if (ind1Row) {
+        // Check if time matches any sync time in columns L onwards
+        for (let j = 12; j < 53; j += 2) {
+          if (ind1Row[j] && ind1Row[j] === time) {
+            syncStatus = 'Synced';
+            break;
+          }
+        }
+      }
       
       const signal = { 
         symbol: symbol, 
         time: time, 
         reason: row[3], 
         capital: row[4],
-        status: 'Awaiting' // Default status
+        status: syncStatus
       };
       
-      if (reason.includes('hvd')) logs.hvd.push(signal);
-      else if (reason.includes('bullish')) logs.bullish.push(signal);
-      else if (reason.includes('bearish')) logs.bearish.push(signal);
-      else if (reason.includes('oversold')) logs.oversold.push(signal);
-      else if (reason.includes('overbought')) logs.overbought.push(signal);
+      // Categorize based on reason
+      if (reason.includes('hvd')) {
+        logs.hvd.push(signal);
+      } else if (reason.includes('bullish')) {
+        logs.bullish.push(signal);
+      } else if (reason.includes('bearish')) {
+        logs.bearish.push(signal);
+      } else if (reason.includes('oversold')) {
+        logs.oversold.push(signal);
+      } else if (reason.includes('overbought')) {
+        logs.overbought.push(signal);
+      }
     });
-    for (const key in logs) { logs[key].sort((a, b) => b.time.localeCompare(a.time)); }
+    
+    for (const key in logs) { 
+      logs[key].sort((a, b) => b.time.localeCompare(a.time)); 
+    }
 
     // Build dashboard synced list (symbols with sync events from Indicator2)
     const dashboardSyncedList = [];
@@ -764,11 +784,13 @@ function getDashboardData() {
       if (ind2Reasons.length > 0) {
         // Get the first Indicator1 reason for this symbol
         const ind1Reason = row[1] || '';
+        const ind1Time = row[2] || '';
         
         ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
         dashboardSyncedList.push({
           symbol: symbol,
           ind1Reason: ind1Reason,
+          ind1Time: ind1Time,
           ind2Reasons: ind2Reasons
         });
         
@@ -791,15 +813,21 @@ function getDashboardData() {
       latestSignal: liveFeed.length > 0 ? liveFeed[0].symbol : '-' 
     };
 
-    // Build tickers
+    // Build tickers (HVD and patterns)
     const tickers = {
       hvd: logs.hvd.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 7),
       patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => b.time.localeCompare(a.time)).slice(0, 7)
     };
 
-    // Get latest Nifty data
-    const latestNifty = niftyData.length > 0 ? niftyData.reduce((latest, current) => (current[1] > latest[1] ? current : latest), niftyData[0]) : null;
-    const niftyDataObj = latestNifty ? { ticker: latestNifty[2], timestamp: latestNifty[1], reason: latestNifty[3] } : null;
+    // Get latest Nifty data (from Indicator2 sheet, filtered by ticker name)
+    const latestNifty = niftyData.length > 0 ? 
+      niftyData.reduce((latest, current) => 
+        (current[1] > latest[1] ? current : latest), niftyData[0]) : null;
+    const niftyDataObj = latestNifty ? { 
+      ticker: latestNifty[2], 
+      timestamp: latestNifty[1], 
+      reason: latestNifty[3] 
+    } : null;
 
     Logger.log('getDashboardData: Successfully processed all data.');
 
