@@ -736,11 +736,39 @@
         }
 
         /* Sync Events in Modal */
-        .sync-event-item { padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--material-border); }
+        .sync-event-item { 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            margin-bottom: 10px; 
+            border: 1px solid var(--material-border); 
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+        .sync-event-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
         html.light .sync-event-item { background-color: rgba(0, 0, 0, 0.03); }
         html.dark .sync-event-item { background-color: var(--material-thin); }
+        
+        /* Event sections with different transparency */
+        .trigger-events-section { opacity: 1; }
+        .sync-events-section { opacity: 0.95; }
         .sync-event-reason { font-weight: 600; }
         .sync-event-time { font-size: 13px; color: var(--text-secondary); }
+        
+        /* Logo Animation */
+        @keyframes logo-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #loginLogoContainer, #headerLogoContainer {
+            animation: logo-pulse 2s ease-in-out infinite;
+        }
+        #loginLogoContainer:hover, #headerLogoContainer:hover {
+            animation: logo-pulse 0.5s ease-in-out infinite;
+        }
 
         /* Date Cards */
         .date-card { padding: 1.25rem; text-align: center; }
@@ -1976,23 +2004,21 @@
             container.innerHTML = clubbedArray.map(signal => {
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
                  const latestReason = signal.reasons[0];
-                 const otherReasons = signal.reasons.slice(1);
+                 const secondReason = signal.reasons[1] || null;
+                 const hasMoreReasons = signal.reasons.length > 2;
                  const reasonColor = getReasonColor(latestReason.reason);
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showSignalDetail('${signal.symbol}', '${latestReason.time}')">
+                 return `<div class="signal-card material material-regular interactive" onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
-                                    <h3 class="symbol-name">${signal.symbol}</h3>
-                                    <p class="text-xs mt-1" style="color: ${reasonColor}; font-weight: 600;">${latestReason.reason}</p>
-                                    ${otherReasons.length > 0 ? `
-                                    <div class="mt-2 space-y-1">
-                                        ${otherReasons.slice(0, 2).map(r => `<p class="text-xs" style="color: ${getReasonColor(r.reason)}; font-size: 0.75rem; opacity: 0.75;">${r.reason}</p>`).join('')}
-                                    </div>
-                                    ` : ''}
+                                    <h3 class="symbol-name mb-2">${signal.symbol}</h3>
+                                    <p class="text-sm font-semibold mb-1" style="color: ${reasonColor};">${latestReason.reason}</p>
+                                    ${secondReason ? `<p class="text-xs font-medium" style="color: ${getReasonColor(secondReason.reason)}; opacity: 0.75;">${secondReason.reason}</p>` : ''}
+                                    ${hasMoreReasons ? `<p class="text-xs mt-1" style="color: var(--text-secondary); opacity: 0.6;">+${signal.reasons.length - 2} more (click to view)</p>` : ''}
                                 </div>
-                                <div class="flex flex-col items-end gap-2">
+                                <div class="flex flex-col items-end gap-3">
                                     <span class="status-light ${statusLightClass}"></span>
-                                    <p class="text-xs text-secondary">${latestReason.time}</p>
+                                    <p class="text-sm font-medium text-secondary">${latestReason.time}</p>
                                 </div>
                             </div>
                         </div>`;
@@ -2259,6 +2285,72 @@
              showModal(content);
         }
 
+        function showLiveFeedDetail(symbol) {
+             const liveFeed = AppState.data.liveFeed || [];
+             // Get all signals for this symbol
+             const signals = liveFeed.filter(s => s.symbol === symbol);
+             if (signals.length === 0) { console.warn(`No signals found for: ${symbol}`); return; }
+             
+             // Determine status
+             const hasSync = signals.some(s => s.status === 'Synced');
+             const statusClass = hasSync ? 'status-synced' : 'status-awaiting';
+             const statusText = hasSync ? 'Synced' : 'Awaiting';
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             // Build trigger events (all indicator 1 reasons)
+             const triggerEventsHTML = signals.map(signal => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(signal.reason)};">${signal.reason}</span>
+                         <span class="sync-event-time">${signal.time}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
+             // Build sync events if synced (get all from dashboardSyncedList)
+             let syncEventsHTML = '';
+             if (hasSync) {
+                 const syncedSignal = (AppState.data.dashboardSyncedList || []).find(s => s.symbol === symbol);
+                 if (syncedSignal && syncedSignal.ind2Reasons && syncedSignal.ind2Reasons.length > 0) {
+                     syncEventsHTML = `
+                         <div class="sync-events-section p-4 material material-regular mb-4">
+                             <h3 class="font-semibold mb-3">Sync Events</h3>
+                             ${syncedSignal.ind2Reasons.map(sync => `
+                                 <div class="sync-event-item">
+                                     <div class="flex justify-between items-center">
+                                         <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${sync.reason}</span>
+                                         <span class="sync-event-time">${sync.time}</span>
+                                     </div>
+                                 </div>
+                             `).join('')}
+                         </div>
+                     `;
+                 }
+             }
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <div class="trigger-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${triggerEventsHTML}
+                </div>
+                ${syncEventsHTML}`;
+             showModal(content);
+        }
+
         function showSignalDetail(symbol, time) {
              const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.liveFeed);
              if (!signal) { console.warn(`Signal not found: ${symbol} at ${time}`); return; }
@@ -2294,17 +2386,164 @@
              if (!AppState.data.currentHistoricalData || !AppState.data.currentHistoricalData.signals) return;
              const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.currentHistoricalData.signals);
              if (!signal) { console.warn(`Historical signal not found: ${symbol} at ${time}`); return; }
-             const syncEvents = (signal.status === 'Synced' && signal.syncReason) ? [{ reason: signal.syncReason, time: signal.syncTime }] : [];
-             showDetailModal(signal, syncEvents, AppState.data.currentHistoricalData.date);
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+             
+             const statusClass = signal.status === 'Synced' ? 'status-synced' : 'status-unsynced';
+             const ind2Reasons = signal.ind2Reasons || [];
+             
+             // Build trigger event HTML
+             const triggerEventHTML = `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(signal.reason)};">${signal.reason}</span>
+                         <span class="sync-event-time">${signal.time}</span>
+                     </div>
+                 </div>
+             `;
+             
+             // Build sync events HTML
+             let syncEventsHTML = '';
+             if (signal.status === 'Synced' && ind2Reasons.length > 0) {
+                 syncEventsHTML = `
+                     <div class="sync-events-section p-4 material material-regular mb-4">
+                         <h3 class="font-semibold mb-3">Sync Events</h3>
+                         ${ind2Reasons.map(sync => `
+                             <div class="sync-event-item">
+                                 <div class="flex justify-between items-center">
+                                     <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${formatReason(sync.reason)}</span>
+                                     <span class="sync-event-time">${sync.time}</span>
+                                 </div>
+                             </div>
+                         `).join('')}
+                     </div>
+                 `;
+             }
+             
+             // Store data for Gemini analysis
+             if (signal.status === 'Synced') {
+                 window._tempSignalData = {
+                     symbol: signal.symbol,
+                     reason: signal.reason,
+                     syncEvents: ind2Reasons
+                 };
+             }
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${signal.status}</span>
+                </div>
+                <div class="trigger-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${triggerEventHTML}
+                </div>
+                ${syncEventsHTML}
+                ${signal.status === 'Synced' ? `
+                    <button onclick="analyzeWithGemini(window._tempSignalData.symbol, window._tempSignalData.reason, window._tempSignalData.syncEvents)" 
+                            class="w-full px-4 py-3 rounded-lg bg-gradient-theme text-white font-semibold interactive flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Analyze with Gemini AI
+                    </button>
+                    <div id="gemini-analysis" class="mt-4 hidden"></div>
+                ` : ''}`;
+             showModal(content);
         }
 
         function showDashboardSyncDetail(symbol) {
              const signalList = AppState.data.dashboardSyncedList || [];
              const signal = signalList.find(s => s.symbol === symbol);
              if (!signal) { console.warn(`Dashboard synced signal not found: ${symbol}`); return; }
-             const originalSignal = (AppState.data.liveFeed || []).find(s => s.symbol === symbol && s.reason === signal.ind1Reason);
-             const baseSignal = { symbol: signal.symbol, reason: signal.ind1Reason, time: originalSignal ? originalSignal.time : 'N/A', status: 'Synced' };
-             showDetailModal(baseSignal, signal.ind2Reasons, 'Today', true);
+             
+             // Get all Indicator 1 reasons for this symbol from liveFeed
+             const liveFeed = AppState.data.liveFeed || [];
+             const ind1Signals = liveFeed.filter(s => s.symbol === symbol);
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+             
+             // Build trigger events HTML (all indicator 1 reasons)
+             const triggerEventsHTML = ind1Signals.map(s => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(s.reason)};">${s.reason}</span>
+                         <span class="sync-event-time">${s.time}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
+             // Build sync events HTML (all indicator 2 reasons)
+             const syncEventsHTML = signal.ind2Reasons.map(sync => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${formatReason(sync.reason)}</span>
+                         <span class="sync-event-time">${sync.time}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
+             // Store data for Gemini analysis
+             window._tempSignalData = {
+                 symbol: signal.symbol,
+                 reason: signal.ind1Reason,
+                 syncEvents: signal.ind2Reasons
+             };
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
+                    <span class="status-badge status-synced">Synced</span>
+                </div>
+                <div class="trigger-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${triggerEventsHTML}
+                </div>
+                <div class="sync-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Sync Events</h3>
+                    ${syncEventsHTML}
+                </div>
+                <button onclick="analyzeWithGemini(window._tempSignalData.symbol, window._tempSignalData.reason, window._tempSignalData.syncEvents)" 
+                        class="w-full px-4 py-3 rounded-lg bg-gradient-theme text-white font-semibold interactive flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Analyze with Gemini AI
+                </button>
+                <div id="gemini-analysis" class="mt-4 hidden"></div>`;
+             showModal(content);
         }
 
         function showDetailModal(signal, syncEvents, dateStr = 'Today', isDashboard = false) {
@@ -2350,20 +2589,24 @@
                     <span class="status-badge ${statusClass}">${signal.status}</span>
                 </div>
                 ${ind1Reason ? `
-                <div class="p-4 material material-regular mb-4">
+                <div class="trigger-events-section p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Trigger Events</h3>
-                    <div class="flex justify-between items-center">
-                        <span style="color: ${getReasonColor(ind1Reason)}; font-size: 0.95rem; font-weight: 600;">${ind1Reason}</span>
-                        <span class="text-sm text-secondary">${signal.time || ''}</span>
+                    <div class="sync-event-item">
+                        <div class="flex justify-between items-center">
+                            <span class="sync-event-reason" style="color: ${getReasonColor(ind1Reason)};">${ind1Reason}</span>
+                            <span class="sync-event-time">${signal.time || ''}</span>
+                        </div>
                     </div>
                 </div>` : ''}
                 ${ind2Events.length > 0 ? `
-                <div class="p-4 material material-regular mb-4">
+                <div class="sync-events-section p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Sync Events</h3>
-                    ${ind2Events.map((sync, idx) => `
-                        <div class="flex justify-between items-center mb-2" style="${idx === 0 ? 'font-size: 0.95rem;' : ''}">
-                            <span style="color: ${getReasonColor(sync.reason)}; font-weight: ${idx === 0 ? '600' : '500'};">${formatReason(sync.reason)}</span>
-                            <span class="text-sm text-secondary">${sync.time}</span>
+                    ${ind2Events.map(sync => `
+                        <div class="sync-event-item">
+                            <div class="flex justify-between items-center">
+                                <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${formatReason(sync.reason)}</span>
+                                <span class="sync-event-time">${sync.time}</span>
+                            </div>
                         </div>`).join('')}
                 </div>` : ''}
                 ${signal.status === 'Synced' ? `
