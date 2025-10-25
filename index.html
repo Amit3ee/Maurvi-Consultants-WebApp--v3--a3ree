@@ -1245,7 +1245,7 @@
     </div>
 
     <!-- Calculator Panel -->
-    <div id="calculator-panel" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 md:w-96 opacity-0 pointer-events-none transition-all duration-500 ease-in-out z-[150]" style="transform: translate(-50%, -50%) scale(0.5);">
+    <div id="calculator-panel" class="fixed bottom-6 right-24 w-80 md:w-96 opacity-0 pointer-events-none transition-all duration-500 ease-in-out z-[150]" style="position: fixed; bottom: 24px; right: 96px; width: 320px; transform: scale(0.5);">
         <div class="material material-ultrathick backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
             <!-- Calculator Header -->
             <div class="flex items-center justify-between mb-4">
@@ -2906,7 +2906,7 @@
             if (AppState.calculatorOpen) {
                 DOM.calculatorPanel.style.opacity = '1';
                 DOM.calculatorPanel.style.pointerEvents = 'auto';
-                DOM.calculatorPanel.style.transform = 'translate(-50%, -50%) scale(1)';
+                DOM.calculatorPanel.style.transform = 'scale(1)';
                 if (DOM.calculatorFloatButton) DOM.calculatorFloatButton.style.display = 'none';
                 // Focus on display for keyboard input
                 setTimeout(() => {
@@ -2919,7 +2919,7 @@
             } else {
                 DOM.calculatorPanel.style.opacity = '0';
                 DOM.calculatorPanel.style.pointerEvents = 'none';
-                DOM.calculatorPanel.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                DOM.calculatorPanel.style.transform = 'scale(0.5)';
                 if (DOM.calculatorFloatButton) DOM.calculatorFloatButton.style.display = 'flex';
             }
         }
