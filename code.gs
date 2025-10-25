@@ -306,6 +306,12 @@ function doPost(e) {
     // Write data to the correct row based on indicator type
     writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
     
+    // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
+    const cacheService = CacheService.getScriptCache();
+    cacheService.remove(`sheetData_Indicator1_${dateSuffix}`);
+    cacheService.remove(`sheetData_Indicator2_${dateSuffix}`);
+    Logger.log(`Cache cleared for immediate data refresh`);
+    
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'success', 
       indicator: indicatorType,
@@ -621,7 +627,7 @@ function verifySessionServer(sessionToken) {
 
 // --- DATA-READING FUNCTIONS ---
 
-/** Utility to get sheet data with caching */
+/** Utility to get sheet data with caching - Enhanced with auto-creation */
 function _getSheetData(sheetName) {
   const cache = CacheService.getScriptCache();
   const cacheKey = `sheetData_${sheetName}`;
@@ -630,13 +636,59 @@ function _getSheetData(sheetName) {
 
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) { Logger.log(`_getSheetData: Sheet not found - ${sheetName}`); _logErrorToSheet(null, '_getSheetData Error', new Error('Sheet not found'), `Sheet: ${sheetName}`); return []; }
+    let sheet = ss.getSheetByName(sheetName);
+    
+    // Auto-create sheet if it doesn't exist (for date-suffixed sheets)
+    if (!sheet) {
+      Logger.log(`_getSheetData: Sheet not found - ${sheetName}. Attempting to create...`);
+      
+      // Extract date suffix and sheet type
+      const scriptTimeZone = Session.getScriptTimeZone();
+      const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+      
+      // Only auto-create if it's today's sheet
+      if (sheetName.includes(`_${today}`)) {
+        try {
+          sheet = ss.insertSheet(sheetName);
+          Logger.log(`Auto-created sheet: ${sheetName}`);
+          
+          // Add headers based on sheet type
+          if (sheetName.startsWith('Indicator1_')) {
+            const headers = ['Symbol'];
+            for (let i = 1; i <= 5; i++) {
+              headers.push(`Reason ${i}`, `Time ${i}`);
+            }
+            for (let i = 1; i <= 21; i++) {
+              headers.push(`Sync Reason ${i}`, `Sync Time ${i}`);
+            }
+            sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+          } else if (sheetName.startsWith('Indicator2_')) {
+            sheet.getRange('A1:E1').setValues([['Date', 'Time', 'Ticker', 'Reason', 'Capital (Cr)']]);
+          } else if (sheetName.startsWith('DebugLogs_')) {
+            sheet.getRange('A1:E1').setValues([['Timestamp', 'Context', 'Error Message', 'Details', 'Stack']]);
+          }
+          
+          Logger.log(`Headers added to ${sheetName}`);
+        } catch (createErr) {
+          Logger.log(`Failed to auto-create sheet: ${createErr.message}`);
+          _logErrorToSheet(null, '_getSheetData Auto-Create Error', createErr, `Sheet: ${sheetName}`);
+          return [];
+        }
+      } else {
+        // Not today's sheet - don't create
+        Logger.log(`_getSheetData: Sheet not found and not today's sheet - ${sheetName}`);
+        _logErrorToSheet(null, '_getSheetData Error', new Error('Sheet not found'), `Sheet: ${sheetName}`);
+        return [];
+      }
+    }
+    
     const lastRow = sheet.getLastRow();
     let data = [];
     if (lastRow > 0) { data = sheet.getDataRange().getDisplayValues(); }
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
-    cache.put(cacheKey, JSON.stringify(data), 60);
+    
+    // Use shorter cache TTL for faster updates (30 seconds instead of 60)
+    cache.put(cacheKey, JSON.stringify(data), 30);
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
@@ -883,8 +935,8 @@ function getSignalsForDate(dateStr) {
     
     const ind1Data = ind1FullData.slice(ind1FullData.length > 0 ? 1 : 0);
     
-    // Build signals from Indicator1 data
-    const signals = [];
+    // Build signals from Indicator1 data with all sync events
+    const signalsBySymbol = {};
     ind1Data.forEach(row => {
       if (!row[0]) return; // Skip empty rows
       const symbol = row[0];
@@ -892,20 +944,49 @@ function getSignalsForDate(dateStr) {
       // Collect all Indicator1 signals
       for (let i = 1; i < 11; i += 2) {
         if (row[i] && row[i] !== '') {
-          const hasSync = (i >= 11 && row[11] && row[11] !== '');
-          signals.push({
+          // Collect all Indicator2 sync events (columns L onwards - up to 21 pairs)
+          const ind2Reasons = [];
+          for (let j = 11; j < 53; j += 2) { // 11 to 52 (21 pairs starting from column L)
+            if (row[j] && row[j] !== '') {
+              ind2Reasons.push({
+                time: row[j + 1] || '',
+                reason: row[j]
+              });
+            }
+          }
+          
+          // Sort sync events by time descending
+          ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
+          
+          const signal = {
             symbol: symbol,
             time: row[i + 1] || '',
             reason: row[i],
-            status: hasSync ? 'Synced' : 'Awaiting',
-            syncTime: hasSync ? (row[12] || '') : '',
-            syncReason: hasSync ? (row[11] || '') : ''
-          });
+            status: ind2Reasons.length > 0 ? 'Synced' : 'Awaiting',
+            ind2Reasons: ind2Reasons
+          };
+          
+          // Group by symbol for clubbing
+          if (!signalsBySymbol[symbol]) {
+            signalsBySymbol[symbol] = signal;
+          } else {
+            // Merge ind2Reasons if multiple signals for same symbol
+            signalsBySymbol[symbol].ind2Reasons = [...signalsBySymbol[symbol].ind2Reasons, ...ind2Reasons];
+          }
         }
       }
     });
     
+    const signals = Object.values(signalsBySymbol);
     signals.sort((a, b) => b.time.localeCompare(a.time));
+    Logger.log(`getSignalsForDate: Found ${signals.length} signals for ${dateStr}`);
+    return { date: dateStr, signals: signals };
+  } catch (err) {
+    Logger.log(`getSignalsForDate CRITICAL ERROR for ${dateStr}: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'getSignalsForDate Error', err, `Date: ${dateStr}`);
+    return { error: `Server error in getSignalsForDate: ${err.message}`, stack: err.stack };
+  }
+}
     Logger.log(`getSignalsForDate: Found ${signals.length} signals for ${dateStr}`);
     return { date: dateStr, signals: signals };
   } catch (err) {
