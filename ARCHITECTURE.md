@@ -459,10 +459,10 @@ If limits are hit:
 2. **Custom retention periods**: Per-user preferences
 3. **Alert notifications**: Email/SMS for specific signals
 4. **Export functionality**: Download data as CSV/Excel
-5. **Advanced analytics**: Pattern recognition, win rates
+5. **Advanced analytics**: Pattern recognition, signal statistics
 6. **Mobile app**: Native iOS/Android apps
 7. **Real-time sync**: WebSocket alternative (e.g., Firebase)
-8. **Machine learning**: Predictive signal analysis via Gemini
+8. **AI-enhanced analysis**: Advanced text analysis and market insights via Gemini
 
 ### Migration Path
 If outgrowing Google Apps Script:

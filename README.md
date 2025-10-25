@@ -171,7 +171,7 @@ testOpenSheet()
 
 ## 🌟 Key Innovations
 
-1. **Dynamic Row Mapping**: Patent-worthy system for correlating signals
+1. **Dynamic Row Mapping**: Efficient system for correlating signals across indicators
 2. **Date-Suffixed Architecture**: Self-maintaining, self-healing data organization
 3. **Dual Write Pattern**: Indicator2 signals in both sheets for different purposes
 4. **Voice Narration**: Accessibility feature with Indian English voice
