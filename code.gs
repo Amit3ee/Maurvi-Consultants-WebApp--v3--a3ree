@@ -60,7 +60,17 @@ function dailySetupAndMaintenance() {
         
         // Add headers based on sheet type
         if (sheetName.startsWith('Indicator1_')) {
-          sheet.getRange('A1:Z1').setValues([['Symbol', 'Reason 1', 'Time 1', 'Reason 2', 'Time 2', 'Reason 3', 'Time 3', 'Reason 4', 'Time 4', 'Reason 5', 'Time 5', 'Sync Reason 1', 'Sync Time 1', 'Sync Reason 2', 'Sync Time 2', 'Sync Reason 3', 'Sync Time 3', 'Sync Reason 4', 'Sync Time 4', 'Sync Reason 5', 'Sync Time 5', '', '', '', '', '']]);
+          // Create headers: Symbol + 5 Indicator1 pairs + 21 Sync Reason pairs = 53 columns (A-BA)
+          const headers = ['Symbol'];
+          // Indicator1 columns (5 pairs = 10 columns)
+          for (let i = 1; i <= 5; i++) {
+            headers.push(`Reason ${i}`, `Time ${i}`);
+          }
+          // Sync Reason columns (21 pairs = 42 columns)
+          for (let i = 1; i <= 21; i++) {
+            headers.push(`Sync Reason ${i}`, `Sync Time ${i}`);
+          }
+          sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
         } else if (sheetName.startsWith('Indicator2_')) {
           sheet.getRange('A1:E1').setValues([['Date', 'Time', 'Symbol', 'Reason', 'Capital (Cr)']]);
         } else if (sheetName.startsWith('Nifty_')) {
@@ -112,20 +122,24 @@ function dailySetupAndMaintenance() {
 function writeDataToRow(sheet, row, source, reason, time) {
   const REASON_START_COL = 2; // Column B for Indicator1 reasons
   const SYNC_REASON_START_COL = 12; // Column L for Indicator2 sync reasons
-  const MAX_COLS_PER_SECTION = 10; // 5 pairs of [reason, time] columns
+  const MAX_COLS_INDICATOR1 = 10; // 5 pairs of [reason, time] columns for Indicator1
+  const MAX_COLS_INDICATOR2 = 42; // 21 pairs of [reason, time] columns for Indicator2
   
   let startCol;
+  let maxCols;
   if (source === 'Indicator1') {
     startCol = REASON_START_COL;
+    maxCols = MAX_COLS_INDICATOR1;
   } else if (source === 'Indicator2') {
     startCol = SYNC_REASON_START_COL;
+    maxCols = MAX_COLS_INDICATOR2;
   } else {
     Logger.log(`writeDataToRow: Unknown source "${source}"`);
     return;
   }
   
   // Get the current values in this row's section
-  const range = sheet.getRange(row, startCol, 1, MAX_COLS_PER_SECTION);
+  const range = sheet.getRange(row, startCol, 1, maxCols);
   const values = range.getValues()[0];
   
   // Find the first empty cell (looking at pairs: reason cell should be empty)
@@ -163,6 +177,10 @@ function doGet(e) {
 
 /**
  * Handles all POST requests (TradingView alerts) with Dynamic Row Mapping.
+ * Supports multiple alert message formats:
+ * - Indicator1: {"scrip": "...", "timestamp": "...", "reason": "..."}
+ * - Indicator2: {"timestamp": "...", "ticker": "...", "reason": "...", "capital_deployed_cr": "..."}
+ * - Nifty: {"timestamp": "...", "ticker": "...", "reason": "..."}
  */
 function doPost(e) {
   let logSheet;
@@ -186,44 +204,76 @@ function doPost(e) {
     
     logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
     
-    // Validate required fields
-    if (!data.symbol) {
-      throw new Error("Missing required field: symbol");
+    // Normalize alert message format to internal format
+    // Handle different field names: "scrip" or "ticker" or "symbol"
+    let symbol = data.symbol || data.ticker || data.scrip;
+    
+    // Handle timestamp field (might come from alert or use current time)
+    let alertTime = time;
+    if (data.timestamp) {
+      // If timestamp is provided in alert, try to parse it
+      try {
+        // Handle both epoch and ISO string formats
+        const parsedTime = new Date(data.timestamp);
+        if (!isNaN(parsedTime.getTime())) {
+          alertTime = Utilities.formatDate(parsedTime, scriptTimeZone, 'HH:mm:ss');
+        }
+      } catch (err) {
+        Logger.log(`Could not parse timestamp from alert: ${data.timestamp}. Using current time.`);
+      }
     }
-    if (!data.source) {
-      throw new Error("Missing required field: source");
+    
+    // Validate required fields
+    if (!symbol) {
+      throw new Error("Missing required field: symbol/ticker/scrip");
+    }
+    
+    // Determine source based on available fields
+    // If capital_deployed_cr exists, it's Indicator2
+    // If only basic fields exist, need to check if source is explicitly provided
+    let source = data.source;
+    if (!source) {
+      // Auto-detect source based on available fields
+      if (data.capital_deployed_cr) {
+        source = "Indicator2";
+      } else if (data.scrip) {
+        source = "Indicator1";
+      } else {
+        // Default to Indicator1 if can't determine
+        source = "Indicator1";
+      }
     }
     
     // --- Handle Indicator2 signals (append to Indicator2 sheet for logs) ---
-    if (data.source === "Indicator2") {
+    if (source === "Indicator2") {
       const ind2Sheet = ss.getSheetByName(`Indicator2_${dateSuffix}`);
       if (!ind2Sheet) {
         throw new Error(`Sheet not found: Indicator2_${dateSuffix}`);
       }
       ind2Sheet.appendRow([
         dateSuffix,
-        time,
-        data.symbol,
+        alertTime,
+        symbol,
         data.reason || '',
         data.capital_deployed_cr || ''
       ]);
-      Logger.log(`Indicator2 signal appended to Indicator2 sheet: ${data.symbol} at ${time}`);
+      Logger.log(`Indicator2 signal appended to Indicator2 sheet: ${symbol} at ${alertTime}`);
       // Note: Will also sync to Indicator1 sheet below
     }
     
     // --- Handle Nifty signals (if symbol is NIFTY) ---
-    if (data.symbol && data.symbol.includes('NIFTY')) {
+    if (symbol && symbol.includes('NIFTY')) {
       const niftySheet = ss.getSheetByName(`Nifty_${dateSuffix}`);
       if (!niftySheet) {
         throw new Error(`Sheet not found: Nifty_${dateSuffix}`);
       }
       niftySheet.appendRow([
         dateSuffix,
-        time,
-        data.symbol,
+        alertTime,
+        symbol,
         data.reason || ''
       ]);
-      Logger.log(`Nifty signal appended: ${data.symbol} at ${time}`);
+      Logger.log(`Nifty signal appended: ${symbol} at ${alertTime}`);
       
       // Nifty doesn't need row mapping, so we can return here
       return ContentService.createTextOutput(JSON.stringify({ 
@@ -256,26 +306,26 @@ function doPost(e) {
     }
     
     // Find or assign row for this symbol ("Fixed Address" Logic)
-    let targetRow = symbolMap[data.symbol];
+    let targetRow = symbolMap[symbol];
     
     if (targetRow === undefined) {
       // New symbol for the day - assign next available row
       targetRow = ind1Sheet.getLastRow() + 1;
       
       // Write symbol to Column A
-      ind1Sheet.getRange(targetRow, 1).setValue(data.symbol);
+      ind1Sheet.getRange(targetRow, 1).setValue(symbol);
       
       // Update and save the map
-      symbolMap[data.symbol] = targetRow;
+      symbolMap[symbol] = targetRow;
       cache.put(cacheKey, JSON.stringify(symbolMap), 86400); // Cache for 24 hours
       
-      Logger.log(`New symbol "${data.symbol}" assigned to row ${targetRow}`);
+      Logger.log(`New symbol "${symbol}" assigned to row ${targetRow}`);
     } else {
-      Logger.log(`Using existing row ${targetRow} for symbol "${data.symbol}"`);
+      Logger.log(`Using existing row ${targetRow} for symbol "${symbol}"`);
     }
     
     // Write data to the correct row
-    writeDataToRow(ind1Sheet, targetRow, data.source, data.reason || '', time);
+    writeDataToRow(ind1Sheet, targetRow, source, data.reason || '', alertTime);
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'success', 
@@ -700,9 +750,9 @@ function getDashboardData() {
       if (!row[0]) return;
       const symbol = row[0];
       
-      // Check if there are any sync events (columns L onwards)
+      // Check if there are any sync events (columns L onwards - now up to 21 pairs)
       const ind2Reasons = [];
-      for (let i = 11; i < 21; i += 2) {
+      for (let i = 11; i < 53; i += 2) { // 11 to 52 (21 pairs starting from column L)
         if (row[i] && row[i] !== '') {
           ind2Reasons.push({
             time: row[i + 1] || '',
@@ -1142,3 +1192,221 @@ function testDynamicRowMapping() {
   }
 }
 
+
+// --- LARGE MOCK DATA FUNCTIONS ---
+
+/**
+ * Populates large-scale mock data for stress testing the system.
+ * Creates multiple symbols with many signals to test the 21 sync reason capacity
+ * and simultaneous signal handling.
+ */
+function populateLargeMockData() {
+  let logSheet;
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = new Date();
+    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    
+    const ind1SheetName = `Indicator1_${dateSuffix}`;
+    const ind2SheetName = `Indicator2_${dateSuffix}`;
+    const niftySheetName = `Nifty_${dateSuffix}`;
+    
+    logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
+    
+    let ind1Sheet = ss.getSheetByName(ind1SheetName);
+    let ind2Sheet = ss.getSheetByName(ind2SheetName);
+    let niftySheet = ss.getSheetByName(niftySheetName);
+    
+    if (!ind1Sheet || !ind2Sheet || !niftySheet) {
+      throw new Error(`Required sheets not found. Please run dailySetupAndMaintenance() first.`);
+    }
+    
+    Logger.log('Starting to populate large mock data...');
+    
+    // Generate 50 different symbols
+    const symbols = [
+      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK', 'HDFC', 'SBIN', 'BHARTIARTL', 'ITC', 'KOTAKBANK',
+      'LT', 'AXISBANK', 'ASIANPAINT', 'MARUTI', 'HCLTECH', 'WIPRO', 'ULTRACEMCO', 'BAJFINANCE', 'SUNPHARMA', 'TITAN',
+      'NESTLEIND', 'TECHM', 'POWERGRID', 'NTPC', 'ONGC', 'M&M', 'TATASTEEL', 'INDUSINDBK', 'ADANIPORTS', 'COALINDIA',
+      'GRASIM', 'JSWSTEEL', 'DRREDDY', 'CIPLA', 'BRITANNIA', 'HINDALCO', 'EICHERMOT', 'HEROMOTOCO', 'BAJAJFINSV', 'SHREECEM',
+      'DIVISLAB', 'TATAMOTORS', 'UPL', 'SBILIFE', 'APOLLOHOSP', 'BPCL', 'IOC', 'VEDL', 'TATACONSUM', 'DABUR'
+    ];
+    
+    const reasons1 = [
+      'Volume Surge', 'Price Breakout', '52 Week High', 'RSI Oversold', 'Moving Avg Cross',
+      'MACD Bullish', 'Support Level', 'Resistance Break', 'Golden Cross', 'Bollinger Breakout'
+    ];
+    
+    const reasons2 = [
+      'Bullish Engulfing', 'HVD', 'Bearish Harami', 'Bullish Pin Bar', 'Morning Star',
+      'Evening Star', 'Hammer', 'Shooting Star', 'Doji', 'Three White Soldiers'
+    ];
+    
+    // Clear existing cache
+    const cache = CacheService.getScriptCache();
+    cache.remove(`symbolRowMap_${dateSuffix}`);
+    
+    // Clear existing data (keep headers)
+    if (ind1Sheet.getLastRow() > 1) {
+      ind1Sheet.getRange(2, 1, ind1Sheet.getLastRow() - 1, ind1Sheet.getMaxColumns()).clearContent();
+    }
+    if (ind2Sheet.getLastRow() > 1) {
+      ind2Sheet.getRange(2, 1, ind2Sheet.getLastRow() - 1, ind2Sheet.getMaxColumns()).clearContent();
+    }
+    if (niftySheet.getLastRow() > 1) {
+      niftySheet.getRange(2, 1, niftySheet.getLastRow() - 1, niftySheet.getMaxColumns()).clearContent();
+    }
+    
+    // Generate data for each symbol
+    let totalSignals = 0;
+    symbols.forEach((symbol, symbolIndex) => {
+      const row = symbolIndex + 2; // Row 2 onwards (row 1 is header)
+      
+      // Write symbol in column A
+      ind1Sheet.getRange(row, 1).setValue(symbol);
+      
+      // Generate random number of Indicator1 signals (1-5)
+      const numInd1Signals = Math.floor(Math.random() * 5) + 1;
+      const ind1Data = [];
+      for (let i = 0; i < numInd1Signals; i++) {
+        const hour = 9 + Math.floor(Math.random() * 6);
+        const minute = Math.floor(Math.random() * 60);
+        const second = Math.floor(Math.random() * 60);
+        const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+        const reason = reasons1[Math.floor(Math.random() * reasons1.length)];
+        ind1Data.push(reason, timeStr);
+      }
+      if (ind1Data.length > 0) {
+        ind1Sheet.getRange(row, 2, 1, ind1Data.length).setValues([ind1Data]);
+      }
+      totalSignals += numInd1Signals;
+      
+      // Generate random number of Indicator2 signals (1-21 to test the capacity)
+      const numInd2Signals = Math.floor(Math.random() * 21) + 1;
+      const ind2Data = [];
+      for (let i = 0; i < numInd2Signals; i++) {
+        const hour = 9 + Math.floor(Math.random() * 6);
+        const minute = Math.floor(Math.random() * 60);
+        const second = Math.floor(Math.random() * 60);
+        const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+        const reason = reasons2[Math.floor(Math.random() * reasons2.length)];
+        ind2Data.push(reason, timeStr);
+        
+        // Also add to Indicator2 sheet
+        const capital = reason === 'HVD' ? String(Math.floor(Math.random() * 500) + 50) : '';
+        ind2Sheet.appendRow([dateSuffix, timeStr, symbol, reason, capital]);
+      }
+      if (ind2Data.length > 0) {
+        ind1Sheet.getRange(row, 12, 1, ind2Data.length).setValues([ind2Data]);
+      }
+      totalSignals += numInd2Signals;
+    });
+    
+    // Add some Nifty signals
+    for (let i = 0; i < 10; i++) {
+      const hour = 9 + Math.floor(Math.random() * 6);
+      const minute = Math.floor(Math.random() * 60);
+      const second = Math.floor(Math.random() * 60);
+      const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+      const niftyReasons = ['Gap Up Opening', 'Approaching Resistance', 'Support Test', 'Trend Reversal'];
+      const reason = niftyReasons[Math.floor(Math.random() * niftyReasons.length)];
+      niftySheet.appendRow([dateSuffix, timeStr, 'NIFTY', reason]);
+    }
+    
+    // Clear cache to force fresh data load
+    cache.removeAll([`sheetData_${ind1SheetName}`, `sheetData_${ind2SheetName}`, `sheetData_${niftySheetName}`]);
+    
+    const message = `Large mock data populated successfully!\n` +
+                    `- Symbols: ${symbols.length}\n` +
+                    `- Total signals: ${totalSignals}\n` +
+                    `- Average signals per symbol: ${(totalSignals / symbols.length).toFixed(1)}\n` +
+                    `- Nifty signals: 10`;
+    Logger.log(message);
+    SpreadsheetApp.flush();
+    return message;
+    
+  } catch (err) {
+    const errorMessage = `Error populating large mock data: ${err.message}`;
+    Logger.log(`${errorMessage} Stack: ${err.stack}`);
+    _logErrorToSheet(logSheet, 'populateLargeMockData Error', err, '');
+    return errorMessage;
+  }
+}
+
+/**
+ * Erases all mock data from today's sheets while preserving headers.
+ * Clears Indicator1, Indicator2, and Nifty sheets for the current date.
+ */
+function eraseMockData() {
+  let logSheet;
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = new Date();
+    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    
+    const ind1SheetName = `Indicator1_${dateSuffix}`;
+    const ind2SheetName = `Indicator2_${dateSuffix}`;
+    const niftySheetName = `Nifty_${dateSuffix}`;
+    
+    logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
+    
+    let ind1Sheet = ss.getSheetByName(ind1SheetName);
+    let ind2Sheet = ss.getSheetByName(ind2SheetName);
+    let niftySheet = ss.getSheetByName(niftySheetName);
+    
+    if (!ind1Sheet || !ind2Sheet || !niftySheet) {
+      throw new Error(`Required sheets not found. Nothing to erase.`);
+    }
+    
+    Logger.log('Starting to erase mock data...');
+    
+    // Clear data rows (keep headers in row 1)
+    let clearedRows = 0;
+    if (ind1Sheet.getLastRow() > 1) {
+      const rowCount = ind1Sheet.getLastRow() - 1;
+      ind1Sheet.getRange(2, 1, rowCount, ind1Sheet.getMaxColumns()).clearContent();
+      clearedRows += rowCount;
+      Logger.log(`Cleared ${rowCount} rows from ${ind1SheetName}`);
+    }
+    
+    if (ind2Sheet.getLastRow() > 1) {
+      const rowCount = ind2Sheet.getLastRow() - 1;
+      ind2Sheet.getRange(2, 1, rowCount, ind2Sheet.getMaxColumns()).clearContent();
+      clearedRows += rowCount;
+      Logger.log(`Cleared ${rowCount} rows from ${ind2SheetName}`);
+    }
+    
+    if (niftySheet.getLastRow() > 1) {
+      const rowCount = niftySheet.getLastRow() - 1;
+      niftySheet.getRange(2, 1, rowCount, niftySheet.getMaxColumns()).clearContent();
+      clearedRows += rowCount;
+      Logger.log(`Cleared ${rowCount} rows from ${niftySheetName}`);
+    }
+    
+    // Clear cache
+    const cache = CacheService.getScriptCache();
+    cache.removeAll([
+      `symbolRowMap_${dateSuffix}`,
+      `sheetData_${ind1SheetName}`,
+      `sheetData_${ind2SheetName}`,
+      `sheetData_${niftySheetName}`
+    ]);
+    Logger.log('Cleared all relevant caches');
+    
+    const message = `Mock data erased successfully!\n` +
+                    `- Total rows cleared: ${clearedRows}\n` +
+                    `- Sheets cleaned: Indicator1, Indicator2, Nifty\n` +
+                    `- Cache cleared: Yes`;
+    Logger.log(message);
+    SpreadsheetApp.flush();
+    return message;
+    
+  } catch (err) {
+    const errorMessage = `Error erasing mock data: ${err.message}`;
+    Logger.log(`${errorMessage} Stack: ${err.stack}`);
+    _logErrorToSheet(logSheet, 'eraseMockData Error', err, '');
+    return errorMessage;
+  }
+}
