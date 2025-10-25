@@ -20,15 +20,33 @@ A real-time trading signal aggregation and synchronization system that processes
 The core innovation is the **dynamic row mapping system**:
 - Each symbol gets a fixed row for the day
 - Indicator1 signals → Columns B-K (5 signal slots)
-- Indicator2 signals → Columns L-U (5 sync event slots)
+- Indicator2 signals → Columns L-BA (21 sync event slots)
 - Both indicators for the same symbol appear in the same row
 - Enables easy visual correlation of signals
+
+### Indicator Detection
+Signals are distinguished by JSON keys:
+- **Indicator 1**: Uses `"scrip"` key in JSON
+- **Indicator 2**: Uses `"ticker"` key in JSON
+- This enables fast, direct indicator identification
+
+### Timestamp Handling
+- **All timestamps use server time** (reduces latency)
+- Indicator timestamps in alerts are ignored
+- Ensures consistent time across all signals
+- Eliminates need for timestamp parsing
 
 ### Sheet Structure
 ```
 Indicator1_2025-01-15    [Main tracking sheet with row mapping]
-Indicator2_2025-01-15    [Append-only log of sync events]
-Nifty_2025-01-15         [NIFTY-specific signals]
+  - Column A: Symbol
+  - Columns B-K: Indicator1 signals (5 reason/time pairs)
+  - Columns L-BA: Indicator2 sync events (21 reason/time pairs)
+  
+Indicator2_2025-01-15    [Append-only log of all Indicator2 signals + Nifty]
+  - Columns: Date, Time, Ticker, Reason, Capital (Cr)
+  - Includes regular stocks AND Nifty signals
+  
 DebugLogs_2025-01-15     [Error logging and debugging]
 ```
 
@@ -80,26 +98,59 @@ DebugLogs_2025-01-15     [Error logging and debugging]
 
 ### TradingView Alert Configuration
 
-**Indicator1 Alert:**
+**Indicator1 Alert (uses "scrip" key):**
 ```json
 {
-  "symbol": "{{ticker}}",
-  "source": "Indicator1",
+  "scrip": "{{ticker}}",
+  "timestamp": "{{timenow}}",
   "reason": "Volume Surge"
 }
 ```
 
-**Indicator2 Alert:**
+**Indicator2 HVD Alert (uses "ticker" key):**
 ```json
 {
-  "symbol": "{{ticker}}",
-  "source": "Indicator2",
-  "reason": "Bullish Engulfing",
+  "timestamp": "{{timenow}}",
+  "ticker": "{{ticker}}",
+  "reason": "HVD",
   "capital_deployed_cr": "150"
 }
 ```
 
-Set webhook URL to your deployed Web app URL.
+**Indicator2 Pattern Alert (uses "ticker" key):**
+```json
+{
+  "timestamp": "{{timenow}}",
+  "ticker": "{{ticker}}",
+  "reason": "Bullish Engulfing"
+}
+```
+
+**Indicator2 Standalone Alert (uses "ticker" key):**
+```json
+{
+  "timestamp": "{{timenow}}",
+  "ticker": "{{ticker}}",
+  "reason": "Oversold - RSI Below 30"
+}
+```
+
+**Nifty Alert (uses "ticker" key with special values):**
+```json
+{
+  "timestamp": "{{timenow}}",
+  "ticker": "NIFTY",
+  "reason": "Gap Up Opening"
+}
+```
+
+**Important Notes:**
+- Timestamps in alerts are **ignored** - server time is used for all signals (reduces latency)
+- Indicator detection is based on JSON keys: `"scrip"` = Indicator1, `"ticker"` = Indicator2
+- Nifty signals use ticker values: "NIFTY", "Nifty", "NIFTY1!", or "Nifty1!"
+- Set webhook URL to your deployed Web app URL
+
+For detailed alert format specifications, see [ALERT_FORMATS.md](ALERT_FORMATS.md)
 
 ## 📚 Documentation
 
@@ -171,16 +222,19 @@ testOpenSheet()
 
 ## 🌟 Key Innovations
 
-1. **Dynamic Row Mapping**: Efficient system for correlating signals across indicators
+1. **Dynamic Row Mapping**: Efficient system for correlating signals across indicators with up to 21 sync events per symbol
 2. **Date-Suffixed Architecture**: Self-maintaining, self-healing data organization
-3. **Dual Write Pattern**: Indicator2 signals in both sheets for different purposes
-4. **Voice Narration**: Accessibility feature with Indian English voice
-5. **Glassmorphic UI**: Modern design with smooth animations
-6. **AI Integration**: Gemini-powered analysis with Google Search grounding
+3. **JSON Key-Based Detection**: Fast indicator identification using "scrip" vs "ticker" keys
+4. **Server-Side Timestamps**: All signals timestamped at server for reduced latency
+5. **Unified Indicator2 Sheet**: Single sheet for all Indicator2 signals including Nifty
+6. **Voice Narration**: Accessibility feature with Indian English voice
+7. **Glassmorphic UI**: Modern design with smooth animations
+8. **AI Integration**: Gemini-powered analysis with Google Search grounding
 
 ## 📊 Limitations
 
-- **Signals per symbol per day**: 10 (5 per indicator)
+- **Indicator1 signals per symbol per day**: 5
+- **Indicator2 sync events per symbol per day**: 21
 - **Historical retention**: 14 days
 - **Concurrent webhooks**: Queued via script lock
 - **Google Apps Script quotas**: 6-minute execution time, 20K URL fetches/day
