@@ -1881,8 +1881,8 @@
              
              container.innerHTML = signals.map(signal => {
                  const latestReason = signal.ind2Reasons[0] || {};
-                 const secondReason = signal.ind2Reasons[1] || null;
-                 const thirdReason = signal.ind2Reasons[2] || null;
+                 const previousReason = signal.ind2Reasons[1] || null;
+                 const previousToPrevious = signal.ind2Reasons[2] || null;
                  const hasMoreReasons = signal.ind2Reasons.length > 3;
                  
                  const latestReasonText = formatReason(latestReason.reason);
@@ -1890,21 +1890,20 @@
                  const ind1Color = getReasonColor(signal.ind1Reason);
                  
                  return `<div class="signal-card material material-regular interactive" onclick="showDashboardSyncDetail('${signal.symbol}')">
-                            <div class="flex justify-between items-start">
+                            <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
-                                    ${signal.ind1Reason ? `<p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.ind1Reason}</p>` : ''}
+                                    ${signal.ind1Reason ? `<p class="text-xs font-semibold mb-2" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.ind1Reason}</p>` : ''}
+                                    <p class="text-xs font-semibold" style="color: ${latestReasonColor}; font-size: 0.8rem;">Latest: ${latestReasonText}</p>
                                 </div>
                                 <div class="text-right flex-shrink-0 ml-4">
-                                    <p class="text-xs text-secondary mb-1">${latestReason.time || ''}</p>
-                                    <p class="text-xs font-semibold" style="color: ${latestReasonColor}; font-size: 0.875rem;">${latestReasonText}</p>
-                                    ${secondReason ? `<p class="text-xs font-medium mt-1" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.75rem; opacity: 0.8;">${formatReason(secondReason.reason)}</p>` : ''}
+                                    <p class="text-xs text-secondary">${latestReason.time || ''}</p>
                                 </div>
                             </div>
-                            ${(secondReason || thirdReason) ? `
-                            <div class="flex justify-end gap-2 mt-2">
-                                ${thirdReason ? `<p class="text-xs" style="color: ${getReasonColor(thirdReason.reason)}; font-size: 0.65rem; opacity: 0.7; ${hasMoreReasons ? 'background: linear-gradient(to right, currentColor 70%, transparent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;' : ''}">${formatReason(thirdReason.reason)}</p>` : ''}
-                                ${secondReason ? `<p class="text-xs" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.65rem; opacity: 0.75;">${formatReason(secondReason.reason)}</p>` : ''}
+                            ${(previousReason || previousToPrevious) ? `
+                            <div class="mt-2 flex gap-2 items-center" style="background: linear-gradient(to right, ${hasMoreReasons ? 'currentColor 60%, transparent' : 'currentColor'}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                ${previousToPrevious ? `<span class="text-xs px-2 py-0.5 rounded" style="color: ${getReasonColor(previousToPrevious.reason)}; background-color: ${getReasonColor(previousToPrevious.reason)}15; font-size: 0.65rem; order: 1;">${formatReason(previousToPrevious.reason)}</span>` : ''}
+                                ${previousReason ? `<span class="text-xs px-2 py-0.5 rounded" style="color: ${getReasonColor(previousReason.reason)}; background-color: ${getReasonColor(previousReason.reason)}15; font-size: 0.7rem; order: 2;">${formatReason(previousReason.reason)}</span>` : ''}
                             </div>
                             ` : ''}
                         </div>`;
@@ -1976,21 +1975,22 @@
             container.innerHTML = clubbedArray.map(signal => {
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
                  const latestReason = signal.reasons[0];
-                 const otherReasons = signal.reasons.slice(1);
+                 const previousReasons = signal.reasons.slice(1);
                  const reasonColor = getReasonColor(latestReason.reason);
+                 const hasMoreThan3 = signal.reasons.length > 3;
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showSignalDetail('${signal.symbol}', '${latestReason.time}')">
+                 return `<div class="signal-card material material-regular interactive" onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
-                                    <h3 class="symbol-name">${signal.symbol}</h3>
+                                    <h3 class="symbol-name mb-1">${signal.symbol}</h3>
                                     <p class="text-xs mt-1" style="color: ${reasonColor}; font-weight: 600;">${latestReason.reason}</p>
-                                    ${otherReasons.length > 0 ? `
-                                    <div class="mt-2 space-y-1">
-                                        ${otherReasons.slice(0, 2).map(r => `<p class="text-xs" style="color: ${getReasonColor(r.reason)}; font-size: 0.75rem; opacity: 0.75;">${r.reason}</p>`).join('')}
+                                    ${previousReasons.length > 0 ? `
+                                    <div class="mt-2 flex flex-wrap gap-2" style="${hasMoreThan3 ? 'background: linear-gradient(to right, currentColor 70%, transparent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;' : ''}">
+                                        ${previousReasons.slice(0, 3).map(r => `<span class="text-xs px-2 py-0.5 rounded" style="color: ${getReasonColor(r.reason)}; background-color: ${getReasonColor(r.reason)}15; font-size: 0.7rem;">${r.reason}</span>`).join('')}
                                     </div>
                                     ` : ''}
                                 </div>
-                                <div class="flex flex-col items-end gap-2">
+                                <div class="flex flex-col items-end gap-3 ml-3">
                                     <span class="status-light ${statusLightClass}"></span>
                                     <p class="text-xs text-secondary">${latestReason.time}</p>
                                 </div>
@@ -2130,29 +2130,30 @@
                   const statusText = signal.status === 'Synced' ? 'Synced' : 'Unsynced';
                   const ind2Reasons = signal.ind2Reasons || [];
                   const latestReason = ind2Reasons[0] || null;
-                  const secondReason = ind2Reasons[1] || null;
-                  const thirdReason = ind2Reasons[2] || null;
+                  const previousReason = ind2Reasons[1] || null;
+                  const previousToPrevious = ind2Reasons[2] || null;
                   const hasMoreReasons = ind2Reasons.length > 3;
                   const ind1Color = getReasonColor(signal.reason);
                   
                   return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol}', '${signal.time}')">
-                            <div class="flex justify-between items-start">
+                            <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
-                                    <p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.reason}</p>
+                                    <p class="text-xs font-semibold mb-2" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.reason}</p>
+                                    ${signal.status === 'Synced' && latestReason ? `
+                                    <p class="text-xs font-semibold" style="color: ${getReasonColor(latestReason.reason)}; font-size: 0.8rem;">Latest: ${formatReason(latestReason.reason)}</p>
+                                    ` : ''}
                                 </div>
                                 ${signal.status === 'Synced' && latestReason ? `
                                 <div class="text-right flex-shrink-0 ml-4">
-                                    <p class="text-xs text-secondary mb-1">${latestReason.time || ''}</p>
-                                    <p class="text-xs font-semibold" style="color: ${getReasonColor(latestReason.reason)}; font-size: 0.875rem;">${formatReason(latestReason.reason)}</p>
-                                    ${secondReason ? `<p class="text-xs font-medium mt-1" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.75rem; opacity: 0.8;">${formatReason(secondReason.reason)}</p>` : ''}
+                                    <p class="text-xs text-secondary">${latestReason.time || ''}</p>
                                 </div>
                                 ` : `<span class="status-badge ${statusClass}">${statusText}</span>`}
                             </div>
-                            ${signal.status === 'Synced' && (secondReason || thirdReason) ? `
-                            <div class="flex justify-end gap-2 mt-2">
-                                ${thirdReason ? `<p class="text-xs" style="color: ${getReasonColor(thirdReason.reason)}; font-size: 0.65rem; opacity: 0.7; ${hasMoreReasons ? 'background: linear-gradient(to right, currentColor 70%, transparent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;' : ''}">${formatReason(thirdReason.reason)}</p>` : ''}
-                                ${secondReason ? `<p class="text-xs" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.65rem; opacity: 0.75;">${formatReason(secondReason.reason)}</p>` : ''}
+                            ${signal.status === 'Synced' && (previousReason || previousToPrevious) ? `
+                            <div class="mt-2 flex gap-2 items-center" style="background: linear-gradient(to right, ${hasMoreReasons ? 'currentColor 60%, transparent' : 'currentColor'}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                                ${previousToPrevious ? `<span class="text-xs px-2 py-0.5 rounded" style="color: ${getReasonColor(previousToPrevious.reason)}; background-color: ${getReasonColor(previousToPrevious.reason)}15; font-size: 0.65rem; order: 1;">${formatReason(previousToPrevious.reason)}</span>` : ''}
+                                ${previousReason ? `<span class="text-xs px-2 py-0.5 rounded" style="color: ${getReasonColor(previousReason.reason)}; background-color: ${getReasonColor(previousReason.reason)}15; font-size: 0.7rem; order: 2;">${formatReason(previousReason.reason)}</span>` : ''}
                             </div>
                             ` : ''}
                         </div>`;
@@ -2259,6 +2260,44 @@
              showModal(content);
         }
 
+        function showLiveFeedDetail(symbol) {
+             // Find all signals for this symbol in live feed
+             const signals = (AppState.data.liveFeed || []).filter(s => s.symbol === symbol);
+             if (signals.length === 0) { console.warn(`No signals found for symbol: ${symbol}`); return; }
+             
+             // Sort by time descending
+             signals.sort((a, b) => b.time.localeCompare(a.time));
+             
+             const status = signals.some(s => s.status === 'Synced') ? 'Synced' : 'Awaiting';
+             const statusClass = status === 'Synced' ? 'status-synced' : 'status-awaiting';
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${status}</span>
+                </div>
+                <div class="p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${signals.map((signal, idx) => `
+                        <div class="flex justify-between items-center mb-2" style="${idx === 0 ? 'font-size: 0.95rem;' : ''}">
+                            <span style="color: ${getReasonColor(signal.reason)}; font-weight: ${idx === 0 ? '600' : '500'};">${signal.reason}</span>
+                            <span class="text-sm text-secondary">${signal.time || ''}</span>
+                        </div>`).join('')}
+                </div>`;
+             showModal(content);
+        }
+
         function showSignalDetail(symbol, time) {
              const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.liveFeed);
              if (!signal) { console.warn(`Signal not found: ${symbol} at ${time}`); return; }
@@ -2294,7 +2333,7 @@
              if (!AppState.data.currentHistoricalData || !AppState.data.currentHistoricalData.signals) return;
              const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.currentHistoricalData.signals);
              if (!signal) { console.warn(`Historical signal not found: ${symbol} at ${time}`); return; }
-             const syncEvents = (signal.status === 'Synced' && signal.syncReason) ? [{ reason: signal.syncReason, time: signal.syncTime }] : [];
+             const syncEvents = signal.ind2Reasons || [];
              showDetailModal(signal, syncEvents, AppState.data.currentHistoricalData.date);
         }
 
@@ -2302,8 +2341,18 @@
              const signalList = AppState.data.dashboardSyncedList || [];
              const signal = signalList.find(s => s.symbol === symbol);
              if (!signal) { console.warn(`Dashboard synced signal not found: ${symbol}`); return; }
-             const originalSignal = (AppState.data.liveFeed || []).find(s => s.symbol === symbol && s.reason === signal.ind1Reason);
-             const baseSignal = { symbol: signal.symbol, reason: signal.ind1Reason, time: originalSignal ? originalSignal.time : 'N/A', status: 'Synced' };
+             
+             // Get all indicator 1 reasons for this symbol from liveFeed
+             const allInd1Signals = (AppState.data.liveFeed || []).filter(s => s.symbol === symbol);
+             allInd1Signals.sort((a, b) => b.time.localeCompare(a.time));
+             
+             const baseSignal = { 
+                 symbol: signal.symbol, 
+                 reason: signal.ind1Reason, 
+                 time: signal.ind1Time,
+                 allInd1Reasons: allInd1Signals.map(s => ({ reason: s.reason, time: s.time })),
+                 status: 'Synced' 
+             };
              showDetailModal(baseSignal, signal.ind2Reasons, 'Today', true);
         }
 
@@ -2340,7 +2389,7 @@
              }
              
              // Separate Indicator 1 and Indicator 2 events
-             const ind1Reason = signal.reason;
+             const ind1Reasons = signal.allInd1Reasons || [{ reason: signal.reason, time: signal.time }];
              const ind2Events = syncEvents && syncEvents.length > 0 ? syncEvents : [];
              
              // Don't show time below symbol name
@@ -2349,13 +2398,14 @@
                     <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
                     <span class="status-badge ${statusClass}">${signal.status}</span>
                 </div>
-                ${ind1Reason ? `
+                ${ind1Reasons.length > 0 ? `
                 <div class="p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Trigger Events</h3>
-                    <div class="flex justify-between items-center">
-                        <span style="color: ${getReasonColor(ind1Reason)}; font-size: 0.95rem; font-weight: 600;">${ind1Reason}</span>
-                        <span class="text-sm text-secondary">${signal.time || ''}</span>
-                    </div>
+                    ${ind1Reasons.map((ind1, idx) => `
+                        <div class="flex justify-between items-center mb-2" style="${idx === 0 ? 'font-size: 0.95rem;' : ''}">
+                            <span style="color: ${getReasonColor(ind1.reason)}; font-weight: ${idx === 0 ? '600' : '500'};">${ind1.reason}</span>
+                            <span class="text-sm text-secondary">${ind1.time || ''}</span>
+                        </div>`).join('')}
                 </div>` : ''}
                 ${ind2Events.length > 0 ? `
                 <div class="p-4 material material-regular mb-4">
