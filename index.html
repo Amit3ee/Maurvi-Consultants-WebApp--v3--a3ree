@@ -1,0 +1,2383 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maurvi Consultants | Automated Trading Signals</title>
+    <!-- Tailwind CSS (from new file) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts (from new file) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+    <!-- NEW STYLES (from uploaded file) -->
+    <style>
+        :root {
+            --bg-dark: #000; --bg-light: #f3f4f6;
+            --text-dark: #e5e7eb; --text-light: #1f2937;
+            --text-secondary-dark: #9ca3af; --text-secondary-light: #4b5563;
+
+            /* Apple HIG Inspired Materials - V5 */
+            --material-bg-ultrathick-dark: hsla(0, 0%, 15%, 0.5);  --material-bg-ultrathick-light: hsla(0, 0%, 98%, 0.6);
+            --material-bg-thick-dark: hsla(0, 0%, 10%, 0.45);   --material-bg-thick-light: hsla(0, 0%, 95%, 0.55);
+            --material-bg-regular-dark: hsla(0, 0%, 10%, 0.35);  --material-bg-regular-light: hsla(0, 0%, 95%, 0.45);
+            --material-bg-thin-dark: hsla(0, 0%, 10%, 0.2);     --material-bg-thin-light: hsla(0, 0%, 95%, 0.35);
+
+            /* Borders and Highlights - V5 */
+            --material-border-dark: hsla(0, 0%, 100%, 0.08); --material-border-light: hsla(0, 0%, 0%, 0.06);
+            --material-highlight-dark: hsla(0, 0%, 100%, 0.12); --material-highlight-light: hsla(0, 0%, 100%, 0.8);
+
+            /* Shadows - V7 (Enhanced depth and layering) */
+            --shadow-light: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.06), 0 12px 24px rgba(0,0,0,0.06);
+            --shadow-dark: 0 2px 6px rgba(0,0,0,0.25), 0 8px 20px rgba(0,0,0,0.35), 0 20px 40px rgba(0,0,0,0.4);
+            --shadow-hover-light: 0 2px 6px rgba(0,0,0,0.08), 0 10px 24px rgba(0,0,0,0.1), 0 20px 40px rgba(0,0,0,0.12);
+            --shadow-hover-dark: 0 4px 12px rgba(0,0,0,0.35), 0 16px 32px rgba(0,0,0,0.45), 0 32px 64px rgba(0,0,0,0.5);
+
+            /* System Colors (Apple HIG) */
+            --violet: #0A84FF; /* Apple System Blue (dark) */
+            --sky: #30D158;   /* Apple System Green (dark) */
+            --blue: #0A84FF; 
+            --green: #32D74B; /* Updated to match HIG */
+            --orange: #FF9F0A; 
+            --red: #FF453A; 
+            --teal: #64D2FF;
+            
+            /* Light mode system colors */
+            --violet-light: #007AFF;
+            --sky-light: #34C759;
+            --blue-light: #007AFF;
+            --green-light: #28CD41;
+            --orange-light: #FF9500;
+            --red-light: #FF3B30;
+            --teal-light: #5AC8FA;
+        }
+        html.dark {
+            --bg-color: var(--bg-dark);
+            --text-primary: var(--text-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --material-ultrathick: var(--material-bg-ultrathick-dark);
+            --material-thick: var(--material-bg-thick-dark);
+            --material-regular: var(--material-bg-regular-dark);
+            --material-thin: var(--material-bg-thin-dark);
+            --material-border: var(--material-border-dark);
+            --material-highlight: var(--material-highlight-dark);
+            --shadow: var(--shadow-dark);
+            --shadow-hover: var(--shadow-hover-dark);
+            --login-title-color: var(--text-dark);
+            --login-subtitle-color: var(--text-secondary-dark);
+        }
+        html.light {
+            --bg-color: var(--bg-light);
+            --text-primary: var(--text-light);
+            --text-secondary: var(--text-secondary-light);
+            --material-ultrathick: var(--material-bg-ultrathick-light);
+            --material-thick: var(--material-bg-thick-light);
+            --material-regular: var(--material-bg-regular-light);
+            --material-thin: var(--material-bg-thin-light);
+            --material-border: var(--material-border-light);
+            --material-highlight: var(--material-highlight-light);
+            --shadow: var(--shadow-light);
+            --shadow-hover: var(--shadow-hover-light);
+            --login-title-color: var(--text-light);
+            --login-subtitle-color: var(--text-secondary-light);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden; /* Prevent scrolling on body */
+            background-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        /* Base background colors for better contrast */
+        html.light body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+        }
+        
+        html.dark body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1e 100%);
+        }
+
+        .dynamic-background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+            background-color: transparent;
+        }
+
+        /* Base Material Style - V6 with Glassmorphism */
+        .material {
+            border-radius: 1.5rem;
+            border: 1px solid var(--material-border);
+            box-shadow: var(--shadow), inset 0 1.5px 1px 0 var(--material-highlight);
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+        }
+        
+        /* Light mode glassmorphism */
+        html.light .material-ultrathick { 
+            background-color: rgba(255, 255, 255, 0.85); 
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        html.light .material-thick { 
+            background-color: rgba(255, 255, 255, 0.75); 
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        html.light .material-regular { 
+            background-color: rgba(255, 255, 255, 0.65); 
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        html.light .material-thin { 
+            background-color: rgba(255, 255, 255, 0.55); 
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        
+        /* Dark mode glassmorphism */
+        html.dark .material-ultrathick { 
+            background-color: rgba(17, 25, 40, 0.85); 
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        html.dark .material-thick { 
+            background-color: rgba(17, 25, 40, 0.75); 
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        html.dark .material-regular { 
+            background-color: rgba(17, 25, 40, 0.65); 
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+        html.dark .material-thin { 
+            background-color: rgba(17, 25, 40, 0.55); 
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            backdrop-filter: blur(16px) saturate(180%); 
+            -webkit-backdrop-filter: blur(16px) saturate(180%); 
+        }
+
+        .interactive {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .interactive:hover {
+            z-index: 10;
+            transform: scale(1.03);
+            box-shadow: var(--shadow-hover), inset 0 1.5px 1px 0 var(--material-highlight);
+        }
+        .interactive:active {
+            transform: scale(0.98);
+            transition-duration: 0.1s;
+        }
+
+        .animate-in { opacity: 0; animation: fadeIn 0.8s ease-out forwards; } @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Segmented Control / Tabs with Enhanced Glassmorphism */
+        .segmented-control { 
+            position: relative; 
+            display: inline-flex; 
+            align-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        html.light .segmented-control {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        .liquid-slider { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            height: 100%; 
+            border-radius: 9999px; 
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.95), rgba(48, 209, 88, 0.95)); 
+            box-shadow: 0 2px 12px rgba(10, 132, 255, 0.4), 0 4px 24px rgba(48, 209, 88, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+            z-index: 1;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .tab-button, .sort-button { display: flex; align-items: center; justify-content: center; background-color: transparent !important; z-index: 2; transition: color 0.4s ease, text-shadow 0.3s ease; color: var(--text-secondary); }
+        .active-button { color: white !important; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+        /* Modal Styles */
+        .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; border-radius: 1.5rem; /* Match material */ width: calc(100% - 32px); max-width: 520px; padding: 24px; }
+        .modal-backdrop.visible .modal-content { transform: scale(1); }
+
+        /* Ticker Styles */
+        .ticker-wrap { position: relative; width: 100%; overflow: hidden; height: 3rem; }
+        .ticker-move { display: flex; align-items: center; position: absolute; left: 0; top: 0; height: 100%; animation: ticker 40s linear infinite; white-space: nowrap; }
+        /* Ticker 1 (HVD) - slower speed */
+        #hvd-ticker { animation: ticker 50s linear infinite; }
+        /* Ticker 2 (Pattern) - faster speed */
+        #pattern-ticker { animation: ticker 30s linear infinite; }
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .ticker-item { flex-shrink: 0; padding: 0 2rem; display: flex; align-items: center; font-weight: 600; }
+        .ticker-item .symbol { font-weight: 700; }
+        .ticker-item .details { font-weight: 500; font-size: 0.75em; margin-left: 8px; }
+        .ticker-item .bull-icon { margin-left: 4px; }
+        .ticker-item .bear-icon { margin-left: 4px; }
+        /* Ticker Sizes from largest to smallest */
+        .ticker-item.size-xl { font-size: 24px; opacity: 1; }
+        .ticker-item.size-lg { font-size: 22px; opacity: 0.95; }
+        .ticker-item.size-md { font-size: 20px; opacity: 0.9; }
+        .ticker-item.size-sm { font-size: 18px; opacity: 0.85; }
+        .ticker-item.size-xs { font-size: 16px; opacity: 0.8; }
+        
+        /* Ticker colors with better visibility in dark/light modes */
+        html.dark .ticker-bullish { color: #32d74b; }
+        html.light .ticker-bullish { color: #248a3d; }
+        html.dark .ticker-bearish { color: #ff453a; }
+        html.light .ticker-bearish { color: #c41e00; }
+        html.dark .ticker-hvd { color: #ff9f0a; }
+        html.light .ticker-hvd { color: #c93400; }
+        
+        html.dark .ticker-item .bull-icon { color: #32d74b; }
+        html.light .ticker-item .bull-icon { color: #248a3d; }
+        html.dark .ticker-item .bear-icon { color: #ff453a; }
+        html.light .ticker-item .bear-icon { color: #c41e00; }
+
+        /* Scrollbar Hiding */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .company-name-font { font-family: 'Montserrat', sans-serif; }
+        .login-title { color: var(--login-title-color); }
+        .login-subtitle { color: var(--login-subtitle-color); }
+
+        /* Theme Toggle Animation - Enhanced */
+        @keyframes theme-icon-spin { 
+            0% { transform: rotate(0deg) scale(0.8); opacity: 0.8; } 
+            50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+            100% { transform: rotate(360deg) scale(1); opacity: 1; } 
+        }
+        .theme-icon-animation { animation: theme-icon-spin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        .bg-gradient-theme { background-image: linear-gradient(to right, var(--violet), var(--sky)); }
+
+        /* Volume Icon Animation - Enhanced */
+        @keyframes volume-icon-pulse { 
+            0% { transform: scale(1); }
+            25% { transform: scale(1.15) rotate(-5deg); }
+            50% { transform: scale(1.25) rotate(5deg); }
+            75% { transform: scale(1.15) rotate(-5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .volume-icon-animation { animation: volume-icon-pulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* Sort Arrow Animation - Enhanced */
+        @keyframes sort-arrow-pop { 
+            0% { transform: scale(1) rotate(0deg); opacity: 1; } 
+            50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; } 
+            100% { transform: scale(1) rotate(180deg); opacity: 1; }
+        }
+        .sort-arrow-pop-animation { animation: sort-arrow-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .liquid-blob { 
+            position: absolute; 
+            filter: blur(160px); 
+            -webkit-filter: blur(160px); 
+            mix-blend-mode: screen;
+            will-change: transform, border-radius;
+        }
+        
+        /* Light mode blobs - Vibrant and saturated */
+        html.light .liquid-blob {
+            opacity: 0.4;
+        }
+        html.light #liquid-blue { 
+            width: 70vmax; 
+            height: 70vmax; 
+            background: radial-gradient(circle at 30% 50%, 
+                hsla(280, 95%, 65%, 0.9), 
+                hsla(220, 100%, 55%, 0.8), 
+                hsla(200, 90%, 50%, 0.6)); 
+            top: -15%; 
+            left: -15%; 
+            transform-origin: center center; 
+            animation: liquid-blue-flow-advanced 30s infinite ease-in-out; 
+        }
+        html.light #liquid-green { 
+            width: 65vmax; 
+            height: 65vmax; 
+            background: radial-gradient(circle at 70% 50%, 
+                hsla(340, 100%, 55%, 0.8), 
+                hsla(30, 100%, 50%, 0.7), 
+                hsla(50, 90%, 55%, 0.5)); 
+            bottom: -15%; 
+            right: -15%; 
+            transform-origin: center center; 
+            animation: liquid-green-flow-advanced 30s infinite ease-in-out; 
+            animation-delay: -15s;
+        }
+        html.light #liquid-purple { 
+            width: 60vmax; 
+            height: 60vmax; 
+            background: radial-gradient(circle at 50% 50%, 
+                hsla(160, 85%, 45%, 0.7), 
+                hsla(180, 90%, 50%, 0.6), 
+                hsla(200, 80%, 55%, 0.4)); 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            transform-origin: center center; 
+            animation: liquid-purple-flow-advanced 35s infinite ease-in-out; 
+            animation-delay: -20s;
+        }
+        
+        /* Dark mode blobs - Darker and more dramatic */
+        html.dark .liquid-blob {
+            opacity: 0.7;
+        }
+        html.dark #liquid-blue { 
+            width: 70vmax; 
+            height: 70vmax; 
+            background: radial-gradient(circle at 30% 50%, 
+                hsla(240, 100%, 25%, 0.95), 
+                hsla(260, 100%, 30%, 0.85), 
+                hsla(220, 95%, 28%, 0.75)); 
+            top: -15%; 
+            left: -15%; 
+            transform-origin: center center; 
+            animation: liquid-blue-flow-advanced 30s infinite ease-in-out; 
+        }
+        html.dark #liquid-green { 
+            width: 65vmax; 
+            height: 65vmax; 
+            background: radial-gradient(circle at 70% 50%, 
+                hsla(160, 100%, 20%, 0.9), 
+                hsla(180, 95%, 25%, 0.8), 
+                hsla(140, 90%, 22%, 0.7)); 
+            bottom: -15%; 
+            right: -15%; 
+            transform-origin: center center; 
+            animation: liquid-green-flow-advanced 30s infinite ease-in-out; 
+            animation-delay: -15s;
+        }
+        html.dark #liquid-purple { 
+            width: 60vmax; 
+            height: 60vmax; 
+            background: radial-gradient(circle at 50% 50%, 
+                hsla(280, 90%, 28%, 0.8), 
+                hsla(320, 85%, 25%, 0.7), 
+                hsla(340, 80%, 22%, 0.6)); 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            transform-origin: center center; 
+            animation: liquid-purple-flow-advanced 35s infinite ease-in-out; 
+            animation-delay: -20s;
+        }
+        
+        /* Advanced fluid animations with organic movement */
+        @keyframes liquid-blue-flow-advanced { 
+            0% { 
+                transform: translate(0, 0) rotate(0deg) scale(1); 
+                border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%; 
+            } 
+            14% {
+                transform: translate(8%, 5%) rotate(45deg) scale(1.05); 
+                border-radius: 40% 60% 42% 58% / 48% 35% 65% 52%;
+            }
+            28% { 
+                transform: translate(18%, 12%) rotate(95deg) scale(1.12); 
+                border-radius: 58% 42% 68% 32% / 52% 63% 37% 48%; 
+            }
+            42% {
+                transform: translate(25%, 18%) rotate(150deg) scale(1.08);
+                border-radius: 35% 65% 45% 55% / 60% 40% 60% 40%;
+            }
+            56% { 
+                transform: translate(32%, 22%) rotate(185deg) scale(1); 
+                border-radius: 70% 30% 48% 52% / 42% 68% 32% 58%; 
+            } 
+            70% {
+                transform: translate(22%, 15%) rotate(245deg) scale(1.1);
+                border-radius: 48% 52% 65% 35% / 58% 42% 58% 42%;
+            }
+            84% { 
+                transform: translate(10%, 8%) rotate(285deg) scale(1.15); 
+                border-radius: 42% 58% 38% 62% / 65% 48% 52% 35%; 
+            }
+            100% { 
+                transform: translate(0, 0) rotate(360deg) scale(1); 
+                border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%; 
+            } 
+        }
+        
+        @keyframes liquid-green-flow-advanced { 
+            0% { 
+                transform: translate(0, 0) rotate(0deg) scale(1); 
+                border-radius: 54% 46% 38% 62% / 42% 58% 42% 58%; 
+            } 
+            14% {
+                transform: translate(-8%, -6%) rotate(-50deg) scale(1.08);
+                border-radius: 68% 32% 55% 45% / 60% 40% 60% 40%;
+            }
+            28% { 
+                transform: translate(-16%, -12%) rotate(-98deg) scale(1.14); 
+                border-radius: 38% 62% 48% 52% / 45% 68% 32% 55%; 
+            }
+            42% {
+                transform: translate(-24%, -18%) rotate(-155deg) scale(1.1);
+                border-radius: 65% 35% 42% 58% / 52% 35% 65% 48%;
+            }
+            56% { 
+                transform: translate(-32%, -24%) rotate(-188deg) scale(1); 
+                border-radius: 48% 52% 65% 35% / 58% 52% 48% 42%; 
+            } 
+            70% {
+                transform: translate(-22%, -16%) rotate(-252deg) scale(1.12);
+                border-radius: 42% 58% 52% 48% / 35% 65% 35% 65%;
+            }
+            84% { 
+                transform: translate(-10%, -7%) rotate(-295deg) scale(1.16); 
+                border-radius: 58% 42% 35% 65% / 62% 42% 58% 38%; 
+            }
+            100% { 
+                transform: translate(0, 0) rotate(-360deg) scale(1); 
+                border-radius: 54% 46% 38% 62% / 42% 58% 42% 58%; 
+            } 
+        }
+        
+        @keyframes liquid-purple-flow-advanced {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(0.95);
+                border-radius: 48% 52% 58% 42% / 52% 48% 52% 48%;
+            }
+            20% {
+                transform: translate(-45%, -55%) rotate(72deg) scale(1.1);
+                border-radius: 62% 38% 45% 55% / 48% 62% 38% 52%;
+            }
+            40% {
+                transform: translate(-55%, -50%) rotate(144deg) scale(1.05);
+                border-radius: 38% 62% 52% 48% / 58% 42% 58% 42%;
+            }
+            60% {
+                transform: translate(-50%, -45%) rotate(216deg) scale(0.98);
+                border-radius: 55% 45% 62% 38% / 45% 55% 45% 55%;
+            }
+            80% {
+                transform: translate(-52%, -52%) rotate(288deg) scale(1.08);
+                border-radius: 42% 58% 48% 52% / 62% 38% 62% 38%;
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg) scale(0.95);
+                border-radius: 48% 52% 58% 42% / 52% 48% 52% 48%;
+            }
+        }
+        
+        /* Smooth theme transitions */
+        .dynamic-background {
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .liquid-blob {
+            transition: opacity 0.8s ease-in-out, filter 0.8s ease-in-out;
+        }
+
+        /* Volume Icon Animation - Enhanced */
+        @keyframes volume-icon-pulse { 
+            0% { transform: scale(1); }
+            25% { transform: scale(1.15) rotate(-5deg); }
+            50% { transform: scale(1.25) rotate(5deg); }
+            75% { transform: scale(1.15) rotate(-5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .volume-icon-animation { animation: volume-icon-pulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* Sort Arrow Animation - Enhanced */
+        @keyframes sort-arrow-pop { 
+            0% { transform: scale(1) rotate(0deg); opacity: 1; } 
+            50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; } 
+            100% { transform: scale(1) rotate(180deg); opacity: 1; }
+        }
+        .sort-arrow-pop-animation { animation: sort-arrow-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* iOS 26 Dynamic Liquid Flow Background - Enhanced */
+        .otp-input {
+            width: 2.75rem; /* 44px */
+            height: 3.25rem; /* 52px */
+            color: var(--text-primary);
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-radius: 0.75rem; /* 12px */
+            background-color: hsla(0, 0%, 50%, 0.1);
+            border: 1px solid hsla(0, 0%, 100%, 0.1);
+            caret-color: var(--violet);
+            transition: all 0.2s ease;
+        }
+        .otp-input:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .otp-input:focus {
+            outline: none;
+            border-color: var(--violet);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 30%, transparent);
+        }
+        .otp-separator { /* Style for the '-' separator */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0 -0.25rem; /* Adjust spacing */
+        }
+
+
+        /* Shake Animation */
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+
+        /* Email Input Style */
+        .email-input {
+            width: 100%;
+            height: 3.25rem; /* 52px */
+            padding: 0 1rem;
+            color: var(--text-primary);
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 0.75rem; /* 12px */
+            background-color: hsla(0, 0%, 50%, 0.1);
+            border: 1px solid hsla(0, 0%, 100%, 0.1);
+            caret-color: var(--violet);
+            transition: all 0.2s ease;
+        }
+        .email-input:focus {
+            outline: none;
+            border-color: var(--violet);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 30%, transparent);
+        }
+
+        /* Progress Bar - Enhanced Design */
+        .progress-bar-container { 
+            width: 100%; 
+            height: 8px; 
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 4px; 
+            margin-top: 1.5rem;
+            overflow: hidden; 
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        html.light .progress-bar-container {
+            background: rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar { 
+            height: 100%; 
+            background: linear-gradient(90deg, #0A84FF 0%, #30D158 50%, #0A84FF 100%); 
+            background-size: 200% 100%;
+            border-radius: 4px; 
+            transition: width 1s linear; 
+            box-shadow: 
+                0 0 20px rgba(10, 132, 255, 0.6), 
+                0 0 40px rgba(48, 209, 88, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            animation: progress-shimmer 2s ease-in-out infinite;
+        }
+        @keyframes progress-shimmer {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 0%; }
+            100% { background-position: 0% 0%; }
+        }
+        
+        /* Thumbsup Animation */
+        @keyframes thumbsup-appear {
+            0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+            50% { transform: scale(1.2) translateY(0); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .thumbsup-animation {
+            animation: thumbsup-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Status Badges */
+        .status-badge { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+        .status-synced { background-color: rgba(48, 209, 88, 0.15); color: var(--green); }
+        html.light .status-synced { background-color: rgba(48, 209, 88, 0.2); }
+        .status-awaiting { background-color: rgba(255, 159, 10, 0.15); color: var(--orange); }
+        html.light .status-awaiting { background-color: rgba(255, 159, 10, 0.2); }
+        .status-unsynced { background-color: rgba(255, 69, 58, 0.15); color: var(--red); }
+        html.light .status-unsynced { background-color: rgba(255, 69, 58, 0.2); }
+
+        /* Glowing Status Indicators */
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .status-light-synced {
+            background-color: var(--green);
+            box-shadow: 0 0 8px var(--green), 0 0 16px var(--green);
+            animation: pulse-green 2s infinite;
+        }
+        .status-light-awaiting {
+            background-color: var(--orange);
+            box-shadow: 0 0 8px var(--orange), 0 0 16px var(--orange);
+            animation: pulse-orange 2s infinite;
+        }
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green), 0 0 16px var(--green); }
+            50% { opacity: 0.6; box-shadow: 0 0 4px var(--green), 0 0 8px var(--green); }
+        }
+        @keyframes pulse-orange {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--orange), 0 0 16px var(--orange); }
+            50% { opacity: 0.6; box-shadow: 0 0 4px var(--orange), 0 0 8px var(--orange); }
+        }
+
+        /* Glass Card - Enhanced Glassmorphism */
+        .glass-card {
+            width: 240px;
+            height: 360px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 0 20px 10px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.8),
+                transparent
+            );
+        }
+
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.8),
+                transparent,
+                rgba(255, 255, 255, 0.3)
+            );
+        }
+
+        /* Signal Cards */
+        .signal-card { 
+            padding: 1rem; 
+            position: relative; 
+            overflow: hidden;
+            min-width: 200px; /* Ensure cards don't get too compressed */
+        }
+        .signal-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .timestamp { font-size: 0.8rem; color: var(--text-secondary); }
+        
+        /* Add gap between card sections */
+        .card-section-gap { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--material-border); }
+        
+        /* Responsive grid adjustments */
+        @media (max-width: 640px) {
+            .signals-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .signals-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (min-width: 1025px) and (max-width: 1536px) {
+            .signals-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        }
+        @media (min-width: 1537px) {
+            .signals-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+
+        /* Sync Events in Modal */
+        .sync-event-item { padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--material-border); }
+        html.light .sync-event-item { background-color: rgba(0, 0, 0, 0.03); }
+        html.dark .sync-event-item { background-color: var(--material-thin); }
+        .sync-event-reason { font-weight: 600; }
+        .sync-event-time { font-size: 13px; color: var(--text-secondary); }
+
+        /* Date Cards */
+        .date-card { padding: 1.25rem; text-align: center; }
+        .date-day { font-size: 1.375rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .date-month-year { font-size: 0.875rem; color: var(--text-secondary); }
+
+        /* Loading Spinner */
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Loading Spinner Modal */
+        #loading-spinner {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 200; /* Higher than modal */
+            display: flex; /* Start as flex */
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+            pointer-events: auto; /* Allow interaction blocking */
+        }
+        #loading-spinner.hidden { /* Use a class to hide it */
+             opacity: 0;
+             pointer-events: none;
+        }
+
+        /* Footer Clock */
+        #digitalClock { font-size: clamp(2rem, 6vw, 3rem); } /* Smaller to prevent overlap */
+
+        /* Ensure footer content is visible */
+        #mainFooter p { color: var(--text-secondary); }
+        
+        /* Ensure footer doesn't overlap with content */
+        #mainFooter { 
+            margin-top: 2rem; 
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .header-button { /* Ensure consistent button size */
+            width: 3rem; /* 48px */
+            height: 3rem; /* 48px */
+            flex-shrink: 0;
+        }
+
+        /* Gemini Chat Styles */
+        #gemini-chat-panel.open { transform: translateX(0); }
+        .chat-message { max-width: 85%; }
+        .user-message { margin-left: auto; background: linear-gradient(to right, var(--violet), var(--sky)); color: white; }
+        .ai-message { margin-right: auto; }
+        .chat-message p { line-height: 1.5; }
+        .chat-message.typing::after {
+            content: '...';
+            animation: typing 1.5s infinite;
+        }
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+    <div class="dynamic-background">
+        <div id="liquid-blue" class="liquid-blob"></div>
+        <div id="liquid-green" class="liquid-blob"></div>
+        <div id="liquid-purple" class="liquid-blob"></div>
+    </div>
+
+    <!--Login View Redesigned (and adapted for OTP)-->
+    <div id="loginView" class="min-h-screen flex items-center justify-center p-4 animate-in relative z-10 transition-opacity duration-500 overflow-hidden">
+        <div class="w-full max-w-md relative">
+            <button id="theme-toggle-login" class="absolute top-4 right-4 z-50 material material-thin header-button flex items-center justify-center rounded-full text-lg interactive"></button>
+            <div class="material material-thick p-8 md:p-10 text-center">
+
+                <!-- NEW LOGO -->
+                <div id="loginLogoContainer" class="mx-auto h-20 w-20 mb-6 material material-regular flex items-center justify-center p-3 interactive cursor-pointer rounded-[1.25rem]">
+                    <svg viewBox="0 0 100 100" class="w-full h-full"><defs><linearGradient id="logoGradientLogin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0A84FF"/><stop offset="100%" stop-color="#30D158"/></linearGradient></defs><path fill="none" stroke="url(#logoGradientLogin)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M10 85 L 35 40 L 50 60 L 65 20 L 90 85"/></svg>
+                </div>
+
+                <h1 class="text-2xl font-bold mb-1 company-name-font login-title whitespace-nowrap tracking-tight">Maurvi Consultants</h1>
+                <h2 id="login-subtitle" class="mb-6 login-subtitle font-medium">Enter Email to Sign In</h2>
+
+                <div class="space-y-6">
+                    <!-- Email input (hidden) -->
+                    <input type="email" id="email-input" class="email-input hidden" value="amit3ree@gmail.com" readonly>
+
+                    <!-- OTP inputs (styled as PIN) - Always visible but blocked initially -->
+                    <div id="otp-area" class="flex justify-center items-center space-x-2">
+                        <!-- OTP inputs will be generated here -->
+                         <input type="tel" maxlength="1" class="otp-input" data-index="0" autocomplete="off" disabled>
+                         <input type="tel" maxlength="1" class="otp-input" data-index="1" autocomplete="off" disabled>
+                         <input type="tel" maxlength="1" class="otp-input" data-index="2" autocomplete="off" disabled>
+                         <span class="otp-separator">-</span>
+                         <input type="tel" maxlength="1" class="otp-input" data-index="3" autocomplete="off" disabled>
+                         <input type="tel" maxlength="1" class="otp-input" data-index="4" autocomplete="off" disabled>
+                         <input type="tel" maxlength="1" class="otp-input" data-index="5" autocomplete="off" disabled>
+                    </div>
+
+                    <!-- Generate OTP Button -->
+                    <button id="generate-otp-btn" class="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-blue-500/40 transform hover:scale-105 bg-gradient-theme text-base interactive">
+                        <span id="loginButtonText">Generate OTP</span>
+                        <span id="loginSpinner" class="hidden"><svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></span>
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="progress-container" class="progress-bar-container hidden">
+                    <div id="progress-bar" class="progress-bar" style="width: 100%"></div>
+                </div>
+
+                <p id="login-message" class="text-secondary text-center text-sm mt-4 h-5"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW (from your new file, adapted IDs) -->
+    <div id="app-view" class="hidden h-screen flex flex-col p-4 md:p-6 opacity-0 transition-opacity duration-500 relative z-10">
+        <header class="flex-shrink-0 flex flex-col sm:flex-row justify-between sm:items-center mb-8">
+            <div class="flex items-center mb-4 sm:mb-0">
+                <!-- NEW LOGO (Header) -->
+                <div id="headerLogoContainer" class="h-16 w-16 material material-regular flex items-center justify-center p-3 mr-5 cursor-pointer interactive rounded-[1.25rem]">
+                    <svg viewBox="0 0 100 100" class="w-full h-full"><defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0A84FF"/><stop offset="100%" stop-color="#30D158"/></linearGradient></defs><path fill="none" stroke="url(#logoGradientHeader)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M10 85 L 35 40 L 50 60 L 65 20 L 90 85"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold company-name-font text-transparent bg-clip-text bg-gradient-theme whitespace-nowrap tracking-tight">Maurvi Consultants</h1>
+                    <p class="text-primary font-medium text-base">Automated Trading Signal Platform</p>
+                    <p id="user-name" class="text-sm text-secondary mt-1"></p> <!-- Added user name display -->
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                 <!-- Main Tabs (Adapted IDs) -->
+                <div id="main-tabs" class="material material-regular p-1.5 flex space-x-2 rounded-full segmented-control">
+                    <div id="main-tab-slider" class="liquid-slider"></div>
+                    <button data-tab="dashboard" class="tab-button active-button px-4 py-2 rounded-full text-sm font-semibold">Dashboard</button>
+                    <button data-tab="livefeed" class="tab-button px-4 py-2 rounded-full text-sm font-semibold">Live Feed</button>
+                    <button data-tab="logs" class="tab-button px-4 py-2 rounded-full text-sm font-semibold">Logs</button> <!-- Changed from 'log' -->
+                    <button data-tab="historical" class="tab-button px-4 py-2 rounded-full text-sm font-semibold">Historical</button> <!-- Changed from 'history' -->
+                </div>
+                <button id="volume-toggle" class="material material-regular header-button flex-shrink-0 flex items-center justify-center rounded-full text-lg interactive"></button>
+                <button id="theme-toggle" class="material material-regular header-button flex-shrink-0 flex items-center justify-center rounded-full text-lg interactive"></button>
+            </div>
+        </header>
+
+        <main class="flex-grow overflow-y-auto p-2 pb-8 hide-scrollbar">
+             <!-- Dashboard (Adapted IDs) -->
+            <div id="dashboard-view" class="main-view view-section">
+                <div class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    <!-- Nifty Card -->
+                    <div id="nifty-card" class="material material-regular p-4 md:p-6 interactive kpi-card">
+                        <h3 class="text-secondary text-sm font-medium mb-2 kpi-title">NIFTY 50</h3>
+                        <p id="nifty-value" class="text-3xl md:text-4xl font-bold tracking-tight truncate kpi-value">Loading...</p>
+                        <!-- Timestamp removed as per requirement -->
+                    </div>
+                    <div class="material material-regular p-4 md:p-6 kpi-card"><h3 class="text-secondary text-sm font-medium mb-2 kpi-title">Total Signals Today</h3><p id="total-signals" class="text-3xl md:text-4xl font-bold tracking-tight kpi-value">0</p></div>
+                    <div class="material material-regular p-4 md:p-6 kpi-card"><h3 class="text-secondary text-sm font-medium mb-2 kpi-title">Synced Signals</h3><p id="synced-signals" class="text-3xl md:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-theme kpi-value">0</p></div>
+                    <div class="material material-regular p-4 md:p-6 kpi-card"><h3 class="text-secondary text-sm font-medium mb-2 kpi-title">Latest Signal</h3><p id="latest-signal" class="text-3xl md:text-4xl font-bold tracking-tight truncate kpi-value">-</p></div>
+                </div>
+
+                <!-- Tickers (Adapted IDs) -->
+                <div class="mb-8">
+                  <div id="hvd-ticker-wrap" class="ticker-wrap"><div id="hvd-ticker" class="ticker-move"></div></div>
+                </div>
+                <div class="mb-8">
+                  <div id="pattern-ticker-wrap" class="ticker-wrap"><div id="pattern-ticker" class="ticker-move" style="animation-delay: -20s"></div></div>
+                </div>
+
+                <!-- Synced Signals List (Adapted IDs) -->
+                <div class="material material-thick p-4 md:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+                        <h3 class="text-lg font-semibold mb-3 sm:mb-0 tracking-tight">Synced Signals Feed</h3>
+                        <!-- Sorting removed from dashboard in previous version -->
+                    </div>
+                    <div class="max-h-[40vh] overflow-y-auto hide-scrollbar p-2">
+                        <div id="dashboard-signals-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 signals-grid">
+                            <!-- Dashboard signals populated here -->
+                             <p class="text-center text-secondary p-4 col-span-full">Loading signals data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Feed (Adapted IDs) -->
+            <div id="livefeed-view" class="main-view view-section hidden">
+                 <div class="material material-thick p-4 md:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+                        <h3 class="text-lg font-semibold mb-3 sm:mb-0 tracking-tight">Live Signals Feed</h3>
+                        <div class="flex items-center space-x-2 self-start sm:self-center sort-controls" data-view="livefeed">
+                            <div class="sort-button-container material material-regular p-1 flex space-x-1 rounded-full text-xs segmented-control">
+                                <div class="sort-slider liquid-slider"></div>
+                                <button data-sort="time" class="sort-button active-button px-3 py-1 rounded-full">Time</button>
+                                <button data-sort="status" class="sort-button px-3 py-1 rounded-full">Status</button>
+                            </div>
+                           <button class="arrow-button material material-regular w-8 h-8 flex items-center justify-center rounded-full text-sm transition-transform duration-300 interactive">
+                               <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                           </button>
+                        </div>
+                    </div>
+                    <div class="max-h-[65vh] overflow-y-auto hide-scrollbar p-2">
+                        <div id="livefeed-signals" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 signals-grid">
+                             <p class="text-center text-secondary p-4 col-span-full">Loading live feed data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs (Adapted IDs) -->
+            <div id="logs-view" class="main-view view-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 logs-container">
+                    <!-- HVD - Wide column -->
+                    <div class="hvd-section material material-thick p-4 md:p-6 lg:col-span-1 logs-section">
+                        <h3 class="section-title text-lg font-semibold mb-4 tracking-tight">Significant Deployed Capital</h3>
+                        <div id="hvd-logs" class="scroll-content max-h-[60vh] overflow-y-auto hide-scrollbar p-2 space-y-3">
+                             <p class="text-center text-secondary p-4">No HVD data available</p>
+                        </div>
+                    </div>
+                    <!-- Bullish -->
+                    <div class="material material-thick p-4 md:p-6 logs-section">
+                        <h3 class="section-title text-lg font-semibold mb-4 tracking-tight">Bullish Activity</h3>
+                        <div id="bullish-logs" class="scroll-content max-h-[60vh] overflow-y-auto hide-scrollbar p-2 space-y-3">
+                             <p class="text-center text-secondary p-4">No bullish activity data available</p>
+                        </div>
+                    </div>
+                    <!-- Bearish -->
+                    <div class="material material-thick p-4 md:p-6 logs-section">
+                        <h3 class="section-title text-lg font-semibold mb-4 tracking-tight">Bearish Activity</h3>
+                        <div id="bearish-logs" class="scroll-content max-h-[60vh] overflow-y-auto hide-scrollbar p-2 space-y-3">
+                            <p class="text-center text-secondary p-4">No bearish activity data available</p>
+                        </div>
+                    </div>
+                    <!-- Oversold -->
+                    <div class="material material-thick p-4 md:p-6 logs-section">
+                        <h3 class="section-title text-lg font-semibold mb-4 tracking-tight">Oversold</h3>
+                        <div id="oversold-logs" class="scroll-content max-h-[60vh] overflow-y-auto hide-scrollbar p-2 space-y-3">
+                             <p class="text-center text-secondary p-4">No oversold data available</p>
+                        </div>
+                    </div>
+                    <!-- Overbought -->
+                    <div class="material material-thick p-4 md:p-6 logs-section">
+                        <h3 class="section-title text-lg font-semibold mb-4 tracking-tight">Overbought</h3>
+                        <div id="overbought-logs" class="scroll-content max-h-[60vh] overflow-y-auto hide-scrollbar p-2 space-y-3">
+                             <p class="text-center text-secondary p-4">No overbought data available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Historical (Adapted IDs) -->
+            <div id="historical-view" class="main-view view-section hidden">
+                <div id="historical-dates" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4 mb-6 p-2 date-cards">
+                    <p class="text-center text-secondary p-4 col-span-full">Loading historical dates...</p>
+                </div>
+
+                <div id="historical-signals-section" class="hidden material material-thick p-4 md:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="back-to-dates" class="text-sm font-semibold hover:text-sky-400 interactive">&larr; Back to Dates</button>
+                        <h2 id="historical-date-title" class="text-xl font-bold tracking-tight"></h2>
+                        <div class="flex items-center space-x-2 sort-controls" data-view="historical">
+                             <div class="sort-button-container material material-regular p-1 flex space-x-1 rounded-full text-xs segmented-control">
+                                <div class="sort-slider liquid-slider"></div>
+                                <button data-sort="time" class="sort-button active-button px-3 py-1 rounded-full">Time</button>
+                                <button data-sort="status" class="sort-button px-3 py-1 rounded-full">Status</button>
+                            </div>
+                           <button class="arrow-button material material-regular w-8 h-8 flex items-center justify-center rounded-full text-sm transition-transform duration-300 interactive">
+                               <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                           </button>
+                        </div>
+                    </div>
+                    <div class="max-h-[55vh] overflow-y-auto hide-scrollbar p-2">
+                        <div id="historical-signals-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 signals-grid">
+                            <!-- Historical signals populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer (Adapted from new file) -->
+        <footer id="mainFooter" class="flex-shrink-0 text-left mt-auto pt-6 pb-4">
+            <div id="digitalClock" class="font-mono font-semibold text-secondary mb-3 tracking-wider"></div>
+            <p class="text-xs text-secondary">&copy; 2025 Maurvi Consultants. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Modal (Adapted IDs) -->
+    <div id="detail-modal" class="modal-backdrop p-4">
+        <div id="modal-content" class="modal-content material material-ultrathick w-full max-w-lg p-6">
+             <!-- Modal content populated by JS -->
+        </div>
+    </div>
+
+    <!-- Loading Spinner (Adapted ID) -->
+    <div id="loading-spinner" class="modal-backdrop hidden" style="z-index: 200;"> <!-- Start Hidden -->
+        <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+        </svg>
+    </div>
+
+    <!-- Gemini Floating Button -->
+    <button id="gemini-float-button" class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-theme shadow-lg flex items-center justify-center z-50 interactive hover:shadow-2xl transition-all duration-300" title="Gemini AI Assistant" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </button>
+
+    <!-- Gemini Chat Panel -->
+    <div id="gemini-chat-panel" class="fixed top-0 right-0 h-full w-full md:w-96 bg-transparent transform translate-x-full transition-transform duration-300 ease-in-out z-100" style="z-index: 100;">
+        <div class="h-full flex flex-col material material-ultrathick backdrop-blur-xl">
+            <!-- Chat Header -->
+            <div class="flex items-center justify-between p-4 border-b border-[var(--material-border)]">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h2 class="text-lg font-bold">Gemini AI Assistant</h2>
+                </div>
+                <button id="close-gemini-chat" class="material material-regular w-8 h-8 flex items-center justify-center rounded-full text-sm interactive">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div id="gemini-messages" class="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar">
+                <div class="chat-message ai-message material material-regular p-3 rounded-xl">
+                    <p class="text-sm">Hello! I'm your AI trading assistant. I can help you analyze signals, answer questions about trading patterns, and provide market insights. How can I assist you today?</p>
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-[var(--material-border)]">
+                <div class="flex space-x-2">
+                    <input type="text" id="gemini-input" placeholder="Ask me anything..." class="flex-1 px-4 py-2 rounded-lg material material-thin border border-[var(--material-border)] focus:outline-none focus:border-[var(--violet)]">
+                    <button id="gemini-send" class="px-4 py-2 rounded-lg bg-gradient-theme text-white font-semibold interactive">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gradient Definition for SVG -->
+    <svg class="absolute w-0 h-0"><defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0A84FF"/><stop offset="100%" stop-color="#30D158"/></linearGradient></defs></svg>
+
+    <!-- JAVASCRIPT (Merged and Adapted) -->
+    <script>
+        // --- ICON DEFINITIONS ---
+        const ICONS = {
+            dark: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+            light: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+            volumeOn: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+            volumeOff: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
+            gemini: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+            bull: '▲',
+            bear: '▼'
+        };
+
+        // --- APPLICATION STATE ---
+         const AppState = {
+            theme: localStorage.getItem('theme') || 'dark',
+            narrationEnabled: localStorage.getItem('narration') !== 'false',
+            sessionToken: localStorage.getItem('sessionToken') || null,
+            otpTimer: null,
+            userInfo: null,
+            currentTab: 'dashboard',
+            sortType: { livefeed: 'time', historical: 'time' },
+            sortDirection: { livefeed: 'desc', historical: 'desc' },
+            data: {},
+            currentHistoricalDate: null,
+            pollingInterval: null,
+            speechVoices: [],
+            geminiChatHistory: [],
+            geminiChatOpen: false
+        };
+
+        // --- DOM ELEMENTS CACHE ---
+        const DOM = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cacheDOM();
+            initializeApp();
+        });
+
+        function cacheDOM() {
+            DOM.loginView = document.getElementById('loginView');
+            DOM.emailInput = document.getElementById('email-input');
+            DOM.otpArea = document.getElementById('otp-area');
+            DOM.otpInputs = DOM.otpArea.querySelectorAll('.otp-input');
+            DOM.otpSeparator = DOM.otpArea.querySelector('.otp-separator');
+            DOM.generateOTPBtn = document.getElementById('generate-otp-btn');
+            DOM.loginButtonText = document.getElementById('loginButtonText');
+            DOM.loginSpinner = document.getElementById('loginSpinner');
+            DOM.loginMessage = document.getElementById('login-message');
+            DOM.progressContainer = document.getElementById('progress-container');
+            DOM.progressBar = document.getElementById('progress-bar');
+            DOM.loginSubtitle = document.getElementById('login-subtitle');
+            DOM.appView = document.getElementById('app-view');
+            DOM.loadingSpinner = document.getElementById('loading-spinner');
+            DOM.themeToggles = { login: document.getElementById('theme-toggle-login'), app: document.getElementById('theme-toggle') };
+            DOM.logos = { login: document.getElementById('loginLogoContainer'), header: document.getElementById('headerLogoContainer') };
+            DOM.headerDate = document.getElementById('headerDate');
+            DOM.volumeToggle = document.getElementById('volume-toggle');
+            DOM.geminiChatToggle = document.getElementById('gemini-chat-toggle');
+            DOM.geminiFloatButton = document.getElementById('gemini-float-button');
+            DOM.geminiChatPanel = document.getElementById('gemini-chat-panel');
+            DOM.closeGeminiChat = document.getElementById('close-gemini-chat');
+            DOM.geminiMessages = document.getElementById('gemini-messages');
+            DOM.geminiInput = document.getElementById('gemini-input');
+            DOM.geminiSend = document.getElementById('gemini-send');
+            DOM.userInfo = { name: document.getElementById('user-name') };
+            DOM.mainTabs = document.getElementById('main-tabs');
+            DOM.tabs = DOM.mainTabs.querySelectorAll('.tab-button');
+            DOM.tabSlider = document.getElementById('main-tab-slider');
+            DOM.viewSections = document.querySelectorAll('.main-view');
+            DOM.dashboardView = document.getElementById('dashboard-view');
+            DOM.livefeedView = document.getElementById('livefeed-view');
+            DOM.logsView = document.getElementById('logs-view');
+            DOM.historicalView = document.getElementById('historical-view');
+            DOM.dashboard = {
+                niftyCard: document.getElementById('nifty-card'),
+                niftyValue: document.getElementById('nifty-value'),
+                niftyTimestamp: document.getElementById('nifty-timestamp'),
+                totalSignals: document.getElementById('total-signals'),
+                syncedSignals: document.getElementById('synced-signals'),
+                latestSignal: document.getElementById('latest-signal'),
+                hvdTicker: document.getElementById('hvd-ticker'),
+                patternTicker: document.getElementById('pattern-ticker'),
+                signalsList: document.getElementById('dashboard-signals-list')
+            };
+            DOM.livefeed = { signals: document.getElementById('livefeed-signals') };
+            DOM.logs = {
+                hvd: document.getElementById('hvd-logs'),
+                bullish: document.getElementById('bullish-logs'),
+                bearish: document.getElementById('bearish-logs'),
+                oversold: document.getElementById('oversold-logs'),
+                overbought: document.getElementById('overbought-logs')
+            };
+            DOM.historical = {
+                dates: document.getElementById('historical-dates'),
+                signalsSection: document.getElementById('historical-signals-section'),
+                backButton: document.getElementById('back-to-dates'),
+                dateTitle: document.getElementById('historical-date-title'),
+                signalsList: document.getElementById('historical-signals-list')
+            };
+            DOM.modal = { backdrop: document.getElementById('detail-modal'), content: document.getElementById('modal-content') };
+            DOM.sortControls = document.querySelectorAll('.sort-controls');
+            DOM.digitalClock = document.getElementById('digitalClock');
+            DOM.mainFooter = document.getElementById('mainFooter');
+        }
+
+
+        // --- INITIALIZATION ---
+        function initializeApp() {
+            // Don't show loading on init - causes buffering effect
+            applyTheme(AppState.theme);
+            injectIcons();
+            setupEventListeners();
+            initializeOTPInputs(); // Call OTP setup
+            loadSpeechVoices();
+            checkExistingSession(); // Check for existing session first
+            updateClock();
+            setInterval(updateClock, 1000); // Start clock
+        }
+
+        // --- ICONS & THEME ---
+         function injectIcons() {
+            // Added safety checks
+            if (DOM.themeToggles.login) DOM.themeToggles.login.innerHTML = AppState.theme === 'dark' ? ICONS.light : ICONS.dark;
+            if (DOM.themeToggles.app) DOM.themeToggles.app.innerHTML = AppState.theme === 'dark' ? ICONS.light : ICONS.dark;
+            if (DOM.volumeToggle) DOM.volumeToggle.innerHTML = AppState.narrationEnabled ? ICONS.volumeOn : ICONS.volumeOff;
+            if (DOM.geminiChatToggle) DOM.geminiChatToggle.innerHTML = ICONS.gemini;
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.className = theme;
+            injectIcons(); // Re-inject correct icons after theme change
+        }
+
+        function toggleTheme() {
+            const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            AppState.theme = newTheme; // Update state
+            applyTheme(newTheme);
+
+            const button = event.currentTarget;
+            button.classList.add('theme-icon-animation');
+            setTimeout(() => button.classList.remove('theme-icon-animation'), 500);
+        }
+
+        // --- EVENT LISTENERS ---
+        function setupEventListeners() {
+            addSafeEventListener(DOM.themeToggles.login, 'click', toggleTheme);
+            addSafeEventListener(DOM.themeToggles.app, 'click', toggleTheme);
+            addSafeEventListener(DOM.generateOTPBtn, 'click', handleOTPGeneration);
+            addSafeEventListener(DOM.logos.login, 'click', (e) => handleLogoClick(e.currentTarget)); // Use function directly
+            addSafeEventListener(DOM.logos.header, 'click', (e) => {
+                handleLogoClick(e.currentTarget); // Use function directly
+                switchTab('dashboard');
+            });
+
+             DOM.tabs.forEach(tab => {
+                addSafeEventListener(tab, 'click', () => switchTab(tab.dataset.tab));
+            });
+
+            addSafeEventListener(DOM.volumeToggle, 'click', toggleNarration);
+            // Gemini chat toggle removed from header
+            addSafeEventListener(DOM.geminiFloatButton, 'click', toggleGeminiChat);
+            addSafeEventListener(DOM.closeGeminiChat, 'click', toggleGeminiChat);
+            addSafeEventListener(DOM.geminiSend, 'click', sendGeminiMessage);
+            addSafeEventListener(DOM.geminiInput, 'keypress', (e) => { if (e.key === 'Enter') sendGeminiMessage(); });
+            addSafeEventListener(DOM.modal.backdrop, 'click', (e) => { if (e.target === DOM.modal.backdrop) hideZoomedCard(); });
+            addSafeEventListener(DOM.dashboard.niftyCard, 'click', showNiftyDetail);
+            addSafeEventListener(DOM.historical.backButton, 'click', showHistoricalDates);
+
+             DOM.sortControls.forEach(control => {
+                const viewName = control.dataset.view;
+                const timeBtn = control.querySelector('[data-sort="time"]');
+                const statusBtn = control.querySelector('[data-sort="status"]');
+                const arrowBtn = control.querySelector('.arrow-button');
+
+                addSafeEventListener(timeBtn, 'click', () => changeSortType(viewName, 'time'));
+                addSafeEventListener(statusBtn, 'click', () => changeSortType(viewName, 'status'));
+                addSafeEventListener(arrowBtn, 'click', () => toggleSortDirection(viewName));
+            });
+
+            window.addEventListener('resize', handleResize);
+        }
+
+        // --- ADDED: handleLogoClick Function ---
+        function handleLogoClick(logoContainer) {
+            animateLogo(logoContainer); // Call the existing animation function
+        }
+        // --- END ADDED ---
+
+        function addSafeEventListener(element, event, handler) {
+            if (element) {
+                element.addEventListener(event, handler);
+            } else {
+                 console.warn(`Element not found for listener: ${event}. Check cacheDOM().`);
+            }
+        }
+
+        // --- UI UTILITIES ---
+        function showLoading(show) {
+            if (DOM.loadingSpinner) {
+                 if (show) {
+                     DOM.loadingSpinner.classList.remove('hidden');
+                     DOM.loadingSpinner.style.display = 'flex';
+                     DOM.loadingSpinner.style.pointerEvents = 'auto';
+                 } else {
+                     DOM.loadingSpinner.classList.add('hidden');
+                     DOM.loadingSpinner.style.pointerEvents = 'none';
+                 }
+            } else { console.warn("Loading spinner element not found."); }
+        }
+
+
+        function animateLogo(logoContainer) {
+            if (!logoContainer) return;
+            const logoSvg = logoContainer.querySelector('svg');
+
+            if (logoContainer.classList.contains('container-feedback-animation')) return;
+
+            logoContainer.classList.add('container-feedback-animation');
+            if(logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
+
+            const onAnimationEnd = () => {
+                logoContainer.classList.remove('container-feedback-animation');
+                 if(logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
+            };
+
+            logoContainer.addEventListener('animationend', onAnimationEnd, { once: true });
+        }
+
+        function handleResize() {
+            updateTabSlider();
+            if (AppState.currentTab === 'livefeed') updateSortSlider('livefeed');
+            if (AppState.currentTab === 'historical' && AppState.currentHistoricalDate) updateSortSlider('historical');
+        }
+
+        function updateClock() {
+            if (!DOM.digitalClock) return;
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const hoursStr = String(hours).padStart(2, '0');
+            DOM.digitalClock.textContent = `${hoursStr}:${minutes}:${seconds}`;
+        }
+
+        // --- AUTHENTICATION ---
+
+        function checkExistingSession() {
+            if (AppState.sessionToken) {
+                console.log("Verifying existing session token...");
+                google.script.run
+                    .withSuccessHandler(onSessionVerified)
+                    .withFailureHandler(onSessionInvalid)
+                    .verifySessionServer(AppState.sessionToken);
+            } else {
+                console.log("No session token found.");
+                onSessionInvalid();
+            }
+        }
+
+        function onSessionVerified(response) {
+            console.log("Session verification response:", response);
+            if (response && response.status === 'success') {
+                AppState.userInfo = response.userInfo;
+                transitionToApp();
+            } else {
+                onSessionInvalid();
+            }
+        }
+
+        function onSessionInvalid() {
+            console.log("Session is invalid or expired.");
+            localStorage.removeItem('sessionToken');
+            AppState.sessionToken = null;
+            AppState.userInfo = null;
+            // Don't show loading spinner
+            DOM.loginView.classList.remove('hidden');
+            DOM.appView.classList.add('hidden');
+            DOM.loginView.style.display = 'flex';
+            DOM.appView.style.display = 'none';
+        }
+
+        function handleOTPGeneration() {
+            const email = DOM.emailInput.value;
+            if (!email || !email.includes('@')) {
+                showLoginMessage('Invalid email address.', 'error');
+                return;
+            }
+
+            DOM.generateOTPBtn.disabled = true;
+            DOM.loginButtonText.textContent = 'Sending...';
+            DOM.loginSpinner.classList.remove('hidden');
+            showLoginMessage('Sending OTP...', 'info');
+            console.log("Generating OTP for:", email);
+
+            google.script.run
+                .withSuccessHandler(onOTPGenerated)
+                .withFailureHandler(onOTPError)
+                .generateOTPServer(email);
+        }
+
+        function onOTPGenerated(response) {
+            console.log("OTP generation response:", response);
+            DOM.loginSpinner.classList.add('hidden');
+            if (response && response.status === 'success') {
+                // Don't show thumbsup or any message - just enable OTP inputs
+                DOM.loginMessage.innerHTML = '';
+                DOM.loginMessage.className = 'text-center text-sm mt-4 h-5';
+                
+                // Enable OTP inputs
+                DOM.otpInputs.forEach(input => {
+                    input.disabled = false;
+                });
+                
+                DOM.loginSubtitle.textContent = 'Enter OTP Sent to Email';
+                DOM.loginButtonText.textContent = 'Resend OTP';
+                DOM.generateOTPBtn.disabled = false;
+                if (DOM.otpInputs.length > 0) DOM.otpInputs[0].focus();
+                startOTPTimer(180);
+            } else {
+                onOTPError({ message: (response && response.message) || 'Failed to send OTP.' });
+            }
+        }
+
+        function onOTPError(error) {
+            console.error("OTP Error:", error);
+            DOM.loginSpinner.classList.add('hidden');
+            showLoginMessage(error.message || 'An unknown error occurred.', 'error');
+            DOM.generateOTPBtn.disabled = false;
+            DOM.loginButtonText.textContent = 'Generate OTP';
+        }
+
+         function startOTPTimer(seconds) {
+            clearInterval(AppState.otpTimer);
+            DOM.progressContainer.classList.remove('hidden');
+            let remaining = seconds;
+            DOM.progressBar.style.width = `100%`;
+
+            AppState.otpTimer = setInterval(() => {
+                remaining--;
+                const percentage = Math.max(0, (remaining / seconds) * 100);
+                DOM.progressBar.style.width = `${percentage}%`;
+
+                if (percentage <= 0) {
+                    clearInterval(AppState.otpTimer);
+                    DOM.progressContainer.classList.add('hidden');
+                    
+                    // Disable OTP inputs when timer expires
+                    DOM.otpInputs.forEach(input => {
+                        input.disabled = true;
+                        input.value = '';
+                    });
+                    
+                    DOM.loginSubtitle.textContent = 'Enter Email to Sign In';
+                    DOM.loginButtonText.textContent = 'Generate OTP';
+                    showLoginMessage('OTP expired. Please generate a new one.', 'error');
+                }
+            }, 1000);
+        }
+
+
+        function initializeOTPInputs() {
+             if (!DOM.otpArea) return;
+             DOM.otpInputs = DOM.otpArea.querySelectorAll('.otp-input');
+             DOM.otpSeparator = DOM.otpArea.querySelector('.otp-separator');
+
+             DOM.otpInputs.forEach((input, index) => {
+                const newInput = input.cloneNode(true);
+                input.parentNode.replaceChild(newInput, input);
+
+                newInput.addEventListener('input', () => {
+                    newInput.value = newInput.value.replace(/[^0-9]/g, '');
+                    if (newInput.value && index < DOM.otpInputs.length - 1) {
+                        DOM.otpInputs[index + 1].focus();
+                    }
+                    checkAndVerifyOTP();
+                });
+
+                newInput.addEventListener('keydown', e => {
+                    if (e.key === 'Backspace' && !newInput.value && index > 0) {
+                        DOM.otpInputs[index - 1].focus();
+                    } else if (e.key === "ArrowLeft" && index > 0) {
+                        DOM.otpInputs[index - 1].focus();
+                    } else if (e.key === "ArrowRight" && index < DOM.otpInputs.length - 1) {
+                        DOM.otpInputs[index + 1].focus();
+                    } else if (e.key === "Enter") {
+                        checkAndVerifyOTP();
+                    }
+                });
+
+                newInput.addEventListener('focus', () => newInput.select());
+            });
+
+             DOM.otpInputs = DOM.otpArea.querySelectorAll('.otp-input'); // Re-cache after cloning
+
+             if (DOM.otpInputs.length > 0) {
+                DOM.otpInputs[0].addEventListener('paste', e => {
+                    e.preventDefault();
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+                    if (pasteData.length === 6) {
+                        DOM.otpInputs.forEach((input, index) => { input.value = pasteData[index] || ''; });
+                        if(DOM.otpInputs[5]) DOM.otpInputs[5].focus();
+                        checkAndVerifyOTP();
+                    } else if (pasteData.length > 0) {
+                         for(let i=0; i < DOM.otpInputs.length && i < pasteData.length; i++){
+                             DOM.otpInputs[i].value = pasteData[i];
+                             if (i < DOM.otpInputs.length - 1) { DOM.otpInputs[i+1].focus(); }
+                             else { DOM.otpInputs[i].focus(); }
+                         }
+                         checkAndVerifyOTP();
+                    }
+                });
+             }
+        }
+
+
+        function checkAndVerifyOTP() {
+            const otp = Array.from(DOM.otpInputs).map(input => input.value).join('');
+            if (otp.length === 6) {
+                // Don't show full-screen loading - just show message
+                showLoginMessage('Verifying OTP...', 'info');
+                console.log("Verifying OTP:", otp);
+                google.script.run
+                    .withSuccessHandler(onOTPVerified)
+                    .withFailureHandler(onVerifyError)
+                    .verifyOTPServer(DOM.emailInput.value, otp);
+            }
+        }
+
+        function onOTPVerified(response) {
+            console.log("OTP verification response:", response);
+            // Don't hide loading spinner
+            if (response && response.status === 'success') {
+                showLoginMessage('Login Successful!', 'success');
+                AppState.sessionToken = response.sessionToken;
+                AppState.userInfo = response.userInfo;
+                localStorage.setItem('sessionToken', AppState.sessionToken);
+                clearInterval(AppState.otpTimer);
+                DOM.progressContainer.classList.add('hidden');
+                setTimeout(transitionToApp, 500);
+            } else {
+                onVerifyError({ message: (response && response.message) || 'OTP verification failed.' });
+            }
+        }
+
+        function onVerifyError(error) {
+            console.error("Verification Error:", error);
+            // Don't hide loading spinner
+            showLoginMessage(error.message || 'An unknown error occurred.', 'error');
+            const container = DOM.otpArea || DOM.loginView.querySelector('.material');
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 500);
+            DOM.otpInputs.forEach(input => input.value = '');
+            if (DOM.otpInputs.length > 0) DOM.otpInputs[0].focus();
+        }
+
+        function showLoginMessage(message, type = 'info') {
+             if (!DOM.loginMessage) return;
+            DOM.loginMessage.textContent = message;
+            DOM.loginMessage.className = `text-center text-sm mt-4 h-5 ${type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-500' : 'text-secondary'}`;
+        }
+
+        function transitionToApp() {
+            console.log("Transitioning to app view...");
+            DOM.loginView.style.display = 'none';
+            DOM.appView.classList.remove('hidden');
+            DOM.appView.style.display = 'flex';
+            setTimeout(() => {
+                 DOM.appView.classList.remove('opacity-0');
+            }, 50);
+
+            if (AppState.userInfo && DOM.userInfo.name) {
+                DOM.userInfo.name.textContent = `User: ${AppState.userInfo.name}`;
+            }
+
+            // Show Gemini floating button
+            if (DOM.geminiFloatButton) {
+                DOM.geminiFloatButton.style.display = 'flex';
+            }
+
+            handleResize();
+            loadAppData();
+        }
+
+
+        // --- TABS & NAVIGATION ---
+
+        function switchTab(tabName) {
+            AppState.currentTab = tabName;
+            const wrapper = DOM.mainTabs;
+
+            wrapper.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active-button'));
+            const activeButton = wrapper.querySelector(`[data-tab="${tabName}"]`);
+            if (activeButton) activeButton.classList.add('active-button');
+
+            updateTabSlider();
+
+            document.querySelectorAll('.main-view').forEach(v => v.classList.add('hidden'));
+            const viewElement = document.getElementById(`${tabName}-view`);
+            if (viewElement) viewElement.classList.remove('hidden');
+
+            if (DOM.mainFooter) DOM.mainFooter.classList.toggle('hidden', tabName === 'historical');
+
+            if (tabName === 'historical' && !AppState.data.historicalDates) {
+                loadHistoricalDates();
+            } else {
+                renderCurrentView();
+            }
+        }
+
+        function updateTabSlider() {
+            updateSlider(DOM.mainTabs, DOM.tabSlider);
+        }
+
+        function updateSlider(wrapper, slider) {
+             if (!wrapper || !slider) return;
+             const activeButton = wrapper.querySelector('.active-button');
+             if (activeButton) {
+                 const padding = parseFloat(getComputedStyle(wrapper).paddingLeft) || 6;
+                 slider.style.left = `${activeButton.offsetLeft - padding}px`;
+                 slider.style.width = `${activeButton.offsetWidth}px`;
+                 slider.style.top = `${padding}px`;
+                 slider.style.height = `${activeButton.offsetHeight}px`;
+             }
+        }
+
+        // --- NARRATION / SPEECH ---
+        function loadSpeechVoices() {
+            const setVoices = () => { AppState.speechVoices = window.speechSynthesis.getVoices(); console.log("Voices loaded:", AppState.speechVoices.length); };
+             try { window.speechSynthesis.onvoiceschanged = setVoices; } catch (e) { console.warn("Could not set onvoiceschanged handler:", e); }
+            setVoices();
+        }
+        function toggleNarration() {
+            AppState.narrationEnabled = !AppState.narrationEnabled;
+            localStorage.setItem('narration', AppState.narrationEnabled);
+            injectIcons();
+            DOM.volumeToggle.classList.add('volume-icon-animation');
+            DOM.volumeToggle.addEventListener('animationend', () => DOM.volumeToggle.classList.remove('volume-icon-animation'), { once: true });
+            if (AppState.narrationEnabled) speakText('Narration enabled', true);
+        }
+        function speakSymbol(symbol) {
+             if (!symbol) return;
+            const parts = symbol.split(/[\s-]+/);
+            let textToSpeak = '';
+            if (parts.length > 0) {
+                const firstWord = parts[0];
+                // Always spell out first word if it has 4 or fewer letters
+                if (firstWord.length <= 4 && /^[A-Z]+$/.test(firstWord)) { 
+                    textToSpeak = firstWord.split('').join(', '); 
+                } else { 
+                    textToSpeak = firstWord; 
+                }
+                // Always speak the second word (if exists) as a word, not spelled out
+                if (parts.length > 1) { 
+                    textToSpeak += ' ' + parts.slice(1).join(' '); 
+                }
+            } else { return; }
+            speakText(textToSpeak, false);
+        }
+        function speakText(text, isAnnouncement = false) {
+             if (!AppState.narrationEnabled || !window.speechSynthesis) { console.log("Narration disabled or not supported."); return; }
+             if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
+             if (AppState.speechVoices.length === 0) { loadSpeechVoices(); }
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Priority 1: Indian English female voice (en-IN, female)
+            let selectedVoice = AppState.speechVoices.find(v => 
+                v.lang === 'en-IN' && 
+                (v.name.toLowerCase().includes('female') || 
+                 v.name.toLowerCase().includes('woman') ||
+                 v.name.toLowerCase().includes('neer'))
+            );
+            
+            // Priority 2: Any en-IN voice
+            if (!selectedVoice) {
+                selectedVoice = AppState.speechVoices.find(v => v.lang === 'en-IN');
+            }
+            
+            // Priority 3: Any female English voice
+            if (!selectedVoice) {
+                selectedVoice = AppState.speechVoices.find(v => 
+                    v.lang.startsWith('en-') && 
+                    (v.name.toLowerCase().includes('female') || 
+                     v.name.toLowerCase().includes('woman') ||
+                     v.name.toLowerCase().includes('samantha') ||
+                     v.name.toLowerCase().includes('victoria') ||
+                     (v.gender && v.gender === 'female'))
+                );
+            }
+            
+            // Priority 4: Google's Indian voice
+            if (!selectedVoice) {
+                selectedVoice = AppState.speechVoices.find(v => 
+                    v.name.toLowerCase().includes('google') && 
+                    v.lang.startsWith('en-')
+                );
+            }
+            
+            if (selectedVoice) { 
+                utterance.voice = selectedVoice; 
+                utterance.lang = selectedVoice.lang;
+                console.log(`Using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+            } else {
+                // Last resort: system default
+                utterance.lang = 'en-IN'; // Try to force Indian English even with default voice
+                console.log("Using system default voice with en-IN");
+            }
+            
+            utterance.rate = 0.9; 
+            utterance.pitch = 1.05; // Slightly higher pitch for female voice
+            utterance.volume = 1.0;
+            utterance.onerror = (event) => { console.error("SpeechSynthesisUtterance.onerror:", event); };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- DATA LOADING & POLLING ---
+        function loadAppData() {
+            console.log("Loading app data...");
+            // Don't show loading spinner on data refresh - causes buffering
+            google.script.run
+                .withSuccessHandler(onDataLoaded)
+                .withFailureHandler(onDataError)
+                .getDashboardData();
+         }
+        function onDataLoaded(data) {
+            console.log("Data received from backend:", data);
+            if (!data) { onDataError(new Error("Received null or undefined data from backend.")); return; }
+            if (data.error) { console.error("Error from backend (getDashboardData):", data.error, data.stack); onDataError(new Error(data.error)); return; }
+
+            // Don't hide loading spinner
+
+            try {
+                const oldSyncedList = AppState.data.dashboardSyncedList || [];
+                const newSyncedList = data.dashboardSyncedList || [];
+
+                const getLatestSyncTime = (list) => list.reduce((latest, current) => {
+                    const currentTime = current.ind2Reasons[0]?.time ? new Date(`${new Date().toLocaleDateString('en-CA')}T${current.ind2Reasons[0].time}`).getTime() : 0;
+                    return Math.max(latest, currentTime);
+                }, 0);
+
+                const oldLatestTime = getLatestSyncTime(oldSyncedList);
+                const newlySynced = newSyncedList.filter(signal => {
+                     const signalTime = signal.ind2Reasons[0]?.time ? new Date(`${new Date().toLocaleDateString('en-CA')}T${signal.ind2Reasons[0].time}`).getTime() : 0;
+                     return signalTime > oldLatestTime;
+                });
+
+                if (newlySynced.length > 0) {
+                     const latestNew = newlySynced.reduce((latest, current) => {
+                          const latestTime = latest.ind2Reasons[0]?.time ? new Date(`${new Date().toLocaleDateString('en-CA')}T${latest.ind2Reasons[0].time}`).getTime() : 0;
+                          const currentTime = current.ind2Reasons[0]?.time ? new Date(`${new Date().toLocaleDateString('en-CA')}T${current.ind2Reasons[0].time}`).getTime() : 0;
+                          return currentTime > latestTime ? current : latest;
+                     });
+                     if (latestNew && latestNew.symbol) {
+                         console.log("Speaking latest synced:", latestNew.symbol);
+                         speakSymbol(latestNew.symbol);
+                     }
+                }
+            } catch(e) { console.warn("Error processing latest synced symbol for speech:", e); }
+
+            AppState.data = data;
+            renderCurrentView();
+            if (!AppState.pollingInterval) {
+                console.log("Starting polling interval.");
+                // Reduced polling to 15 seconds for faster updates
+                AppState.pollingInterval = setInterval(loadAppData, 15000);
+            }
+        }
+        function onDataError(error) {
+             // Don't hide loading spinner
+             console.error('Data Error:', error.message || error);
+        }
+        function loadHistoricalDates() {
+             console.log("Loading historical dates...");
+             // Don't show loading spinner
+             google.script.run.withSuccessHandler(onHistoricalDatesLoaded).withFailureHandler(onDataError).getHistoricalDates();
+        }
+        function onHistoricalDatesLoaded(dates) {
+             console.log("Dates received:", dates);
+             if (dates && dates.error) { console.error("Error from backend (getHistoricalDates):", dates.error, dates.stack); onDataError(new Error(dates.error)); return; }
+             // Don't hide loading spinner
+             if (Array.isArray(dates)) { AppState.data.historicalDates = dates; renderHistoricalDates(); }
+             else { console.warn("Received non-array data for historical dates:", dates); AppState.data.historicalDates = []; renderHistoricalDates(); }
+        }
+        function loadSignalsForDate(dateStr) {
+             console.log("Loading signals for date:", dateStr);
+             // Don't show loading spinner
+             AppState.currentHistoricalDate = dateStr;
+             google.script.run.withSuccessHandler(onHistoricalSignalsLoaded).withFailureHandler(onDataError).getSignalsForDate(dateStr);
+        }
+        function onHistoricalSignalsLoaded(data) {
+            console.log("Historical signals received:", data);
+            if (data && data.error) { console.error("Error from backend (getSignalsForDate):", data.error, data.stack); onDataError(new Error(data.error)); return; }
+            // Don't hide loading spinner
+            AppState.data.currentHistoricalData = data;
+            renderHistoricalSignals();
+        }
+
+        // --- VIEW RENDERING ---
+
+        function renderCurrentView() {
+             if (!AppState.data || Object.keys(AppState.data).length === 0) { console.log("Waiting for data before rendering..."); return; }
+            console.log("Rendering view:", AppState.currentTab);
+            switch(AppState.currentTab) {
+                case 'dashboard': renderDashboard(); break;
+                case 'livefeed': renderLiveFeed(); break;
+                case 'logs': renderLogs(); break;
+                case 'historical': renderHistorical(); break;
+            }
+        }
+
+        function renderDashboard() {
+            const kpi = AppState.data.kpi || {};
+            const niftyData = AppState.data.niftyData || {};
+            const tickers = AppState.data.tickers || {};
+            const dashboardSyncedList = AppState.data.dashboardSyncedList || [];
+
+            if(DOM.dashboard.totalSignals) DOM.dashboard.totalSignals.textContent = kpi.totalSignals || '0';
+            if(DOM.dashboard.syncedSignals) DOM.dashboard.syncedSignals.textContent = kpi.syncedSignals || '0';
+            if(DOM.dashboard.latestSignal) DOM.dashboard.latestSignal.textContent = kpi.latestSignal || '-';
+
+            if(DOM.dashboard.niftyValue) DOM.dashboard.niftyValue.textContent = niftyData.reason || 'No Data';
+            // Timestamp removed as per requirement
+
+            renderTicker(DOM.dashboard.hvdTicker, tickers.hvd || [], 'hvd');
+            renderTicker(DOM.dashboard.patternTicker, tickers.patterns || [], 'pattern');
+            renderDashboardSignals(dashboardSyncedList);
+        }
+
+        function renderTicker(container, items, type) {
+            if (!container) { console.warn(`Ticker container not found for type: ${type}`); return; }
+             if (!Array.isArray(items)) items = [];
+             if (items.length === 0) { container.innerHTML = `<div class="ticker-item" style="opacity: 0.7; font-size: 18px;">No ${type} data for today.</div>`; return; }
+            const sizeClasses = ['size-xl', 'size-lg', 'size-md', 'size-md', 'size-sm', 'size-sm', 'size-xs'];
+            let tickerHTML = items.map((item, index) => {
+                const size = sizeClasses[index] || 'size-xs';
+                const symbol = item.symbol || 'N/A';
+                const reason = item.reason || 'N/A';
+                const capital = item.capital || '';
+
+                if (type === 'hvd') { 
+                    // Use different colors for symbol and capital deployed
+                    return `<div class="ticker-item ticker-hvd ${size}">
+                        <span class="symbol" style="color: var(--orange);">${symbol}</span>
+                        <span class="details" style="color: var(--teal);">${capital} Cr.</span>
+                    </div>`; 
+                }
+                else { 
+                    const isBullish = reason.toLowerCase().includes('bullish'); 
+                    const icon = isBullish ? ICONS.bull : ICONS.bear; 
+                    const colorClass = isBullish ? 'ticker-bullish' : 'ticker-bearish';
+                    // Show pattern name from reason
+                    return `<div class="ticker-item ${colorClass} ${size}">
+                        <span class="symbol">${symbol}</span>
+                        <span class="details">${reason}</span>
+                        <span class="${isBullish ? 'bull-icon' : 'bear-icon'}">${icon}</span>
+                    </div>`; 
+                }
+             }).join('');
+            container.innerHTML = tickerHTML + tickerHTML;
+        }
+
+        function renderDashboardSignals(signals) {
+             const container = DOM.dashboard.signalsList;
+             if (!container) { console.warn("Dashboard signals container not found."); return; }
+             if (!Array.isArray(signals)) signals = [];
+             if (signals.length === 0) { container.innerHTML = '<p class="text-center text-secondary p-4 col-span-full">No synced signals yet for today.</p>'; return; }
+             signals.sort((a,b) => (b.ind2Reasons[0]?.time || '0').localeCompare(a.ind2Reasons[0]?.time || '0'));
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 // If reason is HVD with capital, show only capital value
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+             
+             container.innerHTML = signals.map(signal => {
+                 const latestReason = signal.ind2Reasons[0] || {};
+                 const oldReasons = signal.ind2Reasons.slice(1);
+                 const latestReasonText = formatReason(latestReason.reason);
+                 const latestReasonColor = getReasonColor(latestReason.reason);
+                 const ind1Color = getReasonColor(signal.ind1Reason);
+                 
+                 return `<div class="signal-card material material-regular interactive" onclick="showDashboardSyncDetail('${signal.symbol}')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="symbol-name">${signal.symbol}</h3>
+                                    ${signal.ind1Reason ? `<p class="text-sm font-semibold mt-2" style="color: ${ind1Color}; font-size: 0.95rem;">${signal.ind1Reason}</p>` : ''}
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-secondary">${latestReason.time || ''}</p>
+                                    <p class="text-sm font-semibold mt-1" style="color: ${latestReasonColor};">${latestReasonText}</p>
+                                </div>
+                            </div>
+                            ${oldReasons.length > 0 ? `<div class="card-section-gap space-y-1">${oldReasons.map((r, idx) => `<p class="text-xs" style="color: ${getReasonColor(r.reason)}; opacity: ${0.8 - (idx) * 0.1};">${formatReason(r.reason)}</p>`).join('')}</div>` : ''}
+                        </div>`;
+              }).join('');
+        }
+
+        function renderLiveFeed() {
+            const container = DOM.livefeed.signals;
+             if (!container) { console.warn("Livefeed signals container not found."); return; }
+            let signals = AppState.data.liveFeed || [];
+            if (!Array.isArray(signals)) signals = [];
+            if (signals.length === 0) { container.innerHTML = '<p class="text-center text-secondary p-4 col-span-full">No signals yet for today.</p>'; return; }
+            signals = sortSignals(signals, 'livefeed');
+            
+            const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+            };
+            
+            container.innerHTML = signals.map(signal => {
+                 const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
+                 const reasonColor = getReasonColor(signal.reason);
+                 return `<div class="signal-card material material-regular interactive" onclick="showSignalDetail('${signal.symbol}', '${signal.time}')">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="symbol-name">${signal.symbol}</h3>
+                                    <p class="text-xs mt-1" style="color: ${reasonColor};">${signal.reason}</p>
+                                </div>
+                                <span class="status-light ${statusLightClass}"></span>
+                            </div>
+                            <p class="text-xs text-secondary text-right">${signal.time}</p>
+                        </div>`;
+             }).join('');
+            updateSortUI('livefeed');
+        }
+
+        function renderLogs() {
+            const logs = AppState.data.logs || {};
+            const liveFeed = AppState.data.liveFeed || [];
+            
+            // Enhance logs with pattern reasons from Indicator 1
+            const enhanceWithPattern = (logSignals) => {
+                return logSignals.map(signal => {
+                    // Find matching Indicator 1 signal for pattern reason
+                    const ind1Signal = liveFeed.find(s => 
+                        s.symbol === signal.symbol && 
+                        s.status === 'Synced' &&
+                        s.syncTime === signal.time
+                    );
+                    return {
+                        ...signal,
+                        patternReason: ind1Signal ? ind1Signal.reason : null
+                    };
+                });
+            };
+            
+            renderLogSection(DOM.logs.hvd, logs.hvd, 'HVD');
+            renderLogSection(DOM.logs.bullish, logs.bullish, 'Bullish');
+            renderLogSection(DOM.logs.bearish, logs.bearish, 'Bearish');
+            renderLogSection(DOM.logs.oversold, enhanceWithPattern(logs.oversold), 'Oversold');
+            renderLogSection(DOM.logs.overbought, enhanceWithPattern(logs.overbought), 'Overbought');
+        }
+
+        function renderLogSection(container, signals, type) {
+            if (!container) { console.warn(`Logs container not found for type: ${type}`); return; }
+             if (!Array.isArray(signals)) signals = [];
+             if (signals.length === 0) { container.innerHTML = `<p class="text-center text-secondary p-4">No ${type} data available</p>`; return; }
+             signals.sort((a,b) => b.time.localeCompare(a.time));
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return '';
+                 // If reason is HVD, don't show it again
+                 if (reason.toLowerCase().includes('hvd')) return '';
+                 return reason;
+             };
+             
+             container.innerHTML = signals.map(signal => {
+                 // Use actual sync status from backend
+                 const syncStatus = signal.status || 'Awaiting';
+                 const statusLightClass = syncStatus === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
+                 const reasonColor = getReasonColor(signal.reason);
+                 const formattedReason = formatReason(signal.reason);
+                 
+                 return `
+                <div class="signal-card material material-regular mb-3">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <h3 class="symbol-name">${signal.symbol}</h3>
+                            ${formattedReason ? `<p class="text-xs mt-1" style="color: ${reasonColor};">${formattedReason}</p>` : ''}
+                            ${signal.patternReason ? `<p class="text-xs mt-1" style="color: ${getReasonColor(signal.patternReason)};">${signal.patternReason}</p>` : ''}
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="status-light ${statusLightClass}"></span>
+                            <p class="timestamp text-xs mt-2">${signal.time}</p>
+                        </div>
+                    </div>
+                    ${signal.capital ? `<p class="text-sm font-bold" style="color: ${reasonColor};">${signal.capital} Cr.</p>` : ''}
+                </div>`;
+             }).join('');
+        }
+
+        function renderHistorical() {
+            if (AppState.currentHistoricalDate) { renderHistoricalSignals(); } else { renderHistoricalDates(); }
+        }
+
+        function renderHistoricalDates() {
+             const container = DOM.historical.dates; if(!container) { console.warn("Historical dates container not found."); return; }
+             let dates = AppState.data.historicalDates || [];
+             if (!Array.isArray(dates)) { console.warn("Historical dates is not an array:", dates); dates = []; }
+             if (dates.length === 0) { container.innerHTML = '<p class="text-center text-secondary p-4 col-span-full">No historical data found.</p>'; return; }
+             container.innerHTML = dates.map(dateStr => {
+                 try {
+                     const dateObj = new Date(dateStr + 'T12:00:00'); const day = dateObj.getDate(); const monthYear = dateObj.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }); const daySuffix = (d)=>{if(d>3&&d<21)return'th';switch(d%10){case 1:return"st";case 2:return"nd";case 3:return"rd";default:return"th";}};
+                     return `<div class="date-card material material-regular interactive" onclick="loadSignalsForDate('${dateStr}')"><p class="date-day">${day}${daySuffix(day)}</p><p class="date-month-year">${monthYear}</p></div>`;
+                 } catch (e) { console.error(`Error formatting date: ${dateStr}`, e); return ''; }
+              }).join('');
+        }
+
+        function showHistoricalDates() {
+            AppState.currentHistoricalDate = null;
+            if(DOM.historical.signalsSection) DOM.historical.signalsSection.classList.add('hidden');
+            if(DOM.historical.dates) DOM.historical.dates.classList.remove('hidden');
+        }
+
+        function renderHistoricalSignals() {
+            const container = DOM.historical.signalsList; if(!container) { console.warn("Historical signals container not found."); return; }
+             const data = AppState.data.currentHistoricalData;
+             if (!data || !data.signals || !Array.isArray(data.signals) || data.signals.length === 0) { container.innerHTML = '<p class="text-center text-secondary p-4 col-span-full">No signals found for this date.</p>'; return; }
+             try { const dateObj = new Date(data.date + 'T12:00:00'); if(DOM.historical.dateTitle) DOM.historical.dateTitle.textContent = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); }
+             catch(e) { console.error("Error formatting historical date title:", e); }
+
+             let signals = sortSignals(data.signals, 'historical');
+             container.innerHTML = signals.map(signal => {
+                  const statusClass = signal.status === 'Synced' ? 'status-synced' : 'status-unsynced'; // Historical uses unsynced
+                  const statusText = signal.status === 'Synced' ? 'Synced' : 'Unsynced'; // Show "Unsynced" instead of "Awaiting" in historical
+                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol}', '${signal.time}')"><div class="flex justify-between items-start"><div><h3 class="symbol-name">${signal.symbol}</h3><p class="timestamp">${signal.time}</p></div><span class="status-badge ${statusClass}">${statusText}</span></div><p class="text-sm mt-2">${signal.reason}</p></div>`;
+              }).join('');
+             if(DOM.historical.dates) DOM.historical.dates.classList.add('hidden');
+             if(DOM.historical.signalsSection) DOM.historical.signalsSection.classList.remove('hidden');
+             updateSortUI('historical');
+        }
+
+
+        // --- SORTING ---
+
+        function changeSortType(viewName, sortType) {
+            if(!AppState.sortType[viewName]) return;
+            if (AppState.sortType[viewName] === sortType) return;
+            AppState.sortType[viewName] = sortType;
+            AppState.sortDirection[viewName] = 'desc';
+            updateSortUI(viewName);
+            renderCurrentView();
+        }
+
+        function toggleSortDirection(viewName) {
+            if(!AppState.sortDirection[viewName]) return;
+            AppState.sortDirection[viewName] = AppState.sortDirection[viewName] === 'asc' ? 'desc' : 'asc';
+            updateSortUI(viewName);
+            renderCurrentView();
+
+            const arrowBtn = document.querySelector(`.sort-controls[data-view="${viewName}"] .arrow-button`);
+            if(arrowBtn) {
+                 arrowBtn.classList.add('sort-arrow-pop-animation');
+                 arrowBtn.addEventListener('animationend', () => arrowBtn.classList.remove('sort-arrow-pop-animation'), { once: true });
+            }
+        }
+
+         function updateSortUI(viewName) {
+             const control = document.querySelector(`.sort-controls[data-view="${viewName}"]`);
+             if (!control) return;
+
+             const timeBtn = control.querySelector('[data-sort="time"]');
+             const statusBtn = control.querySelector('[data-sort="status"]');
+             const slider = control.querySelector('.liquid-slider') || control.querySelector('.sort-slider');
+             const arrowIcon = control.querySelector('.arrow-button svg');
+             const wrapper = control.querySelector('.segmented-control') || control.querySelector('.sort-button-container');
+
+             if(timeBtn) timeBtn.classList.toggle('active-button', AppState.sortType[viewName] === 'time');
+             if(statusBtn) statusBtn.classList.toggle('active-button', AppState.sortType[viewName] === 'status');
+
+             updateSlider(wrapper, slider);
+
+             if (arrowIcon) {
+                 arrowIcon.style.transform = AppState.sortDirection[viewName] === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)';
+             }
+         }
+
+
+        function sortSignals(signals, viewName) {
+            if (!Array.isArray(signals)) return [];
+            const sortType = AppState.sortType[viewName];
+            const sortDirection = AppState.sortDirection[viewName];
+            const dir = sortDirection === 'asc' ? 1 : -1;
+
+            return [...signals].sort((a, b) => {
+                 if (sortType === 'status') {
+                     const statusA = (a.status === 'Synced') ? 1 : 0;
+                     const statusB = (b.status === 'Synced') ? 1 : 0;
+                     if (statusA !== statusB) { return (statusA - statusB) * dir * -1; }
+                 }
+                 return (a.time || '').localeCompare(b.time || '') * dir;
+            });
+        }
+
+        // --- MODALS / DETAIL VIEWS ---
+
+        function showModal(content) {
+            if (DOM.modal.content) {
+                 DOM.modal.content.innerHTML = content;
+                 DOM.modal.backdrop.classList.add('visible');
+            } else { console.error("Modal content area not found."); }
+        }
+
+        function hideZoomedCard() {
+            if (DOM.modal.backdrop) DOM.modal.backdrop.classList.remove('visible');
+        }
+
+        function getSignalBySymbolAndTime(symbol, time, signals) {
+            if (!Array.isArray(signals)) return null;
+            return signals.find(s => s.symbol === symbol && s.time === time);
+         }
+
+        function showNiftyDetail() {
+             const { niftyData } = AppState.data; if (!niftyData) return;
+             // Candlestick patterns should be under sync events, not trigger events
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${niftyData.ticker || 'NIFTY 50'}</h2></div>
+                </div>
+                <div class="p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Sync Events</h3>
+                    <div class="flex justify-between items-center">
+                        <span>${niftyData.reason || 'N/A'}</span>
+                        <span class="text-sm text-secondary">${niftyData.timestamp || ''}</span>
+                    </div>
+                </div>`;
+             showModal(content);
+        }
+
+        function showSignalDetail(symbol, time) {
+             const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.liveFeed);
+             if (!signal) { console.warn(`Signal not found: ${symbol} at ${time}`); return; }
+             // For live feed, show only trigger events (no sync events)
+             const statusClass = signal.status === 'Synced' ? 'status-synced' : (signal.status === 'Awaiting' ? 'status-awaiting' : 'status-unsynced');
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${signal.status}</span>
+                </div>
+                <div class="p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    <div class="flex justify-between items-center">
+                        <span style="color: ${getReasonColor(signal.reason)}; font-size: 0.95rem; font-weight: 600;">${signal.reason}</span>
+                        <span class="text-sm text-secondary">${signal.time || ''}</span>
+                    </div>
+                </div>`;
+             showModal(content);
+        }
+
+        function showHistoricalSignalDetail(symbol, time) {
+             if (!AppState.data.currentHistoricalData || !AppState.data.currentHistoricalData.signals) return;
+             const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.currentHistoricalData.signals);
+             if (!signal) { console.warn(`Historical signal not found: ${symbol} at ${time}`); return; }
+             const syncEvents = (signal.status === 'Synced' && signal.syncReason) ? [{ reason: signal.syncReason, time: signal.syncTime }] : [];
+             showDetailModal(signal, syncEvents, AppState.data.currentHistoricalData.date);
+        }
+
+        function showDashboardSyncDetail(symbol) {
+             const signalList = AppState.data.dashboardSyncedList || [];
+             const signal = signalList.find(s => s.symbol === symbol);
+             if (!signal) { console.warn(`Dashboard synced signal not found: ${symbol}`); return; }
+             const originalSignal = (AppState.data.liveFeed || []).find(s => s.symbol === symbol && s.reason === signal.ind1Reason);
+             const baseSignal = { symbol: signal.symbol, reason: signal.ind1Reason, time: originalSignal ? originalSignal.time : 'N/A', status: 'Synced' };
+             showDetailModal(baseSignal, signal.ind2Reasons, 'Today', true);
+        }
+
+        function showDetailModal(signal, syncEvents, dateStr = 'Today', isDashboard = false) {
+             const statusClass = signal.status === 'Synced' ? 'status-synced' : (signal.status === 'Awaiting' ? 'status-awaiting' : 'status-unsynced');
+             const formattedDate = dateStr !== 'Today' ? `on ${new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : '';
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 // If reason is HVD with capital, show only capital value
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+             
+             // Store data in a temporary variable for onclick handler
+             if (signal.status === 'Synced') {
+                 window._tempSignalData = {
+                     symbol: signal.symbol,
+                     reason: signal.reason,
+                     syncEvents: syncEvents
+                 };
+             }
+             
+             // Separate Indicator 1 and Indicator 2 events
+             const ind1Reason = signal.reason;
+             const ind2Events = syncEvents && syncEvents.length > 0 ? syncEvents : [];
+             
+             // Don't show time below symbol name
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${signal.status}</span>
+                </div>
+                ${ind1Reason ? `
+                <div class="p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    <div class="flex justify-between items-center">
+                        <span style="color: ${getReasonColor(ind1Reason)}; font-size: 0.95rem; font-weight: 600;">${ind1Reason}</span>
+                        <span class="text-sm text-secondary">${signal.time || ''}</span>
+                    </div>
+                </div>` : ''}
+                ${ind2Events.length > 0 ? `
+                <div class="p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Sync Events</h3>
+                    ${ind2Events.map((sync, idx) => `
+                        <div class="flex justify-between items-center mb-2" style="${idx === 0 ? 'font-size: 0.95rem;' : ''}">
+                            <span style="color: ${getReasonColor(sync.reason)}; font-weight: ${idx === 0 ? '600' : '500'};">${formatReason(sync.reason)}</span>
+                            <span class="text-sm text-secondary">${sync.time}</span>
+                        </div>`).join('')}
+                </div>` : ''}
+                ${signal.status === 'Synced' ? `
+                    <button onclick="analyzeWithGemini(window._tempSignalData.symbol, window._tempSignalData.reason, window._tempSignalData.syncEvents)" 
+                            class="w-full px-4 py-3 rounded-lg bg-gradient-theme text-white font-semibold interactive flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Analyze with Gemini AI
+                    </button>
+                    <div id="gemini-analysis" class="mt-4 hidden"></div>
+                ` : ''}`;
+            showModal(content);
+        }
+
+        // --- GEMINI FUNCTIONS ---
+
+        function toggleGeminiChat() {
+            AppState.geminiChatOpen = !AppState.geminiChatOpen;
+            if (AppState.geminiChatOpen) {
+                DOM.geminiChatPanel.classList.add('open');
+                if (DOM.geminiFloatButton) DOM.geminiFloatButton.style.display = 'none';
+            } else {
+                DOM.geminiChatPanel.classList.remove('open');
+                if (DOM.geminiFloatButton) DOM.geminiFloatButton.style.display = 'flex';
+            }
+        }
+
+        function sendGeminiMessage() {
+            const message = DOM.geminiInput.value.trim();
+            if (!message) return;
+
+            // Add user message to UI
+            addChatMessage(message, 'user');
+            
+            // Clear input
+            DOM.geminiInput.value = '';
+
+            // Show typing indicator
+            const typingDiv = addChatMessage('', 'ai', true);
+
+            // Send to backend
+            google.script.run
+                .withSuccessHandler((response) => onGeminiChatResponse(response, typingDiv, message))
+                .withFailureHandler((error) => onGeminiChatError(error, typingDiv))
+                .chatWithGemini(message, AppState.geminiChatHistory);
+        }
+
+        function onGeminiChatResponse(response, typingDiv, userMessage) {
+            // Remove typing indicator
+            if (typingDiv) typingDiv.remove();
+
+            if (response.error) {
+                addChatMessage(`Error: ${response.error}`, 'ai');
+                return;
+            }
+
+            // Add AI response
+            addChatMessage(response.reply, 'ai');
+
+            // Update chat history
+            AppState.geminiChatHistory.push(
+                { role: 'user', parts: [{ text: userMessage }] },
+                { role: 'model', parts: [{ text: response.reply }] }
+            );
+        }
+
+        function onGeminiChatError(error, typingDiv) {
+            if (typingDiv) typingDiv.remove();
+            addChatMessage('Sorry, I encountered an error. Please try again.', 'ai');
+            console.error('Gemini chat error:', error);
+        }
+
+        function addChatMessage(text, sender, isTyping = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender === 'user' ? 'user-message' : 'ai-message'} material material-regular p-3 rounded-xl${isTyping ? ' typing' : ''}`;
+            
+            if (!isTyping) {
+                const p = document.createElement('p');
+                p.className = 'text-sm';
+                p.textContent = text;
+                messageDiv.appendChild(p);
+            }
+            
+            DOM.geminiMessages.appendChild(messageDiv);
+            DOM.geminiMessages.scrollTop = DOM.geminiMessages.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        function analyzeWithGemini(symbol, ind1Reason, syncEvents) {
+            const analysisDiv = document.getElementById('gemini-analysis');
+            if (!analysisDiv) return;
+
+            analysisDiv.classList.remove('hidden');
+            analysisDiv.innerHTML = '<div class="material material-regular p-4"><p class="text-sm text-secondary">Analyzing with Gemini AI...</p></div>';
+
+            google.script.run
+                .withSuccessHandler((response) => {
+                    if (response.error) {
+                        analysisDiv.innerHTML = `<div class="material material-regular p-4 border border-red-500"><p class="text-sm text-red-500">${response.error}</p></div>`;
+                    } else {
+                        analysisDiv.innerHTML = `
+                            <div class="material material-regular p-4">
+                                <h3 class="font-semibold mb-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    Gemini AI Analysis
+                                </h3>
+                                <p class="text-sm leading-relaxed">${response.analysis}</p>
+                            </div>`;
+                    }
+                })
+                .withFailureHandler((error) => {
+                    analysisDiv.innerHTML = `<div class="material material-regular p-4 border border-red-500"><p class="text-sm text-red-500">Failed to analyze: ${error.message}</p></div>`;
+                })
+                .analyzeSignalWithGemini(symbol, ind1Reason, syncEvents);
+        }
+    </script>
+</body>
+</html>
+
