@@ -41,6 +41,7 @@
             --orange: #FF9F0A; 
             --red: #FF453A; 
             --teal: #64D2FF;
+            --purple: #BF5AF2; /* Apple System Purple for overbought indicators */
             
             /* Light mode system colors */
             --violet-light: #007AFF;
@@ -50,6 +51,7 @@
             --orange-light: #FF9500;
             --red-light: #FF3B30;
             --teal-light: #5AC8FA;
+            --purple-light: #AF52DE; /* Light mode purple */
         }
         html.dark {
             --bg-color: var(--bg-dark);
@@ -801,10 +803,10 @@
         }
         
         .card-glow-overbought {
-            box-shadow: 0 0 0 1.5px #BF5AF2, 0 0 12px rgba(191, 90, 242, 0.4);
+            box-shadow: 0 0 0 1.5px var(--purple), 0 0 12px rgba(191, 90, 242, 0.4);
         }
         .card-glow-overbought:hover {
-            box-shadow: 0 0 0 1.5px #BF5AF2, 0 0 16px rgba(191, 90, 242, 0.5), var(--shadow-hover);
+            box-shadow: 0 0 0 1.5px var(--purple), 0 0 16px rgba(191, 90, 242, 0.5), var(--shadow-hover);
         }
         
         .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
