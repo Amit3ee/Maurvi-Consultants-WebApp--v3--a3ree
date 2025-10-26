@@ -43,18 +43,21 @@ function dailySetupAndMaintenance() {
     
     Logger.log(`Daily Setup: Current date: ${currentDateSuffix}, Purge date: ${purgeDateSuffix}`);
     
-    // 1. Create new date-suffixed sheets for today
+    // 1. Create new date-suffixed sheets for today in correct order at the beginning
     const sheetNames = [
       `Indicator1_${currentDateSuffix}`,
       `Indicator2_${currentDateSuffix}`,
       `DebugLogs_${currentDateSuffix}`
     ];
     
-    sheetNames.forEach(sheetName => {
+    // Insert sheets in reverse order so they appear in correct order (Indicator1, Indicator2, DebugLogs)
+    for (let i = sheetNames.length - 1; i >= 0; i--) {
+      const sheetName = sheetNames[i];
       let sheet = ss.getSheetByName(sheetName);
       if (!sheet) {
-        sheet = ss.insertSheet(sheetName);
-        Logger.log(`Created new sheet: ${sheetName}`);
+        // Insert at position 0 (beginning) - sheets will be added in reverse order
+        sheet = ss.insertSheet(sheetName, 0);
+        Logger.log(`Created new sheet: ${sheetName} at position 0`);
         
         // Add headers based on sheet type
         if (sheetName.startsWith('Indicator1_')) {
@@ -78,7 +81,7 @@ function dailySetupAndMaintenance() {
       } else {
         Logger.log(`Sheet already exists: ${sheetName}`);
       }
-    });
+    }
     
     // 2. Delete old sheets with purge date suffix
     const allSheets = ss.getSheets();
@@ -649,8 +652,9 @@ function _getSheetData(sheetName) {
       // Only auto-create if it's today's sheet
       if (sheetName.includes(`_${today}`)) {
         try {
-          sheet = ss.insertSheet(sheetName);
-          Logger.log(`Auto-created sheet: ${sheetName}`);
+          // Insert at position 0 to maintain correct ordering
+          sheet = ss.insertSheet(sheetName, 0);
+          Logger.log(`Auto-created sheet: ${sheetName} at position 0`);
           
           // Add headers based on sheet type
           if (sheetName.startsWith('Indicator1_')) {
