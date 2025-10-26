@@ -784,6 +784,29 @@
             min-width: 200px; /* Ensure cards don't get too compressed */
         }
         .signal-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        
+        /* Card glow effects for specific sync reasons */
+        .card-glow-hvd {
+            box-shadow: 0 0 0 1.5px var(--orange), 0 0 12px rgba(255, 159, 10, 0.4);
+        }
+        .card-glow-hvd:hover {
+            box-shadow: 0 0 0 1.5px var(--orange), 0 0 16px rgba(255, 159, 10, 0.5), var(--shadow-hover);
+        }
+        
+        .card-glow-oversold {
+            box-shadow: 0 0 0 1.5px var(--blue), 0 0 12px rgba(10, 132, 255, 0.4);
+        }
+        .card-glow-oversold:hover {
+            box-shadow: 0 0 0 1.5px var(--blue), 0 0 16px rgba(10, 132, 255, 0.5), var(--shadow-hover);
+        }
+        
+        .card-glow-overbought {
+            box-shadow: 0 0 0 1.5px var(--violet), 0 0 12px rgba(10, 132, 255, 0.4);
+        }
+        .card-glow-overbought:hover {
+            box-shadow: 0 0 0 1.5px var(--violet), 0 0 16px rgba(10, 132, 255, 0.5), var(--shadow-hover);
+        }
+        
         .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
         .timestamp { font-size: 0.875rem; color: var(--text-secondary); font-weight: 500; }
         
@@ -833,11 +856,11 @@
             100% { transform: scale(1); opacity: 1; }
         }
         
-        /* Logo Spin Zoom Animation */
+        /* Logo Spin Zoom Animation - Anti-clockwise */
         @keyframes logo-spin-zoom {
             0% { transform: scale(1) rotateY(0deg); }
-            50% { transform: scale(1.2) rotateY(-180deg); }
-            100% { transform: scale(1) rotateY(-360deg); }
+            50% { transform: scale(1.2) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(360deg); }
         }
         
         /* Container Feedback Animation */
@@ -2100,7 +2123,16 @@
                 }
             } catch(e) { console.warn("Error processing latest synced symbol for speech:", e); }
 
+            // Preserve historicalDates when updating AppState.data
+            const historicalDates = AppState.data.historicalDates;
+            const currentHistoricalData = AppState.data.currentHistoricalData;
             AppState.data = data;
+            if (historicalDates) {
+                AppState.data.historicalDates = historicalDates;
+            }
+            if (currentHistoricalData) {
+                AppState.data.currentHistoricalData = currentHistoricalData;
+            }
             renderCurrentView();
             if (!AppState.pollingInterval) {
                 console.log("Starting polling interval.");
@@ -2265,6 +2297,7 @@
                     clubbedSignals[signal.symbol] = {
                         symbol: signal.symbol,
                         status: signal.status,
+                        syncReason: signal.syncReason || '', // Preserve syncReason
                         reasons: []
                     };
                 }
@@ -2272,9 +2305,13 @@
                     reason: signal.reason,
                     time: signal.time
                 });
-                // Update status if any signal is synced
+                // Update status and syncReason if any signal is synced
                 if (signal.status === 'Synced') {
                     clubbedSignals[signal.symbol].status = 'Synced';
+                    // Keep the most recent sync reason
+                    if (signal.syncReason && (!clubbedSignals[signal.symbol].syncReason || signal.time > clubbedSignals[signal.symbol].latestTime)) {
+                        clubbedSignals[signal.symbol].syncReason = signal.syncReason;
+                    }
                 }
             });
             
@@ -2313,13 +2350,23 @@
                  return 'var(--text-secondary)';
             };
             
+            const getGlowClass = (syncReason) => {
+                if (!syncReason) return '';
+                const r = syncReason.toLowerCase();
+                if (r.includes('hvd') || r.includes('significant deployed capital')) return 'card-glow-hvd';
+                if (r.includes('oversold')) return 'card-glow-oversold';
+                if (r.includes('overbought')) return 'card-glow-overbought';
+                return '';
+            };
+            
             container.innerHTML = clubbedArray.map(signal => {
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
                  const latestReason = signal.reasons[0];
                  const secondReason = signal.reasons[1] || null;
                  const reasonColor = getReasonColor(latestReason.reason);
+                 const glowClass = signal.status === 'Synced' ? getGlowClass(signal.syncReason) : '';
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showLiveFeedDetail('${signal.symbol}')">
+                 return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
