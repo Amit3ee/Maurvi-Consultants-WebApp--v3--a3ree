@@ -162,10 +162,17 @@ function writeDataToRow(sheet, row, source, reason, time) {
 }
 
 /**
- * Serves the main HTML page of the web app.
+ * Serves the main HTML page of the web app OR handles approval/rejection actions.
+ * @param {Object} e - The event parameter containing query parameters
  */
 function doGet(e) {
   try {
+      // Check if this is an approval/rejection request
+      if (e.parameter && e.parameter.action) {
+        return handleApprovalAction(e);
+      }
+      
+      // Normal web app loading
       return HtmlService.createHtmlOutputFromFile('index.html')
         .setTitle('Automated Trading Signals')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -174,6 +181,135 @@ function doGet(e) {
       return HtmlService.createHtmlOutput("<p>Error loading application. Please contact support.</p>");
   }
 }
+
+/**
+ * Handles approval/rejection actions from email links
+ * @param {Object} e - The event parameter containing action and email
+ */
+function handleApprovalAction(e) {
+  try {
+    const action = e.parameter.action;
+    const email = e.parameter.email;
+    
+    if (!email) {
+      return HtmlService.createHtmlOutput("<p>Error: Email parameter missing.</p>");
+    }
+    
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    if (!users[email]) {
+      return HtmlService.createHtmlOutput(`
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; text-align: center; background: #f5f5f7; }
+              .error { color: #ff3b30; font-size: 18px; }
+            </style>
+          </head>
+          <body>
+            <h1 class="error">User Not Found</h1>
+            <p>The user ${email} was not found in the registration list.</p>
+          </body>
+        </html>
+      `);
+    }
+    
+    if (action === 'approve') {
+      users[email].approved = true;
+      users[email].approvedAt = new Date().toISOString();
+      props.setProperty('registeredUsers', JSON.stringify(users));
+      
+      // Send approval notification to user
+      try {
+        MailApp.sendEmail({
+          to: email,
+          subject: 'Your Access Has Been Approved - Maurvi Consultants',
+          htmlBody: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f7; }
+                .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                h1 { color: #1d1d1f; font-size: 24px; margin: 0 0 16px 0; }
+                .success-box { background: linear-gradient(135deg, rgba(48, 209, 88, 0.1), rgba(48, 209, 88, 0.15)); padding: 20px; border-radius: 8px; border-left: 4px solid #30d158; margin: 16px 0; }
+                .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>✅ Access Approved!</h1>
+                <p>Good news! Your access to the Maurvi Consultants Trading Signals Platform has been approved.</p>
+                
+                <div class="success-box">
+                  <strong>You can now sign in</strong> using your ${users[email].provider} account.
+                </div>
+                
+                <p>Simply click the "${users[email].provider}" button on the login screen to access the platform.</p>
+                
+                <div class="footer">
+                  <p>Maurvi Consultants - Trading Signals Platform</p>
+                  <p>&copy; ${new Date().getFullYear()} All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+        });
+      } catch (emailErr) {
+        Logger.log(`Failed to send approval notification: ${emailErr.message}`);
+      }
+      
+      return HtmlService.createHtmlOutput(`
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; text-align: center; background: #f5f5f7; }
+              .success { color: #30d158; font-size: 24px; margin-bottom: 20px; }
+              .message { font-size: 18px; color: #1d1d1f; }
+            </style>
+          </head>
+          <body>
+            <h1 class="success">✅ User Approved</h1>
+            <p class="message">${email} has been approved successfully.</p>
+            <p>The user will receive an email notification.</p>
+          </body>
+        </html>
+      `);
+      
+    } else if (action === 'reject') {
+      // Remove user from registration list
+      delete users[email];
+      props.setProperty('registeredUsers', JSON.stringify(users));
+      
+      return HtmlService.createHtmlOutput(`
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; text-align: center; background: #f5f5f7; }
+              .info { color: #ff9500; font-size: 24px; margin-bottom: 20px; }
+              .message { font-size: 18px; color: #1d1d1f; }
+            </style>
+          </head>
+          <body>
+            <h1 class="info">❌ User Rejected</h1>
+            <p class="message">${email} has been rejected and removed from the registration list.</p>
+          </body>
+        </html>
+      `);
+    } else {
+      return HtmlService.createHtmlOutput("<p>Error: Invalid action parameter.</p>");
+    }
+    
+  } catch (err) {
+    Logger.log(`handleApprovalAction Error: ${err.message} Stack: ${err.stack}`);
+    return HtmlService.createHtmlOutput(`<p>Error processing action: ${err.message}</p>`);
+  }
+}
+
 
 /**
  * Handles all POST requests (TradingView alerts) with Dynamic Row Mapping.
@@ -190,8 +326,34 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   
   try {
-    // Acquire lock with 30 second timeout
-    lock.waitLock(30000);
+    // Acquire lock with 60 second timeout (increased from 30 to handle high traffic)
+    // Retry logic: try up to 3 times with exponential backoff
+    let lockAcquired = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (!lockAcquired && retryCount < maxRetries) {
+      try {
+        lockAcquired = lock.tryLock(60000); // 60 second timeout
+        if (!lockAcquired) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            Logger.log(`Lock acquisition attempt ${retryCount} failed, retrying...`);
+            Utilities.sleep(1000 * retryCount); // Exponential backoff: 1s, 2s, 3s
+          }
+        }
+      } catch (lockErr) {
+        Logger.log(`Lock error on attempt ${retryCount + 1}: ${lockErr.message}`);
+        retryCount++;
+        if (retryCount < maxRetries) {
+          Utilities.sleep(1000 * retryCount);
+        }
+      }
+    }
+    
+    if (!lockAcquired) {
+      throw new Error("Failed to acquire lock after " + maxRetries + " attempts. Please try again.");
+    }
     
     const postData = e.postData.contents;
     if (!postData) { throw new Error("Received empty postData."); }
@@ -665,6 +827,11 @@ function registerSocialUser(email, name, provider) {
     
     // Send approval request to admin
     try {
+      // Get the web app URL for approval links
+      const scriptUrl = ScriptApp.getService().getUrl();
+      const approveUrl = `${scriptUrl}?action=approve&email=${encodeURIComponent(email)}`;
+      const rejectUrl = `${scriptUrl}?action=reject&email=${encodeURIComponent(email)}`;
+      
       MailApp.sendEmail({
         to: ADMIN_EMAIL,
         subject: `New User Registration Request - ${name}`,
@@ -681,8 +848,31 @@ function registerSocialUser(email, name, provider) {
               .info-item { margin: 8px 0; }
               .label { font-weight: 600; color: #1d1d1f; }
               .value { color: #86868b; }
-              .approve-link { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
+              .button-container { display: flex; gap: 12px; margin: 24px 0; justify-content: center; }
+              .approve-button { 
+                display: inline-block; 
+                background: linear-gradient(135deg, #30d158 0%, #28cd41 100%); 
+                color: white; 
+                padding: 14px 28px; 
+                border-radius: 8px; 
+                text-decoration: none; 
+                font-weight: 600; 
+                font-size: 16px;
+                box-shadow: 0 2px 8px rgba(48, 209, 88, 0.3);
+              }
+              .reject-button { 
+                display: inline-block; 
+                background: linear-gradient(135deg, #ff3b30 0%, #e63028 100%); 
+                color: white; 
+                padding: 14px 28px; 
+                border-radius: 8px; 
+                text-decoration: none; 
+                font-weight: 600; 
+                font-size: 16px;
+                box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+              }
               .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
+              .note { background: rgba(10, 132, 255, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #0a84ff; margin: 16px 0; font-size: 14px; }
             </style>
           </head>
           <body>
@@ -697,11 +887,14 @@ function registerSocialUser(email, name, provider) {
                 <div class="info-item"><span class="label">Registered:</span> <span class="value">${new Date().toLocaleString()}</span></div>
               </div>
               
-              <p>To approve this user, please:</p>
-              <ol>
-                <li>Open Google Apps Script editor</li>
-                <li>Run the function: <code>approveUser("${email}")</code></li>
-              </ol>
+              <div class="note">
+                <strong>Action Required:</strong> Click one of the buttons below to approve or reject this user's registration.
+              </div>
+              
+              <div class="button-container">
+                <a href="${approveUrl}" class="approve-button">✅ Approve Access</a>
+                <a href="${rejectUrl}" class="reject-button">❌ Reject Access</a>
+              </div>
               
               <div class="footer">
                 <p>Maurvi Consultants - Trading Signals Platform</p>
@@ -712,7 +905,7 @@ function registerSocialUser(email, name, provider) {
           </html>
         `
       });
-      Logger.log(`registerSocialUser: Approval request email sent to admin`);
+      Logger.log(`registerSocialUser: Approval request email sent to admin with action buttons`);
     } catch (emailErr) {
       Logger.log(`registerSocialUser: Failed to send approval email: ${emailErr.message}`);
       // Don't fail registration if email fails
@@ -1376,15 +1569,36 @@ function getDashboardData() {
       logs[key].sort((a, b) => b.time.localeCompare(a.time)); 
     }
 
-    // Build dashboard synced list (symbols with sync events from Indicator2)
+    // Build dashboard synced list (symbols with sync events from Indicator2 that are also in Indicator1)
+    // Column structure constants
+    const COL_SYMBOL = 0; // Column A
+    const COL_IND1_START = 1; // Column B (first Indicator1 reason)
+    const COL_IND1_END = 11; // Column K (last Indicator1 time) - 5 pairs from B to K
+    const COL_IND2_START = 11; // Column L (first Indicator2 sync reason)
+    const COL_IND2_END = 53; // Column BA (last Indicator2 sync time) - 21 pairs from L to BA
+    
     const dashboardSyncedList = [];
     ind1Data.forEach(row => {
-      if (!row[0]) return;
-      const symbol = row[0];
+      if (!row[COL_SYMBOL]) return;
+      const symbol = row[COL_SYMBOL];
+      
+      // First check if there's at least one Indicator1 signal (columns B-K)
+      let hasInd1Signal = false;
+      for (let i = COL_IND1_START; i < COL_IND1_END; i += 2) { // Check Indicator1 reason columns (B, D, F, H, J)
+        if (row[i] && row[i] !== '') {
+          hasInd1Signal = true;
+          break;
+        }
+      }
+      
+      // Skip symbols that don't have any Indicator1 signals
+      if (!hasInd1Signal) {
+        return;
+      }
       
       // Check if there are any sync events (columns L onwards - now up to 21 pairs)
       const ind2Reasons = [];
-      for (let i = 11; i < 53; i += 2) { // 11 to 52 (21 pairs starting from column L)
+      for (let i = COL_IND2_START; i < COL_IND2_END; i += 2) { // L to BA (21 pairs)
         if (row[i] && row[i] !== '') {
           ind2Reasons.push({
             time: row[i + 1] || '',
@@ -1393,10 +1607,11 @@ function getDashboardData() {
         }
       }
       
+      // Only add to dashboard if there are BOTH Indicator1 signals AND Indicator2 sync events
       if (ind2Reasons.length > 0) {
         // Get the first Indicator1 reason for this symbol
-        const ind1Reason = row[1] || '';
-        const ind1Time = row[2] || '';
+        const ind1Reason = row[COL_IND1_START] || '';
+        const ind1Time = row[COL_IND1_START + 1] || '';
         
         ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
         dashboardSyncedList.push({
