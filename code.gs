@@ -125,6 +125,12 @@ function writeDataToRow(sheet, row, source, reason, time) {
   const MAX_COLS_INDICATOR1 = 10; // 5 pairs of [reason, time] columns for Indicator1
   const MAX_COLS_INDICATOR2 = 42; // 21 pairs of [reason, time] columns for Indicator2
   
+  // Validate reason is not blank - do not write blank reasons to sheet
+  if (!reason || reason.trim() === '') {
+    Logger.log(`writeDataToRow: Skipping blank reason for source "${source}" at row ${row}`);
+    return;
+  }
+  
   let startCol;
   let maxCols;
   if (source === 'Indicator1') {
@@ -351,9 +357,9 @@ function doPost(e) {
       throw new Error("Missing required field: must have either 'scrip' or 'ticker'");
     }
     
-    // Validate reason is present
-    if (!data.reason) {
-      throw new Error("Missing required field: reason");
+    // Validate reason is present and not blank
+    if (!data.reason || data.reason.trim() === '') {
+      throw new Error("Missing or blank required field: reason");
     }
     
     Logger.log(`Received ${indicatorType} signal: ${symbol}, Reason: ${data.reason}, Time: ${time}`);
@@ -1457,12 +1463,14 @@ function getDashboardData() {
       const symbol = row[0];
       
       // Collect all Indicator1 signals (reason/time pairs starting from column B)
+      // Filter out blank reasons
       for (let i = 1; i < 11; i += 2) {
-        if (row[i] && row[i] !== '') {
+        const reason = row[i];
+        if (reason && reason.toString().trim() !== '') {
           // Check if this symbol has any sync events (columns L onwards)
           let hasSyncEvents = false;
           for (let j = 11; j < 53; j += 2) {
-            if (row[j] && row[j] !== '') {
+            if (row[j] && row[j].toString().trim() !== '') {
               hasSyncEvents = true;
               break;
             }
@@ -1471,7 +1479,7 @@ function getDashboardData() {
           liveFeed.push({
             symbol: symbol,
             time: row[i + 1] || '',
-            reason: row[i],
+            reason: reason,
             status: hasSyncEvents ? 'Synced' : 'Awaiting',
             syncTime: hasSyncEvents ? (row[12] || '') : '', // First sync time
             syncReason: hasSyncEvents ? (row[11] || '') : '' // First sync reason
@@ -1549,32 +1557,36 @@ function getDashboardData() {
       const symbol = row[0];
       
       // Check if there are any sync events (columns L onwards - now up to 21 pairs)
+      // Filter out blank sync reasons
       const ind2Reasons = [];
       for (let i = 11; i < 53; i += 2) { // 11 to 52 (21 pairs starting from column L)
-        if (row[i] && row[i] !== '') {
+        const syncReason = row[i];
+        if (syncReason && syncReason.toString().trim() !== '') {
           ind2Reasons.push({
             time: row[i + 1] || '',
-            reason: row[i]
+            reason: syncReason
           });
         }
       }
       
       if (ind2Reasons.length > 0) {
-        // Get the first Indicator1 reason for this symbol
+        // Get the first Indicator1 reason for this symbol (filter out blank)
         const ind1Reason = row[1] || '';
         const ind1Time = row[2] || '';
         
-        ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
-        dashboardSyncedList.push({
-          symbol: symbol,
-          ind1Reason: ind1Reason,
-          ind1Time: ind1Time,
-          ind2Reasons: ind2Reasons
-        });
-        
-        // Update status in liveFeed for synced signals
-        liveFeed.forEach(feedItem => {
-          if (feedItem.symbol === symbol && feedItem.status !== 'Synced') {
+        // Only add to dashboard if Indicator1 reason is not blank
+        if (ind1Reason && ind1Reason.toString().trim() !== '') {
+          ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
+          dashboardSyncedList.push({
+            symbol: symbol,
+            ind1Reason: ind1Reason,
+            ind1Time: ind1Time,
+            ind2Reasons: ind2Reasons
+          });
+          
+          // Update status in liveFeed for synced signals
+          liveFeed.forEach(feedItem => {
+            if (feedItem.symbol === symbol && feedItem.status !== 'Synced') {
             feedItem.status = 'Synced';
             feedItem.syncTime = ind2Reasons[0].time;
             feedItem.syncReason = ind2Reasons[0].reason;
@@ -1667,16 +1679,19 @@ function getSignalsForDate(dateStr) {
       if (!row[0]) return; // Skip empty rows
       const symbol = row[0];
       
-      // Collect all Indicator1 signals
+      // Collect all Indicator1 signals (filter out blank reasons)
       for (let i = 1; i < 11; i += 2) {
-        if (row[i] && row[i] !== '') {
+        const reason = row[i];
+        if (reason && reason.toString().trim() !== '') {
           // Collect all Indicator2 sync events (columns L onwards - up to 21 pairs)
+          // Filter out blank sync reasons
           const ind2Reasons = [];
           for (let j = 11; j < 53; j += 2) { // 11 to 52 (21 pairs starting from column L)
-            if (row[j] && row[j] !== '') {
+            const syncReason = row[j];
+            if (syncReason && syncReason.toString().trim() !== '') {
               ind2Reasons.push({
                 time: row[j + 1] || '',
-                reason: row[j]
+                reason: syncReason
               });
             }
           }
@@ -1687,7 +1702,7 @@ function getSignalsForDate(dateStr) {
           const signal = {
             symbol: symbol,
             time: row[i + 1] || '',
-            reason: row[i],
+            reason: reason,
             status: ind2Reasons.length > 0 ? 'Synced' : 'Awaiting',
             ind2Reasons: ind2Reasons
           };
@@ -2294,20 +2309,24 @@ function refreshRearrangeCurrentData() {
       }
       
       // Collect Indicator1 signals (columns B-K, pairs of reason/time)
+      // Filter out blank reasons
       for (let i = 1; i < 11; i += 2) {
-        if (row[i] && row[i] !== '') {
+        const reason = row[i];
+        if (reason && reason.toString().trim() !== '') {
           symbolDataMap[symbol].ind1Signals.push({
-            reason: row[i],
+            reason: reason,
             time: row[i + 1] || ''
           });
         }
       }
       
       // Collect Indicator2 sync events (columns L-BA, pairs of reason/time)
+      // Filter out blank sync reasons
       for (let i = 11; i < 53; i += 2) {
-        if (row[i] && row[i] !== '') {
+        const syncReason = row[i];
+        if (syncReason && syncReason.toString().trim() !== '') {
           symbolDataMap[symbol].ind2SyncEvents.push({
-            reason: row[i],
+            reason: syncReason,
             time: row[i + 1] || ''
           });
         }
