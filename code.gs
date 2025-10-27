@@ -115,13 +115,13 @@ function dailySetupAndMaintenance() {
  * Formats a reason for display, including capital value for HVD signals.
  * @param {string} indicatorType - Either "Indicator1" or "Indicator2"
  * @param {string} reason - The reason text (e.g., "HVD", "Bullish Engulfing")
- * @param {string} capitalDeployedCr - Capital deployed in crores (only for HVD signals)
+ * @param {string} capitalDeployedCr - Capital deployed in crores (can be undefined/null/empty for non-HVD signals)
  * @return {string} Formatted reason (e.g., "HVD (150 Cr.)" or original reason)
  */
 function formatReasonWithCapital(indicatorType, reason, capitalDeployedCr) {
   // For Indicator2 HVD signals with capital value, format as "HVD (XXX Cr.)"
-  if (indicatorType === 'Indicator2' && reason && reason.toUpperCase() === 'HVD' && capitalDeployedCr) {
-    return `HVD (${capitalDeployedCr} Cr.)`;
+  if (indicatorType === 'Indicator2' && reason && reason.toUpperCase() === 'HVD' && capitalDeployedCr && capitalDeployedCr.trim()) {
+    return `HVD (${capitalDeployedCr.trim()} Cr.)`;
   }
   return reason;
 }
