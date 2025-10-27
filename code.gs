@@ -1569,11 +1569,25 @@ function getDashboardData() {
       logs[key].sort((a, b) => b.time.localeCompare(a.time)); 
     }
 
-    // Build dashboard synced list (symbols with sync events from Indicator2)
+    // Build dashboard synced list (symbols with sync events from Indicator2 that are also in Indicator1)
     const dashboardSyncedList = [];
     ind1Data.forEach(row => {
       if (!row[0]) return;
       const symbol = row[0];
+      
+      // First check if there's at least one Indicator1 signal (columns B-K)
+      let hasInd1Signal = false;
+      for (let i = 1; i < 11; i += 2) { // Check Indicator1 reason columns (B, D, F, H, J)
+        if (row[i] && row[i] !== '') {
+          hasInd1Signal = true;
+          break;
+        }
+      }
+      
+      // Skip symbols that don't have any Indicator1 signals
+      if (!hasInd1Signal) {
+        return;
+      }
       
       // Check if there are any sync events (columns L onwards - now up to 21 pairs)
       const ind2Reasons = [];
@@ -1586,6 +1600,7 @@ function getDashboardData() {
         }
       }
       
+      // Only add to dashboard if there are BOTH Indicator1 signals AND Indicator2 sync events
       if (ind2Reasons.length > 0) {
         // Get the first Indicator1 reason for this symbol
         const ind1Reason = row[1] || '';

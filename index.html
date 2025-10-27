@@ -1727,6 +1727,48 @@
 
         // --- SOCIAL LOGIN FUNCTIONS ---
         
+        /**
+         * IMPORTANT: Social Login Integration Requirements
+         * ================================================
+         * 
+         * The current implementation shows placeholder messages for social login.
+         * To enable actual OAuth authentication, you need to:
+         * 
+         * FOR GOOGLE SIGN-IN:
+         * 1. Add Google Sign-In library to <head> section:
+         *    <script src="https://accounts.google.com/gsi/client" async defer></script>
+         * 2. Create OAuth 2.0 Client ID in Google Cloud Console
+         * 3. Configure authorized JavaScript origins and redirect URIs
+         * 4. Initialize Google Sign-In with your Client ID
+         * 5. Handle the credential response and send ID token to backend
+         * 
+         * FOR MICROSOFT SIGN-IN:
+         * 1. Add MSAL.js library to <head> section:
+         *    <script src="https://alcdn.msauth.net/browser/2.x.x/js/msal-browser.min.js"></script>
+         * 2. Register app in Azure Active Directory
+         * 3. Configure redirect URIs and permissions
+         * 4. Initialize MSAL with your Client ID and tenant
+         * 5. Handle login and acquire ID token
+         * 
+         * FOR APPLE SIGN-IN:
+         * 1. Add Apple Sign-In JS to <head> section:
+         *    <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+         * 2. Create App ID and Service ID in Apple Developer Portal
+         * 3. Configure domain and redirect URLs
+         * 4. Initialize AppleID.auth with your configuration
+         * 5. Handle authorization and ID token
+         * 
+         * BACKEND VERIFICATION:
+         * - The backend code (code.gs) has functions ready: verifySocialLogin(), registerSocialUser()
+         * - These need to receive and verify the ID token from the OAuth provider
+         * - Token verification ensures the user is authenticated with the provider
+         * 
+         * REFERENCES:
+         * - Google: https://developers.google.com/identity/gsi/web/guides/overview
+         * - Microsoft: https://docs.microsoft.com/en-us/azure/active-directory/develop/
+         * - Apple: https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_js
+         */
+        
         function handleSocialLogin(provider) {
             console.log(`Initiating ${provider} login...`);
             showLoginMessage(`Signing in with ${provider}...`, 'info');
@@ -1736,13 +1778,8 @@
             DOM.microsoftSigninBtn.disabled = true;
             DOM.appleSigninBtn.disabled = true;
             
-            // In a real implementation, you would:
-            // 1. Initialize OAuth flow for the selected provider
-            // 2. Get ID token from provider
-            // 3. Send to backend for verification
-            
-            // For demonstration, we'll simulate OAuth flow
-            // In production, use proper OAuth libraries like Google Sign-In, MSAL, etc.
+            // TODO: Implement actual OAuth flow
+            // This requires adding OAuth libraries and configuration as described above
             
             if (provider === 'google') {
                 initGoogleSignIn();
@@ -1755,16 +1792,16 @@
         
         function initGoogleSignIn() {
             // This is a placeholder for Google OAuth integration
-            // In production, use: https://developers.google.com/identity/gsi/web/guides/overview
+            // See detailed implementation requirements in handleSocialLogin() comments above
             
-            showLoginMessage('Google Sign-In integration coming soon. Please use guest login for now.', 'info');
+            showLoginMessage('Google Sign-In requires OAuth configuration. Please use guest login or contact admin for access.', 'info');
             
             // Re-enable buttons
             setTimeout(() => {
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+            }, 3000);
             
             // For testing purposes only - simulate successful OAuth
             // REMOVE THIS IN PRODUCTION
@@ -1779,30 +1816,30 @@
         
         function initMicrosoftSignIn() {
             // This is a placeholder for Microsoft OAuth integration
-            // In production, use: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-v2-javascript-auth-code
+            // See detailed implementation requirements in handleSocialLogin() comments above
             
-            showLoginMessage('Microsoft Sign-In integration coming soon. Please use guest login for now.', 'info');
+            showLoginMessage('Microsoft Sign-In requires OAuth configuration. Please use guest login or contact admin for access.', 'info');
             
             // Re-enable buttons
             setTimeout(() => {
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+            }, 3000);
         }
         
         function initAppleSignIn() {
             // This is a placeholder for Apple Sign-In integration
-            // In production, use: https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_js
+            // See detailed implementation requirements in handleSocialLogin() comments above
             
-            showLoginMessage('Apple Sign-In integration coming soon. Please use guest login for now.', 'info');
+            showLoginMessage('Apple Sign-In requires OAuth configuration. Please use guest login or contact admin for access.', 'info');
             
             // Re-enable buttons
             setTimeout(() => {
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+            }, 3000);
         }
         
         function handleSocialLoginSuccess(provider, userData) {
