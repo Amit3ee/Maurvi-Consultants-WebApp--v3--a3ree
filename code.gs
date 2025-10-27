@@ -1484,6 +1484,7 @@ function getDashboardData() {
     liveFeed.sort((a, b) => b.time.localeCompare(a.time));
 
     // Build logs from Indicator2 data (categorize by reason pattern)
+    // ONLY INCLUDE SYNCED SIGNALS (Issue #6)
     const logs = { hvd: [], bullish: [], bearish: [], oversold: [], overbought: [] };
     
     ind2Data.forEach(row => {
@@ -1495,17 +1496,24 @@ function getDashboardData() {
       const symbol = row[2];
       const time = row[1];
       
-      // Check if this signal is synced with Indicator1
+      // Check if this signal is synced with Indicator1 (MANDATORY for logs)
       const ind1Row = ind1Data.find(r => r[0] === symbol);
-      let syncStatus = 'Awaiting';
+      let isSynced = false;
+      
       if (ind1Row) {
         // Check if time matches any sync time in columns L onwards
         for (let j = 12; j < 53; j += 2) {
           if (ind1Row[j] && ind1Row[j] === time) {
-            syncStatus = 'Synced';
+            isSynced = true;
             break;
           }
         }
+      }
+      
+      // ONLY add to logs if synced with Indicator1 (Issue #6)
+      if (!isSynced) {
+        Logger.log(`Skipping non-synced Indicator2 signal: ${symbol} at ${time}`);
+        return;
       }
       
       const signal = { 
@@ -1513,7 +1521,7 @@ function getDashboardData() {
         time: time, 
         reason: row[3], 
         capital: row[4],
-        status: syncStatus
+        status: 'Synced' // All signals in logs are synced
       };
       
       // Categorize based on reason
