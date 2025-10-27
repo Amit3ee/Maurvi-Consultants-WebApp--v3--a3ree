@@ -120,7 +120,9 @@ function dailySetupAndMaintenance() {
  */
 function formatReasonWithCapital(indicatorType, reason, capitalDeployedCr) {
   // For Indicator2 HVD signals with capital value, format as "HVD (XXX Cr.)"
-  if (indicatorType === 'Indicator2' && reason && reason.toUpperCase() === 'HVD' && capitalDeployedCr && capitalDeployedCr.trim()) {
+  if (indicatorType === 'Indicator2' && 
+      reason && reason.toUpperCase() === 'HVD' && 
+      capitalDeployedCr && typeof capitalDeployedCr === 'string' && capitalDeployedCr.trim()) {
     return `HVD (${capitalDeployedCr.trim()} Cr.)`;
   }
   return reason;
