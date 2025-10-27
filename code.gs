@@ -162,10 +162,114 @@ function writeDataToRow(sheet, row, source, reason, time) {
 }
 
 /**
- * Serves the main HTML page of the web app.
+ * Serves the main HTML page of the web app and handles approval/rejection actions.
  */
 function doGet(e) {
   try {
+      // Check if this is an approval/rejection request
+      if (e.parameter && e.parameter.action && e.parameter.email) {
+        const action = e.parameter.action;
+        const email = e.parameter.email;
+        
+        if (action === 'approve') {
+          const result = approveUser(email);
+          if (result.status === 'success') {
+            return HtmlService.createHtmlOutput(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 40px; background: linear-gradient(135deg, #30D158 0%, #28CD41 100%); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                  .container { background: white; border-radius: 16px; padding: 48px; max-width: 500px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+                  h1 { color: #30D158; font-size: 32px; margin: 0 0 16px 0; }
+                  p { color: #86868b; font-size: 16px; line-height: 1.6; }
+                  .email { color: #1d1d1f; font-weight: 600; margin: 16px 0; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>✅ User Approved</h1>
+                  <p class="email">${email}</p>
+                  <p>The user has been successfully approved and can now access the platform.</p>
+                </div>
+              </body>
+              </html>
+            `).setTitle('User Approved');
+          } else {
+            return HtmlService.createHtmlOutput(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="UTF-8">
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 40px; background: #f5f5f7; }
+                  .container { background: white; border-radius: 16px; padding: 48px; max-width: 500px; margin: 0 auto; text-align: center; }
+                  h1 { color: #FF453A; font-size: 32px; margin: 0 0 16px 0; }
+                  p { color: #86868b; font-size: 16px; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>❌ Error</h1>
+                  <p>${result.message}</p>
+                </div>
+              </body>
+              </html>
+            `).setTitle('Error');
+          }
+        } else if (action === 'reject') {
+          const result = rejectUser(email);
+          if (result.status === 'success') {
+            return HtmlService.createHtmlOutput(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="UTF-8">
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 40px; background: linear-gradient(135deg, #FF453A 0%, #FF3B30 100%); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                  .container { background: white; border-radius: 16px; padding: 48px; max-width: 500px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+                  h1 { color: #FF453A; font-size: 32px; margin: 0 0 16px 0; }
+                  p { color: #86868b; font-size: 16px; line-height: 1.6; }
+                  .email { color: #1d1d1f; font-weight: 600; margin: 16px 0; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>❌ User Rejected</h1>
+                  <p class="email">${email}</p>
+                  <p>The user registration has been rejected.</p>
+                </div>
+              </body>
+              </html>
+            `).setTitle('User Rejected');
+          } else {
+            return HtmlService.createHtmlOutput(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="UTF-8">
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 40px; background: #f5f5f7; }
+                  .container { background: white; border-radius: 16px; padding: 48px; max-width: 500px; margin: 0 auto; text-align: center; }
+                  h1 { color: #FF453A; font-size: 32px; margin: 0 0 16px 0; }
+                  p { color: #86868b; font-size: 16px; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>❌ Error</h1>
+                  <p>${result.message}</p>
+                </div>
+              </body>
+              </html>
+            `).setTitle('Error');
+          }
+        }
+      }
+      
+      // Default: serve the main app
       return HtmlService.createHtmlOutputFromFile('index.html')
         .setTitle('Automated Trading Signals')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -190,8 +294,17 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   
   try {
-    // Acquire lock with 30 second timeout
-    lock.waitLock(30000);
+    // Acquire lock with 60 second timeout (increased from 30)
+    const hasLock = lock.tryLock(60000);
+    
+    if (!hasLock) {
+      // If we couldn't get the lock, return a retry response
+      Logger.log('doPost: Could not acquire lock - returning retry response');
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: 'retry', 
+        message: 'Server busy, please retry'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     
     const postData = e.postData.contents;
     if (!postData) { throw new Error("Received empty postData."); }
@@ -663,11 +776,15 @@ function registerSocialUser(email, name, provider) {
     props.setProperty('registeredUsers', JSON.stringify(users));
     Logger.log(`registerSocialUser: User ${email} registered successfully`);
     
-    // Send approval request to admin
+    // Send approval request to admin with actionable buttons
     try {
+      const scriptUrl = ScriptApp.getService().getUrl();
+      const approveUrl = `${scriptUrl}?action=approve&email=${encodeURIComponent(email)}`;
+      const rejectUrl = `${scriptUrl}?action=reject&email=${encodeURIComponent(email)}`;
+      
       MailApp.sendEmail({
         to: ADMIN_EMAIL,
-        subject: `New User Registration Request - ${name}`,
+        subject: `🔔 New User Registration Request - ${name}`,
         htmlBody: `
           <!DOCTYPE html>
           <html>
@@ -681,7 +798,9 @@ function registerSocialUser(email, name, provider) {
               .info-item { margin: 8px 0; }
               .label { font-weight: 600; color: #1d1d1f; }
               .value { color: #86868b; }
-              .approve-link { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
+              .button-container { margin: 24px 0; text-align: center; }
+              .approve-btn { display: inline-block; background: linear-gradient(135deg, #30D158 0%, #28CD41 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 8px; box-shadow: 0 4px 12px rgba(48, 209, 88, 0.3); }
+              .reject-btn { display: inline-block; background: linear-gradient(135deg, #FF453A 0%, #FF3B30 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 8px; box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3); }
               .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
             </style>
           </head>
@@ -697,11 +816,14 @@ function registerSocialUser(email, name, provider) {
                 <div class="info-item"><span class="label">Registered:</span> <span class="value">${new Date().toLocaleString()}</span></div>
               </div>
               
-              <p>To approve this user, please:</p>
-              <ol>
-                <li>Open Google Apps Script editor</li>
-                <li>Run the function: <code>approveUser("${email}")</code></li>
-              </ol>
+              <div class="button-container">
+                <a href="${approveUrl}" class="approve-btn">✅ Approve User</a>
+                <a href="${rejectUrl}" class="reject-btn">❌ Reject User</a>
+              </div>
+              
+              <p style="text-align: center; color: #86868b; font-size: 14px; margin-top: 16px;">
+                Click the buttons above to approve or reject this user registration.
+              </p>
               
               <div class="footer">
                 <p>Maurvi Consultants - Trading Signals Platform</p>
@@ -838,6 +960,82 @@ function approveUser(email) {
     Logger.log(`approveUser CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, 'approveUser Error', err, `Email: ${email}`);
     return { status: 'error', message: 'Server error during approval.' };
+  }
+}
+
+/**
+ * Rejects a user for access (admin function)
+ */
+function rejectUser(email) {
+  try {
+    Logger.log(`rejectUser: Attempting to reject ${email}`);
+    
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    if (!users[email]) {
+      const message = `User ${email} not found in registration list`;
+      Logger.log(`rejectUser: ${message}`);
+      return { status: 'error', message: message };
+    }
+    
+    // Remove user from registered users
+    delete users[email];
+    props.setProperty('registeredUsers', JSON.stringify(users));
+    
+    Logger.log(`rejectUser: User ${email} rejected and removed`);
+    
+    // Send rejection notification to user
+    try {
+      MailApp.sendEmail({
+        to: email,
+        subject: 'Registration Update - Maurvi Consultants',
+        htmlBody: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f7; }
+              .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+              h1 { color: #1d1d1f; font-size: 24px; margin: 0 0 16px 0; }
+              .info-box { background: rgba(255, 69, 58, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #FF453A; margin: 16px 0; }
+              .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Registration Update</h1>
+              <p>Thank you for your interest in the Maurvi Consultants Trading Signals Platform.</p>
+              
+              <div class="info-box">
+                Your registration request has been reviewed and we are unable to approve access at this time.
+              </div>
+              
+              <p>If you believe this is an error or have questions, please contact our support team.</p>
+              
+              <div class="footer">
+                <p>Maurvi Consultants - Trading Signals Platform</p>
+                <p>&copy; ${new Date().getFullYear()} All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      });
+      Logger.log(`rejectUser: Rejection notification sent to ${email}`);
+    } catch (emailErr) {
+      Logger.log(`rejectUser: Failed to send rejection notification: ${emailErr.message}`);
+      // Don't fail rejection if email fails
+    }
+    
+    return { status: 'success', message: `User ${email} rejected successfully` };
+    
+  } catch (err) {
+    Logger.log(`rejectUser CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'rejectUser Error', err, `Email: ${email}`);
+    return { status: 'error', message: 'Server error during rejection.' };
   }
 }
 
