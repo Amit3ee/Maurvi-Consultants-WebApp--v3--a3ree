@@ -1723,55 +1723,63 @@
         }
         
         function initGoogleSignIn() {
-            // This is a placeholder for Google OAuth integration
-            // In production, use: https://developers.google.com/identity/gsi/web/guides/overview
-            
-            showLoginMessage('Google Sign-In integration coming soon. Please use guest login for now.', 'info');
-            
-            // Re-enable buttons
-            setTimeout(() => {
+            // Google OAuth integration
+            // For now, we'll simulate with admin email or register new users
+            const email = prompt('Enter your Google email address:');
+            if (!email) {
+                // Re-enable buttons
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
-            
-            // For testing purposes only - simulate successful OAuth
-            // REMOVE THIS IN PRODUCTION
-            if (window.location.search.includes('test_google_oauth=true')) {
-                const mockUserData = {
-                    email: 'test@example.com',
-                    name: 'Test User'
-                };
-                handleSocialLoginSuccess('google', mockUserData);
+                return;
             }
+            
+            const name = email.split('@')[0];
+            const mockUserData = {
+                email: email,
+                name: name
+            };
+            handleSocialLoginSuccess('google', mockUserData);
         }
         
         function initMicrosoftSignIn() {
-            // This is a placeholder for Microsoft OAuth integration
-            // In production, use: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-v2-javascript-auth-code
-            
-            showLoginMessage('Microsoft Sign-In integration coming soon. Please use guest login for now.', 'info');
-            
-            // Re-enable buttons
-            setTimeout(() => {
+            // Microsoft OAuth integration
+            // For now, we'll simulate with admin email or register new users
+            const email = prompt('Enter your Microsoft email address:');
+            if (!email) {
+                // Re-enable buttons
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+                return;
+            }
+            
+            const name = email.split('@')[0];
+            const mockUserData = {
+                email: email,
+                name: name
+            };
+            handleSocialLoginSuccess('microsoft', mockUserData);
         }
         
         function initAppleSignIn() {
-            // This is a placeholder for Apple Sign-In integration
-            // In production, use: https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_js
-            
-            showLoginMessage('Apple Sign-In integration coming soon. Please use guest login for now.', 'info');
-            
-            // Re-enable buttons
-            setTimeout(() => {
+            // Apple Sign-In integration
+            // For now, we'll simulate with admin email or register new users
+            const email = prompt('Enter your Apple ID email address:');
+            if (!email) {
+                // Re-enable buttons
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+                return;
+            }
+            
+            const name = email.split('@')[0];
+            const mockUserData = {
+                email: email,
+                name: name
+            };
+            handleSocialLoginSuccess('apple', mockUserData);
         }
         
         function handleSocialLoginSuccess(provider, userData) {
@@ -2103,9 +2111,19 @@
 
         // --- NARRATION / SPEECH ---
         function loadSpeechVoices() {
-            const setVoices = () => { AppState.speechVoices = window.speechSynthesis.getVoices(); console.log("Voices loaded:", AppState.speechVoices.length); };
-             try { window.speechSynthesis.onvoiceschanged = setVoices; } catch (e) { console.warn("Could not set onvoiceschanged handler:", e); }
-            setVoices();
+            const setVoices = () => { 
+                AppState.speechVoices = window.speechSynthesis.getVoices(); 
+                console.log("Voices loaded:", AppState.speechVoices.length); 
+                if (AppState.speechVoices.length > 0) {
+                    console.log("Available voices:", AppState.speechVoices.map(v => `${v.name} (${v.lang})`).join(', '));
+                }
+            };
+            try { 
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = setVoices; 
+                }
+            } catch (e) { console.warn("Could not set onvoiceschanged handler:", e); }
+            setVoices(); // Call immediately as well
         }
         function toggleNarration() {
             AppState.narrationEnabled = !AppState.narrationEnabled;
@@ -2251,6 +2269,14 @@
              if (!AppState.narrationEnabled || !window.speechSynthesis) { console.log("Narration disabled or not supported."); return; }
              if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
              if (AppState.speechVoices.length === 0) { loadSpeechVoices(); }
+            
+            // Wait a bit if voices are still loading
+            if (AppState.speechVoices.length === 0) {
+                console.log("Waiting for voices to load...");
+                setTimeout(() => speakText(text, isAnnouncement), 100);
+                return;
+            }
+            
             const utterance = new SpeechSynthesisUtterance(text);
             
             // Priority 1: Indian English female voice (en-IN, female)
@@ -2300,6 +2326,8 @@
             utterance.pitch = 1.05; // Slightly higher pitch for female voice
             utterance.volume = 1.0;
             utterance.onerror = (event) => { console.error("SpeechSynthesisUtterance.onerror:", event); };
+            utterance.onend = () => { console.log("Speech ended successfully"); };
+            console.log(`Speaking: "${text}"`);
             window.speechSynthesis.speak(utterance);
         }
 
@@ -2491,7 +2519,18 @@
                  const latestReasonColor = getReasonColor(latestReason.reason);
                  const ind1Color = getReasonColor(signal.ind1Reason);
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showDashboardSyncDetail('${signal.symbol}')">
+                 // Determine glow class based on latest sync reason
+                 const getGlowClass = (reason) => {
+                     if (!reason) return '';
+                     const r = reason.toLowerCase();
+                     if (r.includes('hvd') || r.includes('significant deployed capital')) return 'card-glow-hvd';
+                     if (r.includes('oversold')) return 'card-glow-oversold';
+                     if (r.includes('overbought')) return 'card-glow-overbought';
+                     return '';
+                 };
+                 const glowClass = getGlowClass(latestReason.reason);
+                 
+                 return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
@@ -2574,23 +2613,14 @@
                  return 'var(--text-secondary)';
             };
             
-            const getGlowClass = (syncReason) => {
-                if (!syncReason) return '';
-                const r = syncReason.toLowerCase();
-                if (r.includes('hvd') || r.includes('significant deployed capital')) return 'card-glow-hvd';
-                if (r.includes('oversold')) return 'card-glow-oversold';
-                if (r.includes('overbought')) return 'card-glow-overbought';
-                return '';
-            };
-            
             container.innerHTML = clubbedArray.map(signal => {
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
                  const latestReason = signal.reasons[0];
                  const secondReason = signal.reasons[1] || null;
                  const reasonColor = getReasonColor(latestReason.reason);
-                 const glowClass = signal.status === 'Synced' ? getGlowClass(signal.syncReason) : '';
+                 // Remove glowing effect from live feed - it should only be in dashboard
                  
-                 return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showLiveFeedDetail('${signal.symbol}')">
+                 return `<div class="signal-card material material-regular interactive" onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
