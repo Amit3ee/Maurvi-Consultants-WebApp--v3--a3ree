@@ -787,9 +787,10 @@
         }
         .signal-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
         
-        /* Card glow effects for specific sync reasons */
+        /* Card glow effects for specific sync reasons with animations */
         .card-glow-hvd {
             box-shadow: 0 0 0 1.5px var(--orange), 0 0 12px rgba(255, 159, 10, 0.4);
+            animation: glow-pulse-hvd 2s ease-in-out infinite;
         }
         .card-glow-hvd:hover {
             box-shadow: 0 0 0 1.5px var(--orange), 0 0 16px rgba(255, 159, 10, 0.5), var(--shadow-hover);
@@ -797,6 +798,7 @@
         
         .card-glow-oversold {
             box-shadow: 0 0 0 1.5px var(--blue), 0 0 12px rgba(10, 132, 255, 0.4);
+            animation: glow-pulse-oversold 2s ease-in-out infinite;
         }
         .card-glow-oversold:hover {
             box-shadow: 0 0 0 1.5px var(--blue), 0 0 16px rgba(10, 132, 255, 0.5), var(--shadow-hover);
@@ -804,9 +806,38 @@
         
         .card-glow-overbought {
             box-shadow: 0 0 0 1.5px var(--purple), 0 0 12px rgba(191, 90, 242, 0.4);
+            animation: glow-pulse-overbought 2s ease-in-out infinite;
         }
         .card-glow-overbought:hover {
             box-shadow: 0 0 0 1.5px var(--purple), 0 0 16px rgba(191, 90, 242, 0.5), var(--shadow-hover);
+        }
+        
+        /* Glow pulse animations for different sync reasons */
+        @keyframes glow-pulse-hvd {
+            0%, 100% { 
+                box-shadow: 0 0 0 1.5px var(--orange), 0 0 12px rgba(255, 159, 10, 0.4); 
+            }
+            50% { 
+                box-shadow: 0 0 0 1.5px var(--orange), 0 0 20px rgba(255, 159, 10, 0.6), 0 0 30px rgba(255, 159, 10, 0.3); 
+            }
+        }
+        
+        @keyframes glow-pulse-oversold {
+            0%, 100% { 
+                box-shadow: 0 0 0 1.5px var(--blue), 0 0 12px rgba(10, 132, 255, 0.4); 
+            }
+            50% { 
+                box-shadow: 0 0 0 1.5px var(--blue), 0 0 20px rgba(10, 132, 255, 0.6), 0 0 30px rgba(10, 132, 255, 0.3); 
+            }
+        }
+        
+        @keyframes glow-pulse-overbought {
+            0%, 100% { 
+                box-shadow: 0 0 0 1.5px var(--purple), 0 0 12px rgba(191, 90, 242, 0.4); 
+            }
+            50% { 
+                box-shadow: 0 0 0 1.5px var(--purple), 0 0 20px rgba(191, 90, 242, 0.6), 0 0 30px rgba(191, 90, 242, 0.3); 
+            }
         }
         
         .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
@@ -2103,9 +2134,24 @@
 
         // --- NARRATION / SPEECH ---
         function loadSpeechVoices() {
-            const setVoices = () => { AppState.speechVoices = window.speechSynthesis.getVoices(); console.log("Voices loaded:", AppState.speechVoices.length); };
-             try { window.speechSynthesis.onvoiceschanged = setVoices; } catch (e) { console.warn("Could not set onvoiceschanged handler:", e); }
+            const setVoices = () => { 
+                AppState.speechVoices = window.speechSynthesis.getVoices(); 
+                console.log("Voices loaded:", AppState.speechVoices.length); 
+                if (AppState.speechVoices.length > 0) {
+                    console.log("Available voices:", AppState.speechVoices.map(v => `${v.name} (${v.lang})`).join(', '));
+                }
+            };
+            try { 
+                window.speechSynthesis.onvoiceschanged = setVoices; 
+            } catch (e) { 
+                console.warn("Could not set onvoiceschanged handler:", e); 
+            }
             setVoices();
+            // Try again after a delay if voices aren't loaded immediately
+            if (window.speechSynthesis.getVoices().length === 0) {
+                setTimeout(setVoices, 100);
+                setTimeout(setVoices, 500);
+            }
         }
         function toggleNarration() {
             AppState.narrationEnabled = !AppState.narrationEnabled;
@@ -2248,10 +2294,24 @@
             speakText(textToSpeak, false);
         }
         function speakText(text, isAnnouncement = false) {
-             if (!AppState.narrationEnabled || !window.speechSynthesis) { console.log("Narration disabled or not supported."); return; }
-             if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
-             if (AppState.speechVoices.length === 0) { loadSpeechVoices(); }
-            const utterance = new SpeechSynthesisUtterance(text);
+             if (!AppState.narrationEnabled || !window.speechSynthesis) { 
+                 console.log("Narration disabled or not supported."); 
+                 return; 
+             }
+             
+             // Cancel any ongoing speech
+             if (window.speechSynthesis.speaking) { 
+                 window.speechSynthesis.cancel(); 
+             }
+             
+             // Ensure voices are loaded
+             if (AppState.speechVoices.length === 0) { 
+                 loadSpeechVoices(); 
+                 // If still no voices, try to get them directly
+                 AppState.speechVoices = window.speechSynthesis.getVoices();
+             }
+             
+             const utterance = new SpeechSynthesisUtterance(text);
             
             // Priority 1: Indian English female voice (en-IN, female)
             let selectedVoice = AppState.speechVoices.find(v => 
@@ -2289,18 +2349,30 @@
             if (selectedVoice) { 
                 utterance.voice = selectedVoice; 
                 utterance.lang = selectedVoice.lang;
-                console.log(`Using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+                console.log(`Speaking: "${text}" using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
             } else {
                 // Last resort: system default
                 utterance.lang = 'en-IN'; // Try to force Indian English even with default voice
-                console.log("Using system default voice with en-IN");
+                console.log(`Speaking: "${text}" using system default voice with en-IN`);
             }
             
             utterance.rate = 0.9; 
             utterance.pitch = 1.05; // Slightly higher pitch for female voice
             utterance.volume = 1.0;
-            utterance.onerror = (event) => { console.error("SpeechSynthesisUtterance.onerror:", event); };
-            window.speechSynthesis.speak(utterance);
+            utterance.onerror = (event) => { 
+                console.error("SpeechSynthesisUtterance.onerror:", event); 
+                console.error("Error details:", event.error, event.message);
+            };
+            utterance.onend = () => { 
+                console.log("Speech completed successfully."); 
+            };
+            
+            try {
+                window.speechSynthesis.speak(utterance);
+                console.log("Speech synthesis started.");
+            } catch (err) {
+                console.error("Error speaking text:", err);
+            }
         }
 
         // --- DATA LOADING & POLLING ---
@@ -2483,6 +2555,15 @@
                  return reason;
              };
              
+             const getGlowClass = (syncReason) => {
+                 if (!syncReason) return '';
+                 const r = syncReason.toLowerCase();
+                 if (r.includes('hvd') || r.includes('significant deployed capital')) return 'card-glow-hvd';
+                 if (r.includes('oversold')) return 'card-glow-oversold';
+                 if (r.includes('overbought')) return 'card-glow-overbought';
+                 return '';
+             };
+             
              container.innerHTML = signals.map(signal => {
                  const latestReason = signal.ind2Reasons[0] || {};
                  const secondReason = signal.ind2Reasons[1] || null;
@@ -2490,8 +2571,9 @@
                  const latestReasonText = formatReason(latestReason.reason);
                  const latestReasonColor = getReasonColor(latestReason.reason);
                  const ind1Color = getReasonColor(signal.ind1Reason);
+                 const glowClass = getGlowClass(latestReason.reason);
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showDashboardSyncDetail('${signal.symbol}')">
+                 return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
@@ -2574,23 +2656,13 @@
                  return 'var(--text-secondary)';
             };
             
-            const getGlowClass = (syncReason) => {
-                if (!syncReason) return '';
-                const r = syncReason.toLowerCase();
-                if (r.includes('hvd') || r.includes('significant deployed capital')) return 'card-glow-hvd';
-                if (r.includes('oversold')) return 'card-glow-oversold';
-                if (r.includes('overbought')) return 'card-glow-overbought';
-                return '';
-            };
-            
             container.innerHTML = clubbedArray.map(signal => {
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
                  const latestReason = signal.reasons[0];
                  const secondReason = signal.reasons[1] || null;
                  const reasonColor = getReasonColor(latestReason.reason);
-                 const glowClass = signal.status === 'Synced' ? getGlowClass(signal.syncReason) : '';
                  
-                 return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showLiveFeedDetail('${signal.symbol}')">
+                 return `<div class="signal-card material material-regular interactive" onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
