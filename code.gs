@@ -2063,7 +2063,13 @@ function testDynamicRowMapping() {
         Logger.log(`  → Using existing row ${targetRow} for symbol "${symbol}"`);
       }
       
-      writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
+      // Write data to the correct row based on indicator type
+      // For HVD signals, include capital value in the reason
+      let reasonToWrite = data.reason;
+      if (indicatorType === 'Indicator2' && data.reason && data.reason.toUpperCase() === 'HVD' && data.capital_deployed_cr) {
+        reasonToWrite = `HVD (${data.capital_deployed_cr} Cr.)`;
+      }
+      writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     });
     
     Logger.log('=== Test completed ===');
