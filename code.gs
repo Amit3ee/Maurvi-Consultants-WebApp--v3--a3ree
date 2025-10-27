@@ -163,15 +163,141 @@ function writeDataToRow(sheet, row, source, reason, time) {
 
 /**
  * Serves the main HTML page of the web app.
+ * Also handles approval/rejection requests via URL parameters.
  */
 function doGet(e) {
   try {
+      // Check if this is an approval/rejection request
+      if (e && e.parameter) {
+        if (e.parameter.action === 'approve' && e.parameter.email) {
+          return handleApprovalRequest(e.parameter.email, true);
+        } else if (e.parameter.action === 'reject' && e.parameter.email) {
+          return handleApprovalRequest(e.parameter.email, false);
+        }
+      }
+      
+      // Normal app loading
       return HtmlService.createHtmlOutputFromFile('index.html')
         .setTitle('Automated Trading Signals')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (err) {
       Logger.log(`doGet Error: ${err.message} Stack: ${err.stack}`);
       return HtmlService.createHtmlOutput("<p>Error loading application. Please contact support.</p>");
+  }
+}
+
+/**
+ * Handles approval/rejection requests from email links
+ */
+function handleApprovalRequest(email, isApproval) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    if (!users[email]) {
+      return HtmlService.createHtmlOutput(`
+        <html>
+          <head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:40px;text-align:center;background:#f5f5f7;}h1{color:#ff3b30;}</style></head>
+          <body><h1>❌ User Not Found</h1><p>The user ${email} was not found in the registration list.</p></body>
+        </html>
+      `);
+    }
+    
+    if (isApproval) {
+      // Approve the user
+      users[email].approved = true;
+      users[email].approvedAt = new Date().toISOString();
+      props.setProperty('registeredUsers', JSON.stringify(users));
+      Logger.log(`User ${email} approved via email link`);
+      
+      // Send approval notification to user
+      try {
+        MailApp.sendEmail({
+          to: email,
+          subject: 'Your Access Has Been Approved - Maurvi Consultants',
+          htmlBody: `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f5f5f7;}.container{max-width:600px;margin:0 auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}h1{color:#1d1d1f;font-size:24px;margin:0 0 16px 0;}.success-box{background:rgba(48,209,88,0.1);padding:20px;border-radius:8px;border-left:4px solid #30d158;margin:16px 0;}.footer{margin-top:24px;padding-top:24px;border-top:1px solid #e5e5e7;color:#86868b;font-size:12px;}</style></head>
+            <body>
+              <div class="container">
+                <h1>✅ Access Approved!</h1>
+                <p>Good news! Your access to the Maurvi Consultants Trading Signals Platform has been approved.</p>
+                <div class="success-box">
+                  <strong>You can now sign in</strong> using your ${users[email].provider} account.
+                </div>
+                <p>Simply click the "${users[email].provider}" button on the login screen to access the platform.</p>
+                <div class="footer">
+                  <p>Maurvi Consultants - Trading Signals Platform</p>
+                  <p>&copy; ${new Date().getFullYear()} All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+        });
+      } catch (emailErr) {
+        Logger.log(`Failed to send approval notification: ${emailErr.message}`);
+      }
+      
+      return HtmlService.createHtmlOutput(`
+        <html>
+          <head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:40px;text-align:center;background:#f5f5f7;}h1{color:#30d158;}p{color:#1d1d1f;font-size:16px;}</style></head>
+          <body><h1>✅ User Approved</h1><p>${email} has been approved and notified via email.</p><p>You can close this window now.</p></body>
+        </html>
+      `);
+    } else {
+      // Reject the user (remove from registration list)
+      delete users[email];
+      props.setProperty('registeredUsers', JSON.stringify(users));
+      Logger.log(`User ${email} rejected and removed via email link`);
+      
+      // Send rejection notification to user
+      try {
+        MailApp.sendEmail({
+          to: email,
+          subject: 'Registration Update - Maurvi Consultants',
+          htmlBody: `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f5f5f7;}.container{max-width:600px;margin:0 auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}h1{color:#1d1d1f;font-size:24px;margin:0 0 16px 0;}.info-box{background:rgba(255,59,48,0.1);padding:20px;border-radius:8px;border-left:4px solid #ff3b30;margin:16px 0;}.footer{margin-top:24px;padding-top:24px;border-top:1px solid #e5e5e7;color:#86868b;font-size:12px;}</style></head>
+            <body>
+              <div class="container">
+                <h1>Registration Update</h1>
+                <p>Thank you for your interest in the Maurvi Consultants Trading Signals Platform.</p>
+                <div class="info-box">
+                  Your registration request has not been approved at this time.
+                </div>
+                <p>If you have any questions, please contact the administrator.</p>
+                <div class="footer">
+                  <p>Maurvi Consultants - Trading Signals Platform</p>
+                  <p>&copy; ${new Date().getFullYear()} All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+        });
+      } catch (emailErr) {
+        Logger.log(`Failed to send rejection notification: ${emailErr.message}`);
+      }
+      
+      return HtmlService.createHtmlOutput(`
+        <html>
+          <head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:40px;text-align:center;background:#f5f5f7;}h1{color:#ff3b30;}p{color:#1d1d1f;font-size:16px;}</style></head>
+          <body><h1>❌ User Rejected</h1><p>${email} has been rejected and notified via email.</p><p>You can close this window now.</p></body>
+        </html>
+      `);
+    }
+  } catch (err) {
+    Logger.log(`handleApprovalRequest ERROR: ${err.message} Stack: ${err.stack}`);
+    return HtmlService.createHtmlOutput(`
+      <html>
+        <head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:40px;text-align:center;background:#f5f5f7;}h1{color:#ff3b30;}</style></head>
+        <body><h1>❌ Error</h1><p>An error occurred: ${err.message}</p></body>
+      </html>
+    `);
   }
 }
 
@@ -190,8 +316,8 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   
   try {
-    // Acquire lock with 30 second timeout
-    lock.waitLock(30000);
+    // Acquire lock with 60 second timeout (increased from 30)
+    lock.waitLock(60000);
     
     const postData = e.postData.contents;
     if (!postData) { throw new Error("Received empty postData."); }
@@ -665,6 +791,10 @@ function registerSocialUser(email, name, provider) {
     
     // Send approval request to admin
     try {
+      const webAppUrl = ScriptApp.getService().getUrl();
+      const approveUrl = `${webAppUrl}?action=approve&email=${encodeURIComponent(email)}`;
+      const rejectUrl = `${webAppUrl}?action=reject&email=${encodeURIComponent(email)}`;
+      
       MailApp.sendEmail({
         to: ADMIN_EMAIL,
         subject: `New User Registration Request - ${name}`,
@@ -681,7 +811,29 @@ function registerSocialUser(email, name, provider) {
               .info-item { margin: 8px 0; }
               .label { font-weight: 600; color: #1d1d1f; }
               .value { color: #86868b; }
-              .approve-link { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
+              .button-container { margin: 24px 0; text-align: center; }
+              .approve-btn { 
+                display: inline-block; 
+                background: linear-gradient(135deg, #30d158 0%, #28cd41 100%); 
+                color: white; 
+                padding: 14px 32px; 
+                border-radius: 8px; 
+                text-decoration: none; 
+                font-weight: 600; 
+                margin: 8px;
+                box-shadow: 0 2px 8px rgba(48, 209, 88, 0.3);
+              }
+              .reject-btn { 
+                display: inline-block; 
+                background: linear-gradient(135deg, #ff3b30 0%, #d32f2f 100%); 
+                color: white; 
+                padding: 14px 32px; 
+                border-radius: 8px; 
+                text-decoration: none; 
+                font-weight: 600; 
+                margin: 8px;
+                box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+              }
               .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
             </style>
           </head>
@@ -697,11 +849,17 @@ function registerSocialUser(email, name, provider) {
                 <div class="info-item"><span class="label">Registered:</span> <span class="value">${new Date().toLocaleString()}</span></div>
               </div>
               
-              <p>To approve this user, please:</p>
-              <ol>
-                <li>Open Google Apps Script editor</li>
-                <li>Run the function: <code>approveUser("${email}")</code></li>
-              </ol>
+              <p><strong>Click one of the buttons below to approve or reject this user:</strong></p>
+              
+              <div class="button-container">
+                <a href="${approveUrl}" class="approve-btn">✓ Approve User</a>
+                <a href="${rejectUrl}" class="reject-btn">✗ Reject User</a>
+              </div>
+              
+              <p style="font-size: 12px; color: #86868b; margin-top: 16px;">
+                Clicking approve will grant immediate access to the user and send them a confirmation email.
+                Clicking reject will remove the registration request and notify the user.
+              </p>
               
               <div class="footer">
                 <p>Maurvi Consultants - Trading Signals Platform</p>
@@ -2079,5 +2237,133 @@ function eraseMockData() {
     Logger.log(`${errorMessage} Stack: ${err.stack}`);
     _logErrorToSheet(logSheet, 'eraseMockData Error', err, '');
     return errorMessage;
+  }
+}
+
+/**
+ * Rearranges and fixes data on the current date Indicator1 sheet
+ * Rebuilds the symbol row map and fixes any wrongly written data
+ */
+function refreshRearrangeCurrentData() {
+  let logSheet;
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = new Date();
+    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    
+    const ind1SheetName = `Indicator1_${dateSuffix}`;
+    logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
+    
+    let ind1Sheet = ss.getSheetByName(ind1SheetName);
+    if (!ind1Sheet) {
+      throw new Error(`Sheet not found: ${ind1SheetName}`);
+    }
+    
+    Logger.log('Starting to refresh and rearrange current data...');
+    
+    // Get all data from the sheet
+    const lastRow = ind1Sheet.getLastRow();
+    if (lastRow <= 1) {
+      Logger.log('No data to rearrange (only headers)');
+      return { status: 'success', message: 'No data to rearrange' };
+    }
+    
+    const allData = ind1Sheet.getRange(2, 1, lastRow - 1, ind1Sheet.getMaxColumns()).getValues();
+    
+    // Build a map of unique symbols with all their data
+    const symbolDataMap = {};
+    allData.forEach((row, index) => {
+      const symbol = row[0];
+      if (!symbol || symbol === '') return;
+      
+      if (!symbolDataMap[symbol]) {
+        symbolDataMap[symbol] = {
+          symbol: symbol,
+          ind1Signals: [],
+          ind2SyncEvents: []
+        };
+      }
+      
+      // Collect Indicator1 signals (columns B-K, pairs of reason/time)
+      for (let i = 1; i < 11; i += 2) {
+        if (row[i] && row[i] !== '') {
+          symbolDataMap[symbol].ind1Signals.push({
+            reason: row[i],
+            time: row[i + 1] || ''
+          });
+        }
+      }
+      
+      // Collect Indicator2 sync events (columns L-BA, pairs of reason/time)
+      for (let i = 11; i < 53; i += 2) {
+        if (row[i] && row[i] !== '') {
+          symbolDataMap[symbol].ind2SyncEvents.push({
+            reason: row[i],
+            time: row[i + 1] || ''
+          });
+        }
+      }
+    });
+    
+    // Clear all data except headers
+    if (lastRow > 1) {
+      ind1Sheet.getRange(2, 1, lastRow - 1, ind1Sheet.getMaxColumns()).clearContent();
+    }
+    
+    // Rebuild the sheet with cleaned data
+    const symbols = Object.keys(symbolDataMap).sort();
+    const newSymbolMap = {};
+    
+    symbols.forEach((symbol, index) => {
+      const targetRow = index + 2; // Row 2 onwards
+      const data = symbolDataMap[symbol];
+      
+      // Write symbol in column A
+      ind1Sheet.getRange(targetRow, 1).setValue(symbol);
+      
+      // Write Indicator1 signals (up to 5 pairs)
+      const ind1Data = [];
+      data.ind1Signals.slice(0, 5).forEach(signal => {
+        ind1Data.push(signal.reason, signal.time);
+      });
+      if (ind1Data.length > 0) {
+        ind1Sheet.getRange(targetRow, 2, 1, ind1Data.length).setValues([ind1Data]);
+      }
+      
+      // Write Indicator2 sync events (up to 21 pairs)
+      const ind2Data = [];
+      data.ind2SyncEvents.slice(0, 21).forEach(event => {
+        ind2Data.push(event.reason, event.time);
+      });
+      if (ind2Data.length > 0) {
+        ind1Sheet.getRange(targetRow, 12, 1, ind2Data.length).setValues([ind2Data]);
+      }
+      
+      // Update symbol map
+      newSymbolMap[symbol] = targetRow;
+    });
+    
+    // Update cache with new symbol map
+    const cache = CacheService.getScriptCache();
+    const cacheKey = `symbolRowMap_${dateSuffix}`;
+    cache.put(cacheKey, JSON.stringify(newSymbolMap), 86400);
+    
+    // Clear data cache to force refresh
+    cache.remove(`sheetData_${ind1SheetName}`);
+    
+    const message = `Data refreshed and rearranged successfully!\n` +
+                    `- Unique symbols: ${symbols.length}\n` +
+                    `- Total Indicator1 signals: ${Object.values(symbolDataMap).reduce((sum, d) => sum + d.ind1Signals.length, 0)}\n` +
+                    `- Total Indicator2 sync events: ${Object.values(symbolDataMap).reduce((sum, d) => sum + d.ind2SyncEvents.length, 0)}`;
+    Logger.log(message);
+    SpreadsheetApp.flush();
+    return { status: 'success', message: message };
+    
+  } catch (err) {
+    const errorMessage = `Error refreshing/rearranging data: ${err.message}`;
+    Logger.log(`${errorMessage} Stack: ${err.stack}`);
+    _logErrorToSheet(logSheet, 'refreshRearrangeCurrentData Error', err, '');
+    return { status: 'error', message: errorMessage };
   }
 }
