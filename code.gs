@@ -384,7 +384,8 @@ function doPost(e) {
       Logger.log(`Indicator2 signal appended: ${symbol} at ${time}`);
       
       // Check if this is a Nifty signal - if so, we're done (no row mapping needed)
-      if (symbol === 'NIFTY' || symbol === 'Nifty' || symbol === 'Nifty1!' || symbol === 'NIFTY1!') {
+      const symbolUpper = (symbol || '').toUpperCase();
+      if (symbolUpper === 'NIFTY' || symbolUpper === 'NIFTY1!') {
         Logger.log(`Nifty signal processed: ${symbol}`);
         return ContentService.createTextOutput(JSON.stringify({ 
           status: 'success', 
