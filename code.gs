@@ -125,6 +125,12 @@ function writeDataToRow(sheet, row, source, reason, time) {
   const MAX_COLS_INDICATOR1 = 10; // 5 pairs of [reason, time] columns for Indicator1
   const MAX_COLS_INDICATOR2 = 42; // 21 pairs of [reason, time] columns for Indicator2
   
+  // Validate that reason is not blank
+  if (!reason || typeof reason !== 'string' || reason.trim() === '') {
+    Logger.log(`writeDataToRow: Skipping write - reason is blank or invalid for source ${source}`);
+    return;
+  }
+  
   let startCol;
   let maxCols;
   if (source === 'Indicator1') {
@@ -351,9 +357,9 @@ function doPost(e) {
       throw new Error("Missing required field: must have either 'scrip' or 'ticker'");
     }
     
-    // Validate reason is present
-    if (!data.reason) {
-      throw new Error("Missing required field: reason");
+    // Validate reason is present and not blank
+    if (!data.reason || typeof data.reason !== 'string' || data.reason.trim() === '') {
+      throw new Error("Missing required field: reason (must be a non-empty string)");
     }
     
     Logger.log(`Received ${indicatorType} signal: ${symbol}, Reason: ${data.reason}, Time: ${time}`);
