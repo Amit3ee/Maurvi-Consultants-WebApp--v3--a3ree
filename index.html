@@ -1790,6 +1790,9 @@
             }
         }
         
+        // Constants for social login
+        const SOCIAL_LOGIN_TIMEOUT_MS = 3000; // Time to show message before re-enabling buttons
+        
         function initGoogleSignIn() {
             // This is a placeholder for Google OAuth integration
             // See detailed implementation requirements in handleSocialLogin() comments above
@@ -1801,7 +1804,7 @@
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 3000);
+            }, SOCIAL_LOGIN_TIMEOUT_MS);
             
             // For testing purposes only - simulate successful OAuth
             // REMOVE THIS IN PRODUCTION
@@ -1825,7 +1828,7 @@
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 3000);
+            }, SOCIAL_LOGIN_TIMEOUT_MS);
         }
         
         function initAppleSignIn() {
@@ -1839,7 +1842,7 @@
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 3000);
+            }, SOCIAL_LOGIN_TIMEOUT_MS);
         }
         
         function handleSocialLoginSuccess(provider, userData) {

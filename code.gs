@@ -1570,14 +1570,21 @@ function getDashboardData() {
     }
 
     // Build dashboard synced list (symbols with sync events from Indicator2 that are also in Indicator1)
+    // Column structure constants
+    const COL_SYMBOL = 0; // Column A
+    const COL_IND1_START = 1; // Column B (first Indicator1 reason)
+    const COL_IND1_END = 11; // Column K (last Indicator1 time) - 5 pairs from B to K
+    const COL_IND2_START = 11; // Column L (first Indicator2 sync reason)
+    const COL_IND2_END = 53; // Column BA (last Indicator2 sync time) - 21 pairs from L to BA
+    
     const dashboardSyncedList = [];
     ind1Data.forEach(row => {
-      if (!row[0]) return;
-      const symbol = row[0];
+      if (!row[COL_SYMBOL]) return;
+      const symbol = row[COL_SYMBOL];
       
       // First check if there's at least one Indicator1 signal (columns B-K)
       let hasInd1Signal = false;
-      for (let i = 1; i < 11; i += 2) { // Check Indicator1 reason columns (B, D, F, H, J)
+      for (let i = COL_IND1_START; i < COL_IND1_END; i += 2) { // Check Indicator1 reason columns (B, D, F, H, J)
         if (row[i] && row[i] !== '') {
           hasInd1Signal = true;
           break;
@@ -1591,7 +1598,7 @@ function getDashboardData() {
       
       // Check if there are any sync events (columns L onwards - now up to 21 pairs)
       const ind2Reasons = [];
-      for (let i = 11; i < 53; i += 2) { // 11 to 52 (21 pairs starting from column L)
+      for (let i = COL_IND2_START; i < COL_IND2_END; i += 2) { // L to BA (21 pairs)
         if (row[i] && row[i] !== '') {
           ind2Reasons.push({
             time: row[i + 1] || '',
@@ -1603,8 +1610,8 @@ function getDashboardData() {
       // Only add to dashboard if there are BOTH Indicator1 signals AND Indicator2 sync events
       if (ind2Reasons.length > 0) {
         // Get the first Indicator1 reason for this symbol
-        const ind1Reason = row[1] || '';
-        const ind1Time = row[2] || '';
+        const ind1Reason = row[COL_IND1_START] || '';
+        const ind1Time = row[COL_IND1_START + 1] || '';
         
         ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
         dashboardSyncedList.push({
