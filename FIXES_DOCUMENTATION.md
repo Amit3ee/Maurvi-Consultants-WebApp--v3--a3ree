@@ -361,6 +361,73 @@ function loadSpeechVoices() {
 6. Verify symbol is spoken aloud
 7. Check console for speech events
 
+## Issue 9: Blank Indicator 1 Reasons
+
+### Problem
+Signals with blank or empty Indicator 1 reasons were appearing in the `Indicator1_<date>` sheet and being displayed in the web app.
+
+### Solution
+Implemented comprehensive filtering at multiple levels:
+
+#### 1. Input Validation (doPost)
+Enhanced validation to reject blank/empty reasons at the webhook entry point:
+```javascript
+// Validate reason is present and not blank
+if (!data.reason || data.reason.trim() === '') {
+  throw new Error("Missing or blank required field: reason");
+}
+```
+
+#### 2. Write Prevention (writeDataToRow)
+Added check to prevent writing blank reasons to the sheet:
+```javascript
+// Validate reason is not blank - do not write blank reasons to sheet
+if (!reason || reason.trim() === '') {
+  Logger.log(`writeDataToRow: Skipping blank reason for source "${source}" at row ${row}`);
+  return;
+}
+```
+
+#### 3. Display Filtering
+Updated all data reading functions to filter out blank reasons:
+- `getDashboardData()`: Filters blank reasons from live feed
+- `getSignalsForDate()`: Filters blank reasons from historical data
+- `refreshRearrangeCurrentData()`: Removes blank reasons during data reorganization
+
+### Implementation Details
+All filtering uses robust string validation:
+```javascript
+// Check for blank with trim()
+const reason = row[i];
+if (reason && reason.toString().trim() !== '') {
+  // Process non-blank reason
+}
+```
+
+### What This Fixes
+1. **Webhook Level**: Rejects incoming signals with blank reasons
+2. **Storage Level**: Prevents blank reasons from being written to sheets
+3. **Display Level**: Filters out any existing blank reasons from display
+4. **Maintenance Level**: Cleans up blank reasons during data refresh
+
+### Testing
+Added `testBlankReasonFiltering()` function to verify:
+- `writeDataToRow` skips blank reasons
+- `getDashboardData` filters blank reasons from output
+- Validation logic properly rejects various blank inputs (empty string, whitespace, null)
+
+### Usage
+Run test from Apps Script editor:
+```javascript
+testBlankReasonFiltering()
+```
+
+### Impact
+- Cleaner data in Indicator1 sheets
+- More accurate signal display
+- Better data quality
+- Prevents confusion from empty signals
+
 ## Rollback Procedure
 
 If any issues arise, you can rollback:
@@ -390,8 +457,9 @@ For issues or questions:
 
 ## Version History
 
-- **v3.1** (Current): All 8 issues fixed
-- **v3.0** (Previous): Original implementation
+- **v3.2** (Current): Issue 9 fixed - Blank indicator 1 reasons filtering
+- **v3.1**: All 8 issues fixed (social login, approval emails, lock timeout, glowing effects, narration)
+- **v3.0**: Original implementation
 
 ## Notes
 

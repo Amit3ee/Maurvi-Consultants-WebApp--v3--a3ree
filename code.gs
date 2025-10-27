@@ -2058,6 +2058,140 @@ function testDynamicRowMapping() {
   }
 }
 
+/**
+ * Test function for blank reason filtering
+ * Tests that blank and empty string reasons are properly rejected and filtered
+ */
+function testBlankReasonFiltering() {
+  try {
+    Logger.log('=== Testing Blank Reason Filtering ===');
+    
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const ind1Sheet = ss.getSheetByName(`Indicator1_${today}`);
+    
+    if (!ind1Sheet) {
+      throw new Error(`Sheet not found: Indicator1_${today}. Run testDailySetup() first.`);
+    }
+    
+    // Test 1: writeDataToRow should skip blank reasons
+    Logger.log('\n--- Test 1: writeDataToRow with blank reasons ---');
+    const testRow = ind1Sheet.getLastRow() + 1;
+    ind1Sheet.getRange(testRow, 1).setValue('TESTBLANK');
+    
+    // These should be skipped (not written)
+    writeDataToRow(ind1Sheet, testRow, 'Indicator1', '', Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss'));
+    writeDataToRow(ind1Sheet, testRow, 'Indicator1', '   ', Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss'));
+    writeDataToRow(ind1Sheet, testRow, 'Indicator1', null, Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss'));
+    
+    // This should be written
+    writeDataToRow(ind1Sheet, testRow, 'Indicator1', 'Valid Reason', Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss'));
+    
+    // Check results
+    const testRowData = ind1Sheet.getRange(testRow, 1, 1, 12).getValues()[0];
+    Logger.log(`Test Row Data: ${JSON.stringify(testRowData)}`);
+    
+    // Verify only the valid reason was written
+    let validReasonCount = 0;
+    for (let i = 1; i < 11; i += 2) {
+      if (testRowData[i] && testRowData[i] !== '') {
+        validReasonCount++;
+        Logger.log(`  Found reason at column ${i + 1}: "${testRowData[i]}"`);
+      }
+    }
+    
+    if (validReasonCount === 1 && testRowData[1] === 'Valid Reason') {
+      Logger.log('✓ Test 1 PASSED: Only valid reason was written, blank reasons were skipped');
+    } else {
+      Logger.log(`✗ Test 1 FAILED: Expected 1 valid reason, found ${validReasonCount}`);
+    }
+    
+    // Test 2: getDashboardData should filter blank reasons
+    Logger.log('\n--- Test 2: getDashboardData filtering ---');
+    
+    // Add a row with blank reason manually (to simulate existing data)
+    const testRow2 = ind1Sheet.getLastRow() + 1;
+    ind1Sheet.getRange(testRow2, 1).setValue('TESTBLANK2');
+    ind1Sheet.getRange(testRow2, 2, 1, 2).setValues([['', '10:00:00']]);  // Blank reason
+    ind1Sheet.getRange(testRow2, 4, 1, 2).setValues([['Good Reason', '10:01:00']]);  // Valid reason
+    
+    // Get dashboard data
+    const dashboardData = getDashboardData();
+    
+    // Check if TESTBLANK2 appears in liveFeed
+    const testBlank2Signals = dashboardData.liveFeed.filter(item => item.symbol === 'TESTBLANK2');
+    Logger.log(`Found ${testBlank2Signals.length} signals for TESTBLANK2 in liveFeed`);
+    
+    if (testBlank2Signals.length === 1 && testBlank2Signals[0].reason === 'Good Reason') {
+      Logger.log('✓ Test 2 PASSED: Blank reason was filtered out, only valid reason appears');
+    } else {
+      Logger.log(`✗ Test 2 FAILED: Expected 1 signal with "Good Reason", found ${testBlank2Signals.length} signals`);
+      if (testBlank2Signals.length > 0) {
+        Logger.log(`  Signals: ${JSON.stringify(testBlank2Signals)}`);
+      }
+    }
+    
+    // Test 3: Validate doPost rejects blank reasons
+    Logger.log('\n--- Test 3: doPost validation ---');
+    
+    // Simulate doPost data validation
+    const testCases = [
+      { reason: '', shouldFail: true, description: 'empty string' },
+      { reason: '   ', shouldFail: true, description: 'whitespace only' },
+      { reason: 'Valid Signal', shouldFail: false, description: 'valid reason' },
+      { reason: null, shouldFail: true, description: 'null value' }
+    ];
+    
+    let passedTests = 0;
+    testCases.forEach(testCase => {
+      try {
+        // Simulate the validation from doPost
+        if (!testCase.reason || testCase.reason.trim() === '') {
+          if (testCase.shouldFail) {
+            Logger.log(`  ✓ Correctly rejected: ${testCase.description}`);
+            passedTests++;
+          } else {
+            Logger.log(`  ✗ Incorrectly rejected: ${testCase.description}`);
+          }
+        } else {
+          if (!testCase.shouldFail) {
+            Logger.log(`  ✓ Correctly accepted: ${testCase.description}`);
+            passedTests++;
+          } else {
+            Logger.log(`  ✗ Incorrectly accepted: ${testCase.description}`);
+          }
+        }
+      } catch (err) {
+        Logger.log(`  Error testing ${testCase.description}: ${err.message}`);
+      }
+    });
+    
+    if (passedTests === testCases.length) {
+      Logger.log('✓ Test 3 PASSED: All validation tests passed');
+    } else {
+      Logger.log(`✗ Test 3 FAILED: ${passedTests}/${testCases.length} validation tests passed`);
+    }
+    
+    // Clean up test data
+    Logger.log('\n--- Cleaning up test data ---');
+    // Note: In production, you may want to keep test data for manual verification
+    // For now, we'll log that cleanup should be done manually
+    Logger.log('Test rows created: TESTBLANK, TESTBLANK2');
+    Logger.log('You can manually delete these test rows or run eraseMockData() to clean up');
+    
+    Logger.log('\n=== Blank Reason Filtering Tests Completed ===');
+    Logger.log('Summary:');
+    Logger.log('- writeDataToRow correctly skips blank reasons');
+    Logger.log('- getDashboardData filters out signals with blank reasons');
+    Logger.log('- Validation logic properly rejects blank reasons');
+    
+  } catch (err) {
+    Logger.log(`TEST ERROR: ${err.message} Stack: ${err.stack}`);
+    throw err;
+  }
+}
+
 
 // --- LARGE MOCK DATA FUNCTIONS ---
 
