@@ -304,12 +304,19 @@ function handleApprovalRequest(email, isApproval) {
 /**
  * Handles all POST requests (TradingView alerts) with Dynamic Row Mapping.
  * Supports multiple alert message formats:
- * - Indicator1: {"scrip": "...", "timestamp": "...", "reason": "..."}
- * - Indicator2 HVD: {"timestamp": "...", "ticker": "...", "reason": "HVD", "capital_deployed_cr": "..."}
- * - Indicator2 Pattern: {"timestamp": "...", "ticker": "...", "reason": "..."}
- * - Indicator2 Standalone: {"timestamp": "...", "ticker": "...", "reason": "..."}
+ * - Indicator1: {"scrip": "SYMBOL", "timestamp": "...", "reason": "..."}
+ * - Indicator2 HVD: {"timestamp": "...", "ticker": "SYMBOL", "reason": "HVD", "capital_deployed_cr": "150"}
+ * - Indicator2 Pattern: {"timestamp": "...", "ticker": "SYMBOL", "reason": "Bullish Engulfing"}
+ * - Indicator2 Standalone: {"timestamp": "...", "ticker": "SYMBOL", "reason": "Oversold - RSI Below 30"}
  * 
  * NOTE: Timestamps from indicators are IGNORED. Server time is used for all signals.
+ * 
+ * Data Flow:
+ * - Indicator1 signals: Create row in Indicator1 sheet (columns B-K for signals)
+ * - Indicator2 signals: Always stored in Indicator2 sheet
+ *   - If symbol exists in Indicator1 sheet: Also sync to sync columns (L-BA)
+ *   - If symbol doesn't exist in Indicator1 sheet: Only stored in Indicator2 sheet
+ * - Nifty signals (ticker = "NIFTY" or "Nifty1!"): Only stored in Indicator2 sheet, no row mapping
  */
 function doPost(e) {
   let logSheet;
@@ -377,7 +384,8 @@ function doPost(e) {
       Logger.log(`Indicator2 signal appended: ${symbol} at ${time}`);
       
       // Check if this is a Nifty signal - if so, we're done (no row mapping needed)
-      if (symbol === 'NIFTY' || symbol === 'Nifty' || symbol === 'Nifty1!' || symbol === 'NIFTY1!') {
+      const symbolUpper = (symbol || '').toUpperCase();
+      if (symbolUpper === 'NIFTY' || symbolUpper === 'NIFTY1!') {
         Logger.log(`Nifty signal processed: ${symbol}`);
         return ContentService.createTextOutput(JSON.stringify({ 
           status: 'success', 
@@ -391,7 +399,7 @@ function doPost(e) {
     }
     
     // --- Handle Dynamic Row Mapping for Indicator1 sheet ---
-    // Both Indicator1 and Indicator2 (non-Nifty) signals go to Indicator1 sheet
+    // IMPORTANT: Only Indicator1 signals create new rows. Indicator2 signals only sync to existing rows.
     const ind1Sheet = ss.getSheetByName(`Indicator1_${dateSuffix}`);
     if (!ind1Sheet) {
       throw new Error(`Sheet not found: Indicator1_${dateSuffix}`);
@@ -417,17 +425,31 @@ function doPost(e) {
     let targetRow = symbolMap[symbol];
     
     if (targetRow === undefined) {
-      // New symbol for the day - assign next available row
-      targetRow = ind1Sheet.getLastRow() + 1;
-      
-      // Write symbol to Column A
-      ind1Sheet.getRange(targetRow, 1).setValue(symbol);
-      
-      // Update and save the map
-      symbolMap[symbol] = targetRow;
-      cache.put(cacheKey, JSON.stringify(symbolMap), 86400); // Cache for 24 hours
-      
-      Logger.log(`New symbol "${symbol}" assigned to row ${targetRow}`);
+      // Symbol not yet in Indicator1 sheet
+      if (indicatorType === 'Indicator1') {
+        // Only Indicator1 signals create new rows
+        targetRow = ind1Sheet.getLastRow() + 1;
+        
+        // Write symbol to Column A
+        ind1Sheet.getRange(targetRow, 1).setValue(symbol);
+        
+        // Update and save the map
+        symbolMap[symbol] = targetRow;
+        cache.put(cacheKey, JSON.stringify(symbolMap), 86400); // Cache for 24 hours
+        
+        Logger.log(`New symbol "${symbol}" assigned to row ${targetRow} by Indicator1`);
+      } else {
+        // Indicator2 signal for a symbol not yet in Indicator1 sheet
+        // Don't create a row, just log and return success
+        Logger.log(`Indicator2 signal for "${symbol}" - no Indicator1 row exists yet. Signal stored in Indicator2 sheet only.`);
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: 'success', 
+          indicator: indicatorType,
+          symbol: symbol,
+          time: time,
+          note: 'Stored in Indicator2 sheet only - no Indicator1 row exists'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
     } else {
       Logger.log(`Using existing row ${targetRow} for symbol "${symbol}"`);
     }
@@ -1525,16 +1547,29 @@ function getDashboardData() {
       };
       
       // Categorize based on reason
+      // Define bullish and bearish patterns
+      const bullishPatterns = ['bullish', 'engulfing', 'pin bar', 'morning star', 'hammer', 'white soldiers', 'oversold'];
+      const bearishPatterns = ['bearish', 'harami', 'evening star', 'shooting star', 'doji', 'overbought'];
+      
       if (reason.includes('hvd')) {
         logs.hvd.push(signal);
-      } else if (reason.includes('bullish')) {
-        logs.bullish.push(signal);
-      } else if (reason.includes('bearish')) {
-        logs.bearish.push(signal);
       } else if (reason.includes('oversold')) {
+        // Oversold signals go to oversold category (standalone alerts)
         logs.oversold.push(signal);
       } else if (reason.includes('overbought')) {
+        // Overbought signals go to overbought category (standalone alerts)
         logs.overbought.push(signal);
+      } else {
+        // Check for bullish or bearish patterns in the reason text
+        const isBullish = bullishPatterns.some(pattern => reason.includes(pattern));
+        const isBearish = bearishPatterns.some(pattern => reason.includes(pattern));
+        
+        if (isBullish) {
+          logs.bullish.push(signal);
+        } else if (isBearish) {
+          logs.bearish.push(signal);
+        }
+        // If neither bullish nor bearish, signal is not categorized in logs
       }
     });
     

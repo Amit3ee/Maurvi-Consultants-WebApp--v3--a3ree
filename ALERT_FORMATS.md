@@ -189,12 +189,14 @@ Message:
 ### Indicator 2 Signals (Non-Nifty)
 1. Received with `"ticker"` key
 2. Timestamped with server time
-3. Written to Indicator2 sheet (append-only log)
-4. Also written to Indicator1 sheet sync columns (L-BA, up to 21 sync events per symbol)
+3. **Always** written to Indicator2 sheet (append-only log)
+4. **Conditionally** written to Indicator1 sheet sync columns (L-BA, up to 21 sync events per symbol)
+   - Only if the symbol already exists in Indicator1 sheet (created by Indicator1 signal)
+   - If symbol doesn't exist, signal is stored in Indicator2 sheet only
 5. Uses same row as Indicator 1 signal for that symbol (if exists)
 
 ### Nifty Signals
-1. Received with `"ticker"` key = "NIFTY" or "Nifty1!"
+1. Received with `"ticker"` key = "NIFTY", "Nifty", "NIFTY1!", or "Nifty1!" (case-insensitive)
 2. Timestamped with server time
 3. Written to Indicator2 sheet only
 4. No row mapping (displayed separately in UI)
