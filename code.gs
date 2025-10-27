@@ -455,7 +455,12 @@ function doPost(e) {
     }
     
     // Write data to the correct row based on indicator type
-    writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
+    // For HVD signals, include capital value in the reason
+    let reasonToWrite = data.reason;
+    if (indicatorType === 'Indicator2' && data.reason && data.reason.toUpperCase() === 'HVD' && data.capital_deployed_cr) {
+      reasonToWrite = `HVD (${data.capital_deployed_cr} Cr.)`;
+    }
+    writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     
     // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
     const cacheService = CacheService.getScriptCache();
@@ -2167,11 +2172,13 @@ function populateLargeMockData() {
         const second = Math.floor(Math.random() * 60);
         const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
         const reason = reasons2[Math.floor(Math.random() * reasons2.length)];
-        ind2Data.push(reason, timeStr);
-        
         // Also add to Indicator2 sheet
         const capital = reason === 'HVD' ? String(Math.floor(Math.random() * 500) + 50) : '';
         ind2Sheet.appendRow([dateSuffix, timeStr, symbol, reason, capital]);
+        
+        // For HVD signals, include capital value in the reason for Indicator1 sheet
+        const reasonForInd1 = (reason === 'HVD' && capital) ? `HVD (${capital} Cr.)` : reason;
+        ind2Data.push(reasonForInd1, timeStr);
       }
       if (ind2Data.length > 0) {
         ind1Sheet.getRange(row, 12, 1, ind2Data.length).setValues([ind2Data]);
