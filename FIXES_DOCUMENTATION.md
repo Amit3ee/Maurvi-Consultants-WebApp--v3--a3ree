@@ -169,21 +169,35 @@ Added three distinct animated glow effects:
 - Enhanced box-shadow on hover
 - Border color matching glow color
 
-## Issue 6: Sync Signals Feed Filtering
+## Issue 6: Sync Signals Feed Filtering (UPDATED)
 
-### Problem
+### Original Problem (Resolved)
 Logs section showed all Indicator2 signals, including non-synced ones.
 
-### Solution
+### Original Solution
 - Updated `getDashboardData()` function in `code.gs`
 - Added sync validation before adding signals to logs
 - Only signals that exist in Indicator1 sheet sync columns are shown
 - Added logging for skipped non-synced signals
 
-### Logic
+### NEW REQUIREMENT (Current Implementation)
+**Updated Requirement**: Show ALL Indicator2 data in logs feed, regardless of sync status with Indicator1.
+
+### Updated Solution
+- Modified `getDashboardData()` function in `code.gs` (lines 1508-1542)
+- Removed mandatory sync check that filtered out non-synced signals
+- Changed status assignment to be dynamic:
+  - 'Synced' if signal matches with Indicator1 sync columns
+  - 'Awaiting' if signal has no match in Indicator1
+- Removed early return for non-synced signals
+- Removed Logger.log for skipping signals
+
+### Current Logic
 ```javascript
-// Check if signal is synced with Indicator1
+// Check if this signal is synced with Indicator1 (for status only)
+const ind1Row = ind1Data.find(r => r[0] === symbol);
 let isSynced = false;
+
 if (ind1Row) {
     // Check if time matches any sync time in columns L onwards
     for (let j = 12; j < 53; j += 2) {
@@ -194,14 +208,25 @@ if (ind1Row) {
     }
 }
 
-// Only add to logs if synced
-if (!isSynced) return;
+// Include all Indicator2 signals with appropriate status
+const signal = { 
+    symbol: symbol, 
+    time: time, 
+    reason: row[3], 
+    capital: row[4],
+    status: isSynced ? 'Synced' : 'Awaiting' // Set status based on sync state
+};
 ```
 
-### Impact
-- Logs tab shows only truly synced signals
-- Cleaner, more accurate data display
-- Easier to identify real sync events
+### Current Impact
+- Logs tab now shows ALL Indicator2 signals in their respective windows
+- Signals are displayed with correct sync status:
+  - Green status light for synced signals
+  - Orange status light for awaiting signals
+- Supports both scenarios:
+  - Signals with matching Indicator1 entries (Synced)
+  - Signals without matching Indicator1 entries (Awaiting)
+- More comprehensive view of all Indicator2 activity
 
 ## Issue 7: Refresh/Rearrange Function
 
@@ -337,12 +362,18 @@ function loadSpeechVoices() {
 4. Hover over glowing signal
 5. Verify animation pauses
 
-### Test Issue 6: Filtered Logs
+### Test Issue 6: Updated Logs Feed (Show All Indicator2 Data)
 1. Navigate to Logs tab
 2. Check HVD, Bullish, Bearish, Oversold, Overbought sections
-3. Verify all signals show "Synced" status
-4. Check Apps Script logs for "Skipping non-synced" messages
-5. Compare with Indicator2 sheet to confirm filtering
+3. Verify signals appear with different status indicators:
+   - Green status light for synced signals (matched with Indicator1)
+   - Orange status light for awaiting signals (not matched with Indicator1)
+4. Verify ALL Indicator2 signals appear in logs (no filtering)
+5. Test both scenarios:
+   - Signals with Indicator1 match should show "Synced" status
+   - Signals without Indicator1 match should show "Awaiting" status
+6. Compare with Indicator2 sheet to confirm all data is displayed
+7. Verify no "Skipping non-synced" messages in Apps Script logs
 
 ### Test Issue 7: Refresh Function
 1. Open Apps Script editor
