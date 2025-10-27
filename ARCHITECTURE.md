@@ -133,11 +133,6 @@ Frontend Request
     ↓
 [Response] → Return structured data
 ```
-    ├─ Synced signals
-    └─ Latest signal
-    ↓
-[Response] → Return structured data
-```
 
 ## Column Layout - Indicator1 Sheet
 
