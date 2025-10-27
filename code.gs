@@ -616,7 +616,7 @@ function verifySessionServer(sessionToken) {
       if (email) {
         cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
         Logger.log(`verifySessionServer: Valid session found for ${email}. Refreshed.`);
-        return { status: 'success', userInfo: { name: email.split('@')[0] } };
+        return { status: 'success', userInfo: { name: email.split('@')[0], email: email } };
       } else {
         Logger.log(`verifySessionServer: Session token invalid or expired: ${sessionToken}`);
         return { status: 'error', message: 'Session expired.' };
@@ -625,6 +625,562 @@ function verifySessionServer(sessionToken) {
       Logger.log(`verifySessionServer CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
       _logErrorToSheet(null, 'verifySessionServer Error', err, `Token: ${sessionToken}`);
       return { status: 'error', message: 'Server error during session verification.' };
+  }
+}
+
+// --- SOCIAL LOGIN / USER MANAGEMENT FUNCTIONS ---
+
+/**
+ * Registers a new user from social login (Google, Microsoft, Apple)
+ * Stores user info and sends approval request to admin
+ */
+function registerSocialUser(email, name, provider) {
+  try {
+    Logger.log(`registerSocialUser: Attempting to register ${email} from ${provider}`);
+    
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    // Check if user already exists
+    if (users[email]) {
+      Logger.log(`registerSocialUser: User ${email} already registered`);
+      return { 
+        status: 'existing', 
+        approved: users[email].approved,
+        message: users[email].approved ? 'User already approved' : 'Waiting for admin approval'
+      };
+    }
+    
+    // Register new user
+    users[email] = {
+      name: name,
+      provider: provider,
+      approved: false,
+      registeredAt: new Date().toISOString()
+    };
+    
+    props.setProperty('registeredUsers', JSON.stringify(users));
+    Logger.log(`registerSocialUser: User ${email} registered successfully`);
+    
+    // Send approval request to admin
+    try {
+      MailApp.sendEmail({
+        to: ADMIN_EMAIL,
+        subject: `New User Registration Request - ${name}`,
+        htmlBody: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f7; }
+              .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+              h1 { color: #1d1d1f; font-size: 24px; margin: 0 0 16px 0; }
+              .info { background: #f5f5f7; padding: 16px; border-radius: 8px; margin: 16px 0; }
+              .info-item { margin: 8px 0; }
+              .label { font-weight: 600; color: #1d1d1f; }
+              .value { color: #86868b; }
+              .approve-link { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
+              .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>🔔 New User Registration</h1>
+              <p>A new user has requested access to the Trading Signals Platform.</p>
+              
+              <div class="info">
+                <div class="info-item"><span class="label">Name:</span> <span class="value">${name}</span></div>
+                <div class="info-item"><span class="label">Email:</span> <span class="value">${email}</span></div>
+                <div class="info-item"><span class="label">Provider:</span> <span class="value">${provider}</span></div>
+                <div class="info-item"><span class="label">Registered:</span> <span class="value">${new Date().toLocaleString()}</span></div>
+              </div>
+              
+              <p>To approve this user, please:</p>
+              <ol>
+                <li>Open Google Apps Script editor</li>
+                <li>Run the function: <code>approveUser("${email}")</code></li>
+              </ol>
+              
+              <div class="footer">
+                <p>Maurvi Consultants - Trading Signals Platform</p>
+                <p>&copy; ${new Date().getFullYear()} All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      });
+      Logger.log(`registerSocialUser: Approval request email sent to admin`);
+    } catch (emailErr) {
+      Logger.log(`registerSocialUser: Failed to send approval email: ${emailErr.message}`);
+      // Don't fail registration if email fails
+    }
+    
+    return { 
+      status: 'success', 
+      approved: false,
+      message: 'Registration successful. Waiting for admin approval.'
+    };
+    
+  } catch (err) {
+    Logger.log(`registerSocialUser CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'registerSocialUser Error', err, `Email: ${email}, Provider: ${provider}`);
+    return { status: 'error', message: 'Server error during registration.' };
+  }
+}
+
+/**
+ * Checks if a social login user is approved
+ */
+function checkUserApproval(email) {
+  try {
+    // Admin is always approved
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      return { status: 'success', approved: true, isAdmin: true };
+    }
+    
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    if (!users[email]) {
+      Logger.log(`checkUserApproval: User ${email} not found`);
+      return { status: 'error', message: 'User not registered' };
+    }
+    
+    Logger.log(`checkUserApproval: User ${email} approval status: ${users[email].approved}`);
+    return { 
+      status: 'success', 
+      approved: users[email].approved,
+      isAdmin: false
+    };
+    
+  } catch (err) {
+    Logger.log(`checkUserApproval CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'checkUserApproval Error', err, `Email: ${email}`);
+    return { status: 'error', message: 'Server error checking approval status.' };
+  }
+}
+
+/**
+ * Approves a user for access (admin function)
+ */
+function approveUser(email) {
+  try {
+    Logger.log(`approveUser: Attempting to approve ${email}`);
+    
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    if (!users[email]) {
+      const message = `User ${email} not found in registration list`;
+      Logger.log(`approveUser: ${message}`);
+      return { status: 'error', message: message };
+    }
+    
+    users[email].approved = true;
+    users[email].approvedAt = new Date().toISOString();
+    props.setProperty('registeredUsers', JSON.stringify(users));
+    
+    Logger.log(`approveUser: User ${email} approved successfully`);
+    
+    // Send approval notification to user
+    try {
+      MailApp.sendEmail({
+        to: email,
+        subject: 'Your Access Has Been Approved - Maurvi Consultants',
+        htmlBody: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f7; }
+              .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+              h1 { color: #1d1d1f; font-size: 24px; margin: 0 0 16px 0; }
+              .success-box { background: linear-gradient(135deg, rgba(48, 209, 88, 0.1), rgba(48, 209, 88, 0.15)); padding: 20px; border-radius: 8px; border-left: 4px solid #30d158; margin: 16px 0; }
+              .btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
+              .footer { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e5e7; color: #86868b; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>✅ Access Approved!</h1>
+              <p>Good news! Your access to the Maurvi Consultants Trading Signals Platform has been approved.</p>
+              
+              <div class="success-box">
+                <strong>You can now sign in</strong> using your ${users[email].provider} account without needing to enter an OTP.
+              </div>
+              
+              <p>Simply click the "${users[email].provider}" button on the login screen to access the platform.</p>
+              
+              <div class="footer">
+                <p>Maurvi Consultants - Trading Signals Platform</p>
+                <p>&copy; ${new Date().getFullYear()} All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      });
+      Logger.log(`approveUser: Approval notification sent to ${email}`);
+    } catch (emailErr) {
+      Logger.log(`approveUser: Failed to send approval notification: ${emailErr.message}`);
+      // Don't fail approval if email fails
+    }
+    
+    return { status: 'success', message: `User ${email} approved successfully` };
+    
+  } catch (err) {
+    Logger.log(`approveUser CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'approveUser Error', err, `Email: ${email}`);
+    return { status: 'error', message: 'Server error during approval.' };
+  }
+}
+
+/**
+ * Lists all registered users (admin function)
+ */
+function listRegisteredUsers() {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const usersJson = props.getProperty('registeredUsers') || '{}';
+    const users = JSON.parse(usersJson);
+    
+    Logger.log(`listRegisteredUsers: Found ${Object.keys(users).length} registered users`);
+    return { status: 'success', users: users };
+    
+  } catch (err) {
+    Logger.log(`listRegisteredUsers CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'listRegisteredUsers Error', err, '');
+    return { status: 'error', message: 'Server error listing users.' };
+  }
+}
+
+/**
+ * Verifies social login token and creates session if user is approved
+ */
+function verifySocialLogin(idToken, provider) {
+  try {
+    Logger.log(`verifySocialLogin: Verifying ${provider} token`);
+    
+    // For Google OAuth, we would verify the ID token here
+    // For now, we'll accept the token as-is and extract email
+    // In production, you should validate the token with OAuth provider
+    
+    // This is a placeholder - in real implementation, decode and verify the JWT token
+    // For Google: https://developers.google.com/identity/sign-in/web/backend-auth
+    // For Microsoft: https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens
+    // For Apple: https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_rest_api
+    
+    // For testing purposes, we'll extract email from a simple base64-encoded token
+    // In production, replace this with proper JWT verification
+    let email, name;
+    try {
+      const decoded = JSON.parse(Utilities.newBlob(Utilities.base64Decode(idToken)).getDataAsString());
+      email = decoded.email;
+      name = decoded.name || email.split('@')[0];
+    } catch (decodeErr) {
+      Logger.log(`verifySocialLogin: Failed to decode token: ${decodeErr.message}`);
+      return { status: 'error', message: 'Invalid token format' };
+    }
+    
+    // Check if user is admin
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      const sessionToken = Utilities.computeHmacSha256Signature(email + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
+      const cache = CacheService.getScriptCache();
+      cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
+      Logger.log(`verifySocialLogin: Admin ${email} logged in via ${provider}`);
+      return { 
+        status: 'success', 
+        sessionToken: sessionToken, 
+        userInfo: { name: name, email: email, isAdmin: true } 
+      };
+    }
+    
+    // Check approval status
+    const approvalCheck = checkUserApproval(email);
+    if (approvalCheck.status === 'error' || !approvalCheck.approved) {
+      Logger.log(`verifySocialLogin: User ${email} not approved`);
+      return { 
+        status: 'pending_approval', 
+        message: 'Your account is waiting for admin approval. You will receive an email when approved.',
+        userInfo: { name: name, email: email }
+      };
+    }
+    
+    // User is approved, create session
+    const sessionToken = Utilities.computeHmacSha256Signature(email + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
+    const cache = CacheService.getScriptCache();
+    cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
+    
+    Logger.log(`verifySocialLogin: User ${email} logged in via ${provider}`);
+    return { 
+      status: 'success', 
+      sessionToken: sessionToken, 
+      userInfo: { name: name, email: email, isAdmin: false } 
+    };
+    
+  } catch (err) {
+    Logger.log(`verifySocialLogin CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'verifySocialLogin Error', err, `Provider: ${provider}`);
+    return { status: 'error', message: 'Server error during social login verification.' };
+  }
+}
+
+/**
+ * Modified generateOTPServer for guest login - sends OTP to admin instead of guest
+ */
+function generateGuestOTP() {
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const formattedOTP = `${otp.substring(0, 3)}-${otp.substring(3, 6)}`;
+    const cache = CacheService.getScriptCache();
+    cache.put(`guest_otp`, otp, OTP_VALIDITY_MINUTES * 60);
+    Logger.log(`Generated guest OTP ${formattedOTP}`);
+    
+    // Send OTP to admin
+    MailApp.sendEmail({
+      to: ADMIN_EMAIL,
+      subject: `Guest Login OTP Request: ${formattedOTP}`,
+      htmlBody: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+              margin: 0; 
+              padding: 0; 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .container { 
+              max-width: 600px; 
+              margin: 20px auto; 
+              background: rgba(255, 255, 255, 0.98);
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
+              border-radius: 24px; 
+              padding: 0;
+              box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 8px 24px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              padding: 40px 40px 60px 40px;
+              position: relative;
+              overflow: hidden;
+            }
+            .header::before {
+              content: '';
+              position: absolute;
+              top: -50%;
+              left: -50%;
+              width: 200%;
+              height: 200%;
+              background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+              animation: shimmer 6s ease-in-out infinite;
+            }
+            @keyframes shimmer {
+              0%, 100% { transform: translate(0, 0); }
+              50% { transform: translate(10%, 10%); }
+            }
+            .logo { 
+              font-size: 32px; 
+              font-weight: 800; 
+              color: white;
+              margin-bottom: 12px;
+              text-align: center;
+              position: relative;
+              z-index: 1;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              letter-spacing: -0.5px;
+            }
+            .tagline {
+              color: rgba(255, 255, 255, 0.9);
+              font-size: 14px;
+              text-align: center;
+              position: relative;
+              z-index: 1;
+              font-weight: 500;
+              letter-spacing: 0.5px;
+            }
+            .content { 
+              padding: 40px; 
+              text-align: center;
+            }
+            h1 { 
+              color: #1d1d1f; 
+              font-size: 28px; 
+              margin: 0 0 12px 0; 
+              font-weight: 700;
+              letter-spacing: -0.5px;
+            }
+            .subtitle { 
+              color: #86868b; 
+              font-size: 16px; 
+              margin: 0 0 32px 0;
+              line-height: 1.5;
+            }
+            .otp-box { 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+              color: white; 
+              font-size: 48px; 
+              font-weight: 800; 
+              letter-spacing: 12px; 
+              padding: 32px; 
+              border-radius: 16px; 
+              margin: 32px 0; 
+              font-family: 'SF Mono', 'Courier New', monospace;
+              box-shadow: 
+                0 8px 24px rgba(102, 126, 234, 0.4),
+                0 4px 12px rgba(118, 75, 162, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+              position: relative;
+              overflow: hidden;
+            }
+            .otp-box::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: -100%;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+              animation: slide 3s ease-in-out infinite;
+            }
+            @keyframes slide {
+              0% { left: -100%; }
+              50%, 100% { left: 100%; }
+            }
+            .validity { 
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #86868b; 
+              font-size: 14px; 
+              margin: 24px 0;
+              font-weight: 500;
+            }
+            .validity::before {
+              content: '⏱️';
+              margin-right: 8px;
+              font-size: 18px;
+            }
+            .info-box { 
+              color: #0A84FF; 
+              font-size: 13px; 
+              margin: 24px 0; 
+              padding: 20px; 
+              background: linear-gradient(135deg, rgba(10, 132, 255, 0.08), rgba(10, 132, 255, 0.12));
+              border-radius: 12px; 
+              border-left: 4px solid #0A84FF;
+              text-align: left;
+              line-height: 1.6;
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+            }
+            .info-box::before {
+              content: 'ℹ️';
+              margin-right: 8px;
+              font-size: 16px;
+            }
+            .footer { 
+              color: #86868b; 
+              font-size: 12px; 
+              margin-top: 32px; 
+              padding-top: 24px; 
+              border-top: 1px solid #e5e5e7;
+              line-height: 1.6;
+            }
+            .footer p { margin: 8px 0; }
+            .footer strong { color: #1d1d1f; font-weight: 600; }
+            @media (max-width: 600px) {
+              .container { margin: 10px; border-radius: 20px; }
+              .header { padding: 30px 20px 50px 20px; }
+              .content { padding: 30px 20px; }
+              .otp-box { font-size: 36px; letter-spacing: 8px; padding: 24px; }
+              h1 { font-size: 24px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">Maurvi Consultants</div>
+              <div class="tagline">Automated Trading Signals Platform</div>
+            </div>
+            <div class="content">
+              <h1>Guest Login OTP Request</h1>
+              <p class="subtitle">A guest user has requested access to the Trading Signals Platform</p>
+              
+              <div class="otp-box">${formattedOTP}</div>
+              
+              <p class="validity">Valid for ${OTP_VALIDITY_MINUTES} minutes</p>
+              
+              <div class="info-box">
+                <strong>Guest Login:</strong> Share this OTP with the guest user to grant them temporary access to the platform.
+              </div>
+              
+              <div class="footer">
+                <p>This OTP was generated for a guest login request.</p>
+                <p>&copy; ${new Date().getFullYear()} Maurvi Consultants. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+    Logger.log(`Sent guest OTP email to admin`);
+    return { status: 'success', message: 'OTP sent to admin. Please ask admin for the OTP.' };
+  } catch (err) {
+    Logger.log(`generateGuestOTP CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'generateGuestOTP Error', err, '');
+    return { status: 'error', message: 'Failed to generate OTP: ' + err.message };
+  }
+}
+
+/**
+ * Verifies guest OTP (entered by guest after receiving from admin)
+ */
+function verifyGuestOTP(otp) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const storedOTP = cache.get(`guest_otp`);
+    if (!storedOTP) {
+      Logger.log(`verifyGuestOTP: OTP expired or not found`);
+      return { status: 'error', message: 'OTP expired or was invalid. Please request a new one.' };
+    }
+    const submittedOTP = otp.replace('-', '');
+    if (submittedOTP === storedOTP) {
+      const sessionToken = Utilities.computeHmacSha256Signature('guest_' + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
+      cache.put(`session_${sessionToken}`, 'guest@maurvi.local', SESSION_VALIDITY_HOURS * 3600);
+      cache.remove(`guest_otp`);
+      Logger.log(`verifyGuestOTP: Guest OTP verified. Session token created.`);
+      return { status: 'success', sessionToken: sessionToken, userInfo: { name: 'Guest User', email: 'guest@maurvi.local' } };
+    } else {
+      Logger.log(`verifyGuestOTP: Invalid OTP entered. Submitted: ${submittedOTP}, Expected: ${storedOTP}`);
+      return { status: 'error', message: 'Invalid OTP. Please try again.' };
+    }
+  } catch (err) {
+    Logger.log(`verifyGuestOTP CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
+    _logErrorToSheet(null, 'verifyGuestOTP Error', err, '');
+    return { status: 'error', message: 'Server error during OTP verification.' };
   }
 }
 

@@ -964,7 +964,7 @@
         <div id="simple-liquid-green" class="simple-liquid-blob"></div>
     </div>
 
-    <!--Login View Redesigned (and adapted for OTP)-->
+    <!--Login View Redesigned with Social Login and Guest Login-->
     <div id="loginView" class="min-h-screen flex items-center justify-center p-4 animate-in relative z-10 transition-opacity duration-500 overflow-hidden">
         <div class="w-full max-w-md relative">
             <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
@@ -984,29 +984,84 @@
                 </div>
 
                 <h1 class="text-2xl font-bold mb-1 company-name-font login-title whitespace-nowrap tracking-tight">Maurvi Consultants</h1>
-                <h2 id="login-subtitle" class="mb-6 login-subtitle font-medium">Enter Email to Sign In</h2>
+                <h2 id="login-subtitle" class="mb-6 login-subtitle font-medium">Choose Sign-In Method</h2>
 
-                <div class="space-y-6">
-                    <!-- Email input (hidden) -->
-                    <input type="email" id="email-input" class="email-input hidden" value="amit3ree@gmail.com" readonly>
+                <!-- Social Login Section -->
+                <div id="social-login-section" class="space-y-4 mb-6">
+                    <p class="text-sm text-secondary font-medium mb-3">Sign in with your account</p>
+                    
+                    <!-- Google Sign In -->
+                    <button id="google-signin-btn" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-lg border-2 material material-regular interactive hover:border-[#4285F4] transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span class="font-semibold">Continue with Google</span>
+                    </button>
+                    
+                    <!-- Microsoft Sign In -->
+                    <button id="microsoft-signin-btn" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-lg border-2 material material-regular interactive hover:border-[#00A4EF] transition-all">
+                        <svg width="20" height="20" viewBox="0 0 23 23">
+                            <path fill="#f25022" d="M0 0h11v11H0z"/>
+                            <path fill="#00a4ef" d="M12 0h11v11H12z"/>
+                            <path fill="#7fba00" d="M0 12h11v11H0z"/>
+                            <path fill="#ffb900" d="M12 12h11v11H12z"/>
+                        </svg>
+                        <span class="font-semibold">Continue with Microsoft</span>
+                    </button>
+                    
+                    <!-- Apple Sign In -->
+                    <button id="apple-signin-btn" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-lg border-2 material material-regular interactive hover:border-[#000000] dark:hover:border-[#FFFFFF] transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                        </svg>
+                        <span class="font-semibold">Continue with Apple</span>
+                    </button>
+
+                    <!-- Approval Waiting Message -->
+                    <div id="approval-waiting" class="hidden p-4 material material-regular rounded-lg border-2 border-orange-500">
+                        <div class="flex items-center justify-center space-x-2 mb-2">
+                            <svg class="animate-spin h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span class="font-semibold text-orange-500">Waiting for Approval</span>
+                        </div>
+                        <p class="text-sm text-secondary">Your account registration is pending admin approval. You will receive an email once approved.</p>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="flex items-center my-6">
+                    <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+                    <span class="px-4 text-sm text-secondary font-medium">OR</span>
+                    <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+
+                <!-- Guest Login Section -->
+                <div id="guest-login-section" class="space-y-4">
+                    <p class="text-sm text-secondary font-medium mb-3">Guest Login (Temporary Access)</p>
 
                     <!-- OTP inputs (styled as PIN) - Always visible but blocked initially -->
                     <div id="otp-area" class="flex justify-center items-center space-x-2">
-                        <!-- OTP inputs will be generated here -->
-                         <input type="tel" maxlength="1" class="otp-input" data-index="0" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="1" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="2" autocomplete="off" disabled>
-                         <span class="otp-separator">-</span>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="3" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="4" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="5" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="0" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="1" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="2" autocomplete="off" disabled>
+                        <span class="otp-separator">-</span>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="3" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="4" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="5" autocomplete="off" disabled>
                     </div>
 
                     <!-- Generate OTP Button -->
                     <button id="generate-otp-btn" class="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-blue-500/40 transform hover:scale-105 bg-gradient-theme text-base interactive">
-                        <span id="loginButtonText">Generate OTP</span>
+                        <span id="loginButtonText">Request Guest OTP</span>
                         <span id="loginSpinner" class="hidden"><svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></span>
                     </button>
+
+                    <p class="text-xs text-secondary italic">OTP will be sent to admin. Please ask admin for the code.</p>
                 </div>
 
                 <!-- Progress Bar -->
@@ -1361,6 +1416,12 @@
 
         function cacheDOM() {
             DOM.loginView = document.getElementById('loginView');
+            DOM.googleSigninBtn = document.getElementById('google-signin-btn');
+            DOM.microsoftSigninBtn = document.getElementById('microsoft-signin-btn');
+            DOM.appleSigninBtn = document.getElementById('apple-signin-btn');
+            DOM.approvalWaiting = document.getElementById('approval-waiting');
+            DOM.socialLoginSection = document.getElementById('social-login-section');
+            DOM.guestLoginSection = document.getElementById('guest-login-section');
             DOM.emailInput = document.getElementById('email-input');
             DOM.otpArea = document.getElementById('otp-area');
             DOM.otpInputs = DOM.otpArea.querySelectorAll('.otp-input');
@@ -1488,7 +1549,10 @@
         function setupEventListeners() {
             addSafeEventListener(DOM.themeToggles.login, 'click', toggleTheme);
             addSafeEventListener(DOM.themeToggles.app, 'click', toggleTheme);
-            addSafeEventListener(DOM.generateOTPBtn, 'click', handleOTPGeneration);
+            addSafeEventListener(DOM.generateOTPBtn, 'click', handleGuestOTPGeneration);
+            addSafeEventListener(DOM.googleSigninBtn, 'click', () => handleSocialLogin('google'));
+            addSafeEventListener(DOM.microsoftSigninBtn, 'click', () => handleSocialLogin('microsoft'));
+            addSafeEventListener(DOM.appleSigninBtn, 'click', () => handleSocialLogin('apple'));
             addSafeEventListener(DOM.logos.login, 'click', (e) => handleLogoClick(e.currentTarget)); // Use function directly
             addSafeEventListener(DOM.logos.header, 'click', (e) => {
                 handleLogoClick(e.currentTarget); // Use function directly
@@ -1630,53 +1694,211 @@
             DOM.appView.style.display = 'none';
         }
 
-        function handleOTPGeneration() {
-            const email = DOM.emailInput.value;
-            if (!email || !email.includes('@')) {
-                showLoginMessage('Invalid email address.', 'error');
+        // --- SOCIAL LOGIN FUNCTIONS ---
+        
+        function handleSocialLogin(provider) {
+            console.log(`Initiating ${provider} login...`);
+            showLoginMessage(`Signing in with ${provider}...`, 'info');
+            
+            // Disable all social buttons during login
+            DOM.googleSigninBtn.disabled = true;
+            DOM.microsoftSigninBtn.disabled = true;
+            DOM.appleSigninBtn.disabled = true;
+            
+            // In a real implementation, you would:
+            // 1. Initialize OAuth flow for the selected provider
+            // 2. Get ID token from provider
+            // 3. Send to backend for verification
+            
+            // For demonstration, we'll simulate OAuth flow
+            // In production, use proper OAuth libraries like Google Sign-In, MSAL, etc.
+            
+            if (provider === 'google') {
+                initGoogleSignIn();
+            } else if (provider === 'microsoft') {
+                initMicrosoftSignIn();
+            } else if (provider === 'apple') {
+                initAppleSignIn();
+            }
+        }
+        
+        function initGoogleSignIn() {
+            // This is a placeholder for Google OAuth integration
+            // In production, use: https://developers.google.com/identity/gsi/web/guides/overview
+            
+            showLoginMessage('Google Sign-In integration coming soon. Please use guest login for now.', 'info');
+            
+            // Re-enable buttons
+            setTimeout(() => {
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
+            }, 2000);
+            
+            // For testing purposes only - simulate successful OAuth
+            // REMOVE THIS IN PRODUCTION
+            if (window.location.search.includes('test_google_oauth=true')) {
+                const mockUserData = {
+                    email: 'test@example.com',
+                    name: 'Test User'
+                };
+                handleSocialLoginSuccess('google', mockUserData);
+            }
+        }
+        
+        function initMicrosoftSignIn() {
+            // This is a placeholder for Microsoft OAuth integration
+            // In production, use: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-v2-javascript-auth-code
+            
+            showLoginMessage('Microsoft Sign-In integration coming soon. Please use guest login for now.', 'info');
+            
+            // Re-enable buttons
+            setTimeout(() => {
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
+            }, 2000);
+        }
+        
+        function initAppleSignIn() {
+            // This is a placeholder for Apple Sign-In integration
+            // In production, use: https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_js
+            
+            showLoginMessage('Apple Sign-In integration coming soon. Please use guest login for now.', 'info');
+            
+            // Re-enable buttons
+            setTimeout(() => {
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
+            }, 2000);
+        }
+        
+        function handleSocialLoginSuccess(provider, userData) {
+            console.log(`${provider} login successful:`, userData);
+            
+            // Create a simple token with user data (base64 encoded)
+            // In production, this would be the actual ID token from OAuth provider
+            const mockToken = btoa(JSON.stringify({
+                email: userData.email,
+                name: userData.name,
+                provider: provider
+            }));
+            
+            // First, register the user
+            google.script.run
+                .withSuccessHandler((response) => onSocialRegistration(response, mockToken, provider))
+                .withFailureHandler(onSocialLoginError)
+                .registerSocialUser(userData.email, userData.name, provider);
+        }
+        
+        function onSocialRegistration(response, token, provider) {
+            console.log("Social registration response:", response);
+            
+            if (response.status === 'error') {
+                showLoginMessage(response.message || 'Registration failed', 'error');
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
                 return;
             }
-
-            DOM.generateOTPBtn.disabled = true;
-            DOM.loginButtonText.textContent = 'Sending...';
-            DOM.loginSpinner.classList.remove('hidden');
-            console.log("Generating OTP for:", email);
-
+            
+            if (!response.approved) {
+                // Show waiting for approval message
+                DOM.socialLoginSection.classList.add('hidden');
+                DOM.guestLoginSection.classList.add('hidden');
+                DOM.approvalWaiting.classList.remove('hidden');
+                showLoginMessage('Account pending approval', 'info');
+                return;
+            }
+            
+            // User is approved, verify login
             google.script.run
-                .withSuccessHandler(onOTPGenerated)
-                .withFailureHandler(onOTPError)
-                .generateOTPServer(email);
+                .withSuccessHandler(onSocialLoginVerified)
+                .withFailureHandler(onSocialLoginError)
+                .verifySocialLogin(token, provider);
+        }
+        
+        function onSocialLoginVerified(response) {
+            console.log("Social login verification response:", response);
+            
+            if (response.status === 'pending_approval') {
+                DOM.socialLoginSection.classList.add('hidden');
+                DOM.guestLoginSection.classList.add('hidden');
+                DOM.approvalWaiting.classList.remove('hidden');
+                showLoginMessage(response.message, 'info');
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
+                return;
+            }
+            
+            if (response.status === 'success') {
+                showLoginMessage('Login Successful!', 'success');
+                AppState.sessionToken = response.sessionToken;
+                AppState.userInfo = response.userInfo;
+                localStorage.setItem('sessionToken', AppState.sessionToken);
+                setTimeout(transitionToApp, 500);
+            } else {
+                onSocialLoginError({ message: response.message || 'Login failed' });
+            }
+        }
+        
+        function onSocialLoginError(error) {
+            console.error("Social login error:", error);
+            showLoginMessage(error.message || 'Social login failed', 'error');
+            DOM.googleSigninBtn.disabled = false;
+            DOM.microsoftSigninBtn.disabled = false;
+            DOM.appleSigninBtn.disabled = false;
         }
 
-        function onOTPGenerated(response) {
-            console.log("OTP generation response:", response);
+        // --- GUEST LOGIN FUNCTIONS ---
+
+        function handleGuestOTPGeneration() {
+            DOM.generateOTPBtn.disabled = true;
+            DOM.loginButtonText.textContent = 'Requesting OTP...';
+            DOM.loginSpinner.classList.remove('hidden');
+            console.log("Generating guest OTP");
+
+            google.script.run
+                .withSuccessHandler(onGuestOTPGenerated)
+                .withFailureHandler(onGuestOTPError)
+                .generateGuestOTP();
+        }
+
+        function onGuestOTPGenerated(response) {
+            console.log("Guest OTP generation response:", response);
             DOM.loginSpinner.classList.add('hidden');
             if (response && response.status === 'success') {
-                // Don't show thumbsup or any message - just enable OTP inputs
-                DOM.loginMessage.innerHTML = '';
-                DOM.loginMessage.className = 'text-center text-sm mt-4 h-5';
+                // Show message to ask admin for OTP
+                showLoginMessage('OTP sent to admin. Please ask admin for the code.', 'info');
                 
                 // Enable OTP inputs
                 DOM.otpInputs.forEach(input => {
                     input.disabled = false;
                 });
                 
-                DOM.loginSubtitle.textContent = 'Enter OTP Sent to Email';
-                DOM.loginButtonText.textContent = 'Resend OTP';
+                DOM.loginSubtitle.textContent = 'Enter OTP from Admin';
+                DOM.loginButtonText.textContent = 'Request New OTP';
                 DOM.generateOTPBtn.disabled = false;
                 if (DOM.otpInputs.length > 0) DOM.otpInputs[0].focus();
                 startOTPTimer(180);
             } else {
-                onOTPError({ message: (response && response.message) || 'Failed to send OTP.' });
+                onGuestOTPError({ message: (response && response.message) || 'Failed to generate OTP.' });
             }
         }
 
-        function onOTPError(error) {
-            console.error("OTP Error:", error);
+        function onGuestOTPError(error) {
+            console.error("Guest OTP Error:", error);
             DOM.loginSpinner.classList.add('hidden');
             showLoginMessage(error.message || 'An unknown error occurred.', 'error');
             DOM.generateOTPBtn.disabled = false;
-            DOM.loginButtonText.textContent = 'Generate OTP';
+            DOM.loginButtonText.textContent = 'Request Guest OTP';
+        }
+
+        function handleOTPGeneration() {
+            // Legacy function - now redirects to guest OTP
+            handleGuestOTPGeneration();
         }
 
          function startOTPTimer(seconds) {
@@ -1700,9 +1922,9 @@
                         input.value = '';
                     });
                     
-                    DOM.loginSubtitle.textContent = 'Enter Email to Sign In';
-                    DOM.loginButtonText.textContent = 'Generate OTP';
-                    showLoginMessage('OTP expired. Please generate a new one.', 'error');
+                    DOM.loginSubtitle.textContent = 'Choose Sign-In Method';
+                    DOM.loginButtonText.textContent = 'Request Guest OTP';
+                    showLoginMessage('OTP expired. Please request a new one.', 'error');
                 }
             }, 1000);
         }
@@ -1768,11 +1990,11 @@
             if (otp.length === 6) {
                 // Don't show full-screen loading - just show message
                 showLoginMessage('Verifying OTP...', 'info');
-                console.log("Verifying OTP:", otp);
+                console.log("Verifying guest OTP:", otp);
                 google.script.run
                     .withSuccessHandler(onOTPVerified)
                     .withFailureHandler(onVerifyError)
-                    .verifyOTPServer(DOM.emailInput.value, otp);
+                    .verifyGuestOTP(otp);
             }
         }
 
