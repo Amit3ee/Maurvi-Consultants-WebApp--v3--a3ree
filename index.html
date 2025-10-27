@@ -9,6 +9,15 @@
     <!-- Fonts (from new file) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Microsoft Authentication Library (MSAL) -->
+    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
+    
+    <!-- Apple Sign In -->
+    <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
 
     <!-- NEW STYLES (from uploaded file) -->
     <style>
@@ -787,26 +796,59 @@
         }
         .signal-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
         
-        /* Card glow effects for specific sync reasons */
+        /* Card glow effects for specific sync reasons with animation */
+        @keyframes glow-pulse-orange {
+            0%, 100% {
+                box-shadow: 0 0 0 1.5px var(--orange), 0 0 12px rgba(255, 159, 10, 0.4), 0 0 24px rgba(255, 159, 10, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 1.5px var(--orange), 0 0 20px rgba(255, 159, 10, 0.6), 0 0 32px rgba(255, 159, 10, 0.3);
+            }
+        }
+        
+        @keyframes glow-pulse-blue {
+            0%, 100% {
+                box-shadow: 0 0 0 1.5px var(--blue), 0 0 12px rgba(10, 132, 255, 0.4), 0 0 24px rgba(10, 132, 255, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 1.5px var(--blue), 0 0 20px rgba(10, 132, 255, 0.6), 0 0 32px rgba(10, 132, 255, 0.3);
+            }
+        }
+        
+        @keyframes glow-pulse-purple {
+            0%, 100% {
+                box-shadow: 0 0 0 1.5px var(--purple), 0 0 12px rgba(191, 90, 242, 0.4), 0 0 24px rgba(191, 90, 242, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 1.5px var(--purple), 0 0 20px rgba(191, 90, 242, 0.6), 0 0 32px rgba(191, 90, 242, 0.3);
+            }
+        }
+        
         .card-glow-hvd {
-            box-shadow: 0 0 0 1.5px var(--orange), 0 0 12px rgba(255, 159, 10, 0.4);
+            animation: glow-pulse-orange 2.5s ease-in-out infinite;
+            border-color: var(--orange);
         }
         .card-glow-hvd:hover {
-            box-shadow: 0 0 0 1.5px var(--orange), 0 0 16px rgba(255, 159, 10, 0.5), var(--shadow-hover);
+            animation: none;
+            box-shadow: 0 0 0 1.5px var(--orange), 0 0 24px rgba(255, 159, 10, 0.7), 0 0 40px rgba(255, 159, 10, 0.4), var(--shadow-hover);
         }
         
         .card-glow-oversold {
-            box-shadow: 0 0 0 1.5px var(--blue), 0 0 12px rgba(10, 132, 255, 0.4);
+            animation: glow-pulse-blue 2.5s ease-in-out infinite;
+            border-color: var(--blue);
         }
         .card-glow-oversold:hover {
-            box-shadow: 0 0 0 1.5px var(--blue), 0 0 16px rgba(10, 132, 255, 0.5), var(--shadow-hover);
+            animation: none;
+            box-shadow: 0 0 0 1.5px var(--blue), 0 0 24px rgba(10, 132, 255, 0.7), 0 0 40px rgba(10, 132, 255, 0.4), var(--shadow-hover);
         }
         
         .card-glow-overbought {
-            box-shadow: 0 0 0 1.5px var(--purple), 0 0 12px rgba(191, 90, 242, 0.4);
+            animation: glow-pulse-purple 2.5s ease-in-out infinite;
+            border-color: var(--purple);
         }
         .card-glow-overbought:hover {
-            box-shadow: 0 0 0 1.5px var(--purple), 0 0 16px rgba(191, 90, 242, 0.5), var(--shadow-hover);
+            animation: none;
+            box-shadow: 0 0 0 1.5px var(--purple), 0 0 24px rgba(191, 90, 242, 0.7), 0 0 40px rgba(191, 90, 242, 0.4), var(--shadow-hover);
         }
         
         .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
@@ -1723,63 +1765,199 @@
         }
         
         function initGoogleSignIn() {
-            // This is a placeholder for Google OAuth integration
-            // In production, use: https://developers.google.com/identity/gsi/web/guides/overview
+            // Initialize Google Sign-In with One Tap
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.initialize({
+                    client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with your Google Client ID
+                    callback: handleGoogleCallback,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                
+                // Display the One Tap prompt
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        // If One Tap is not displayed, show the Sign-In button
+                        google.accounts.id.renderButton(
+                            DOM.googleSigninBtn,
+                            {
+                                theme: 'outline',
+                                size: 'large',
+                                width: '100%',
+                                text: 'continue_with',
+                                shape: 'rectangular'
+                            }
+                        );
+                    }
+                });
+            } else {
+                console.error('Google Sign-In library not loaded');
+                showLoginMessage('Google Sign-In is temporarily unavailable. Please try guest login.', 'error');
+                // Re-enable buttons
+                setTimeout(() => {
+                    DOM.googleSigninBtn.disabled = false;
+                    DOM.microsoftSigninBtn.disabled = false;
+                    DOM.appleSigninBtn.disabled = false;
+                }, 2000);
+            }
+        }
+        
+        function handleGoogleCallback(response) {
+            console.log('Google Sign-In successful');
             
-            showLoginMessage('Google Sign-In integration coming soon. Please use guest login for now.', 'info');
-            
-            // Re-enable buttons
-            setTimeout(() => {
+            // Decode the JWT credential
+            try {
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                
+                const userData = JSON.parse(jsonPayload);
+                console.log('Google user data:', userData);
+                
+                // Extract user information
+                const userInfo = {
+                    email: userData.email,
+                    name: userData.name || userData.given_name || userData.email.split('@')[0]
+                };
+                
+                handleSocialLoginSuccess('google', userInfo, response.credential);
+            } catch (error) {
+                console.error('Error decoding Google credential:', error);
+                showLoginMessage('Failed to process Google Sign-In. Please try again.', 'error');
                 DOM.googleSigninBtn.disabled = false;
                 DOM.microsoftSigninBtn.disabled = false;
                 DOM.appleSigninBtn.disabled = false;
-            }, 2000);
-            
-            // For testing purposes only - simulate successful OAuth
-            // REMOVE THIS IN PRODUCTION
-            if (window.location.search.includes('test_google_oauth=true')) {
-                const mockUserData = {
-                    email: 'test@example.com',
-                    name: 'Test User'
-                };
-                handleSocialLoginSuccess('google', mockUserData);
             }
         }
         
         function initMicrosoftSignIn() {
-            // This is a placeholder for Microsoft OAuth integration
-            // In production, use: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-v2-javascript-auth-code
-            
-            showLoginMessage('Microsoft Sign-In integration coming soon. Please use guest login for now.', 'info');
-            
-            // Re-enable buttons
-            setTimeout(() => {
-                DOM.googleSigninBtn.disabled = false;
-                DOM.microsoftSigninBtn.disabled = false;
-                DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+            // Initialize Microsoft Authentication Library (MSAL)
+            if (typeof msal !== 'undefined') {
+                const msalConfig = {
+                    auth: {
+                        clientId: 'YOUR_MICROSOFT_CLIENT_ID', // Replace with your Microsoft App Client ID
+                        authority: 'https://login.microsoftonline.com/common',
+                        redirectUri: window.location.origin + window.location.pathname
+                    },
+                    cache: {
+                        cacheLocation: 'localStorage',
+                        storeAuthStateInCookie: false
+                    }
+                };
+                
+                const msalInstance = new msal.PublicClientApplication(msalConfig);
+                
+                const loginRequest = {
+                    scopes: ['openid', 'profile', 'email', 'User.Read']
+                };
+                
+                msalInstance.loginPopup(loginRequest)
+                    .then(response => {
+                        console.log('Microsoft Sign-In successful:', response);
+                        
+                        // Get user account information
+                        const account = response.account;
+                        const userInfo = {
+                            email: account.username,
+                            name: account.name || account.username.split('@')[0]
+                        };
+                        
+                        handleSocialLoginSuccess('microsoft', userInfo, response.idToken);
+                    })
+                    .catch(error => {
+                        console.error('Microsoft Sign-In error:', error);
+                        if (error.errorCode !== 'user_cancelled') {
+                            showLoginMessage('Microsoft Sign-In failed. Please try again.', 'error');
+                        }
+                        // Re-enable buttons
+                        DOM.googleSigninBtn.disabled = false;
+                        DOM.microsoftSigninBtn.disabled = false;
+                        DOM.appleSigninBtn.disabled = false;
+                    });
+            } else {
+                console.error('Microsoft MSAL library not loaded');
+                showLoginMessage('Microsoft Sign-In is temporarily unavailable. Please try guest login.', 'error');
+                // Re-enable buttons
+                setTimeout(() => {
+                    DOM.googleSigninBtn.disabled = false;
+                    DOM.microsoftSigninBtn.disabled = false;
+                    DOM.appleSigninBtn.disabled = false;
+                }, 2000);
+            }
         }
         
         function initAppleSignIn() {
-            // This is a placeholder for Apple Sign-In integration
-            // In production, use: https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_js
-            
-            showLoginMessage('Apple Sign-In integration coming soon. Please use guest login for now.', 'info');
-            
-            // Re-enable buttons
-            setTimeout(() => {
-                DOM.googleSigninBtn.disabled = false;
-                DOM.microsoftSigninBtn.disabled = false;
-                DOM.appleSigninBtn.disabled = false;
-            }, 2000);
+            // Initialize Apple Sign-In
+            if (typeof AppleID !== 'undefined' && AppleID.auth) {
+                AppleID.auth.init({
+                    clientId: 'YOUR_APPLE_SERVICE_ID', // Replace with your Apple Service ID
+                    scope: 'name email',
+                    redirectURI: window.location.origin + window.location.pathname,
+                    state: 'apple_signin_' + Date.now(),
+                    usePopup: true
+                });
+                
+                AppleID.auth.signIn()
+                    .then(response => {
+                        console.log('Apple Sign-In successful:', response);
+                        
+                        // Decode the ID token to get user information
+                        try {
+                            const base64Url = response.authorization.id_token.split('.')[1];
+                            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                            }).join(''));
+                            
+                            const tokenData = JSON.parse(jsonPayload);
+                            
+                            // Get user info from response or token
+                            const userInfo = {
+                                email: tokenData.email || (response.user && response.user.email),
+                                name: (response.user && response.user.name) ? 
+                                      `${response.user.name.firstName} ${response.user.name.lastName}`.trim() : 
+                                      (tokenData.email ? tokenData.email.split('@')[0] : 'Apple User')
+                            };
+                            
+                            handleSocialLoginSuccess('apple', userInfo, response.authorization.id_token);
+                        } catch (error) {
+                            console.error('Error decoding Apple ID token:', error);
+                            showLoginMessage('Failed to process Apple Sign-In. Please try again.', 'error');
+                            DOM.googleSigninBtn.disabled = false;
+                            DOM.microsoftSigninBtn.disabled = false;
+                            DOM.appleSigninBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Apple Sign-In error:', error);
+                        if (error.error !== 'popup_closed_by_user') {
+                            showLoginMessage('Apple Sign-In failed. Please try again.', 'error');
+                        }
+                        // Re-enable buttons
+                        DOM.googleSigninBtn.disabled = false;
+                        DOM.microsoftSigninBtn.disabled = false;
+                        DOM.appleSigninBtn.disabled = false;
+                    });
+            } else {
+                console.error('Apple Sign-In library not loaded');
+                showLoginMessage('Apple Sign-In is temporarily unavailable. Please try guest login.', 'error');
+                // Re-enable buttons
+                setTimeout(() => {
+                    DOM.googleSigninBtn.disabled = false;
+                    DOM.microsoftSigninBtn.disabled = false;
+                    DOM.appleSigninBtn.disabled = false;
+                }, 2000);
+            }
         }
         
-        function handleSocialLoginSuccess(provider, userData) {
+        function handleSocialLoginSuccess(provider, userData, idToken) {
             console.log(`${provider} login successful:`, userData);
             
-            // Create a simple token with user data (base64 encoded)
-            // In production, this would be the actual ID token from OAuth provider
-            const mockToken = btoa(JSON.stringify({
+            // Use the actual ID token from OAuth provider
+            // In production, this token will be verified by the backend
+            const tokenToSend = idToken || btoa(JSON.stringify({
                 email: userData.email,
                 name: userData.name,
                 provider: provider
@@ -1787,7 +1965,7 @@
             
             // First, register the user
             google.script.run
-                .withSuccessHandler((response) => onSocialRegistration(response, mockToken, provider))
+                .withSuccessHandler((response) => onSocialRegistration(response, tokenToSend, provider))
                 .withFailureHandler(onSocialLoginError)
                 .registerSocialUser(userData.email, userData.name, provider);
         }
@@ -2103,9 +2281,27 @@
 
         // --- NARRATION / SPEECH ---
         function loadSpeechVoices() {
-            const setVoices = () => { AppState.speechVoices = window.speechSynthesis.getVoices(); console.log("Voices loaded:", AppState.speechVoices.length); };
-             try { window.speechSynthesis.onvoiceschanged = setVoices; } catch (e) { console.warn("Could not set onvoiceschanged handler:", e); }
+            const setVoices = () => { 
+                AppState.speechVoices = window.speechSynthesis.getVoices(); 
+                console.log("Voices loaded:", AppState.speechVoices.length); 
+                if (AppState.speechVoices.length > 0) {
+                    console.log("Available voices:", AppState.speechVoices.map(v => `${v.name} (${v.lang})`));
+                }
+            };
+            try { 
+                // Set handler for when voices change
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = setVoices;
+                }
+            } catch (e) { 
+                console.warn("Could not set onvoiceschanged handler:", e); 
+            }
+            // Try to load voices immediately
             setVoices();
+            // If voices not loaded yet, wait a bit and try again
+            if (AppState.speechVoices.length === 0) {
+                setTimeout(setVoices, 100);
+            }
         }
         function toggleNarration() {
             AppState.narrationEnabled = !AppState.narrationEnabled;
@@ -2248,9 +2444,37 @@
             speakText(textToSpeak, false);
         }
         function speakText(text, isAnnouncement = false) {
-             if (!AppState.narrationEnabled || !window.speechSynthesis) { console.log("Narration disabled or not supported."); return; }
-             if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
-             if (AppState.speechVoices.length === 0) { loadSpeechVoices(); }
+             if (!AppState.narrationEnabled) { 
+                 console.log("Narration disabled."); 
+                 return; 
+             }
+             
+             if (!window.speechSynthesis) { 
+                 console.error("SpeechSynthesis not supported in this browser."); 
+                 return; 
+             }
+             
+             // Cancel any ongoing speech
+             if (window.speechSynthesis.speaking) { 
+                 window.speechSynthesis.cancel(); 
+             }
+             
+             // Load voices if not loaded
+             if (AppState.speechVoices.length === 0) { 
+                 loadSpeechVoices(); 
+                 // If still no voices, try again after a short delay
+                 if (AppState.speechVoices.length === 0) {
+                     setTimeout(() => {
+                         if (AppState.speechVoices.length > 0) {
+                             speakText(text, isAnnouncement);
+                         } else {
+                             console.warn("No voices available for speech synthesis");
+                         }
+                     }, 200);
+                     return;
+                 }
+             }
+             
             const utterance = new SpeechSynthesisUtterance(text);
             
             // Priority 1: Indian English female voice (en-IN, female)
@@ -2299,7 +2523,14 @@
             utterance.rate = 0.9; 
             utterance.pitch = 1.05; // Slightly higher pitch for female voice
             utterance.volume = 1.0;
-            utterance.onerror = (event) => { console.error("SpeechSynthesisUtterance.onerror:", event); };
+            utterance.onerror = (event) => { 
+                console.error("SpeechSynthesisUtterance.onerror:", event); 
+            };
+            utterance.onend = () => {
+                console.log("Speech completed:", text);
+            };
+            
+            console.log("Speaking:", text);
             window.speechSynthesis.speak(utterance);
         }
 
@@ -2491,7 +2722,7 @@
                  const latestReasonColor = getReasonColor(latestReason.reason);
                  const ind1Color = getReasonColor(signal.ind1Reason);
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showDashboardSyncDetail('${signal.symbol}')">
+                 const getGlowClass=(syncReason)=>{if(!syncReason)return "";const r=syncReason.toLowerCase();if(r.includes("hvd")||r.includes("significant deployed capital"))return "card-glow-hvd";if(r.includes("oversold"))return "card-glow-oversold";if(r.includes("overbought"))return "card-glow-overbought";return "";};const glowClass=getGlowClass(latestReason.reason);return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
@@ -2588,9 +2819,9 @@
                  const latestReason = signal.reasons[0];
                  const secondReason = signal.reasons[1] || null;
                  const reasonColor = getReasonColor(latestReason.reason);
-                 const glowClass = signal.status === 'Synced' ? getGlowClass(signal.syncReason) : '';
                  
-                 return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showLiveFeedDetail('${signal.symbol}')">
+                 
+                 return `<div class="signal-card material material-regular interactive " onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
