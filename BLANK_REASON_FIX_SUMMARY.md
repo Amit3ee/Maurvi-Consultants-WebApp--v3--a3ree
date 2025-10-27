@@ -14,15 +14,8 @@ The system had multiple points where blank reasons could slip through:
 ### 1. Enhanced Input Validation (`doPost` function)
 **Location**: Line 354-357 in `code.gs`
 
-**Before**:
-```javascript
-// Validate reason is present
-if (!data.reason) {
-  throw new Error("Missing required field: reason");
-}
-```
+**Change**: Strengthened validation to use `.trim()` for detecting blank strings
 
-**After**:
 ```javascript
 // Validate reason is present and not blank
 if (!data.reason || data.reason.trim() === '') {
@@ -30,7 +23,7 @@ if (!data.reason || data.reason.trim() === '') {
 }
 ```
 
-**Impact**: Webhooks with blank reasons are now rejected at the entry point.
+**Impact**: Webhooks with blank reasons (empty strings, whitespace) are now rejected at the entry point.
 
 ### 2. Write Prevention (`writeDataToRow` function)
 **Location**: Line 122-132 in `code.gs`
@@ -107,11 +100,18 @@ testBlankReasonFiltering()
 5. Optionally run `refreshRearrangeCurrentData()` to clean up existing data
 
 ## Rollback
-If issues arise, revert commits:
+If issues arise, revert the following commits in reverse order:
 ```bash
-git revert 06c4214  # Revert test and documentation
-git revert cc03fd7  # Revert blank reason filtering
+git revert HEAD~2  # Revert documentation (current: efba369)
+git revert HEAD~1  # Revert test function (current: 06c4214)
+git revert HEAD    # Revert main fix (current: cc03fd7)
 git push
+```
+
+Alternatively, you can revert by commit hash:
+```bash
+git log --oneline -5  # Find the commit hashes
+git revert <commit-hash>  # Revert specific commit
 ```
 
 ## Version
