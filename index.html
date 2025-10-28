@@ -2475,7 +2475,23 @@
                  }
              }
              
-            const utterance = new SpeechSynthesisUtterance(text);
+            // Process text to add human-like pauses
+            // Convert comma-separated letters (e.g., "H, D, F, C") to have better pauses
+            let processedText = text;
+            
+            // Add slight pause after each spelled letter by ensuring commas exist
+            // But also add periods for longer pauses between words
+            if (text.includes(',')) {
+                // Already has commas for spelling, just ensure they're consistent
+                processedText = text.replace(/,\s*/g, ', '); // Normalize comma spacing
+            }
+            
+            // Add pauses between distinct words (not spelled letters)
+            // If text has both spelled letters and words, add a longer pause between them
+            processedText = processedText.replace(/([a-z])\s+([A-Z])/g, '$1. $2'); // Add period between lowercase and uppercase
+            processedText = processedText.replace(/\s+(bank|motors|power|steel|finance|services|ports|green|paints|consumer|products|financial)\s*/gi, '. $1. '); // Add pauses around common words
+            
+            const utterance = new SpeechSynthesisUtterance(processedText);
             
             // Priority 1: Indian English female voice (en-IN, female)
             let selectedVoice = AppState.speechVoices.find(v => 
@@ -2520,7 +2536,8 @@
                 console.log("Using system default voice with en-IN");
             }
             
-            utterance.rate = 0.9; 
+            // Adjusted rate for more natural speech with pauses
+            utterance.rate = 0.85; // Slightly slower for better clarity
             utterance.pitch = 1.05; // Slightly higher pitch for female voice
             utterance.volume = 1.0;
             utterance.onerror = (event) => { 
@@ -2530,7 +2547,7 @@
                 console.log("Speech completed:", text);
             };
             
-            console.log("Speaking:", text);
+            console.log("Speaking:", processedText);
             window.speechSynthesis.speak(utterance);
         }
 
