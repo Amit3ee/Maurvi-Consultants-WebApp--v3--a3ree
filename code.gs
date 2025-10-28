@@ -484,11 +484,8 @@ function doPost(e) {
     }
     writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     
-    // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
-    const cacheService = CacheService.getScriptCache();
-    cacheService.remove(`sheetData_Indicator1_${dateSuffix}`);
-    cacheService.remove(`sheetData_Indicator2_${dateSuffix}`);
-    Logger.log(`Cache cleared for immediate data refresh`);
+    // Note: Cache clearing removed to reduce latency and lock contention
+    // Cache will naturally expire after TTL, ensuring data freshness without overhead
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'success', 
@@ -1478,8 +1475,9 @@ function _getSheetData(sheetName) {
     if (lastRow > 0) { data = sheet.getDataRange().getDisplayValues(); }
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
     
-    // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    cache.put(cacheKey, JSON.stringify(data), 30);
+    // Cache for 60 seconds to reduce sheet API calls and improve performance
+    // Note: Cache is no longer manually cleared in doPost to reduce lock contention
+    cache.put(cacheKey, JSON.stringify(data), 60);
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
