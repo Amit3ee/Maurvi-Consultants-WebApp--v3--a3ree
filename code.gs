@@ -1672,10 +1672,10 @@ function getDashboardData() {
       latestSignal: liveFeed.length > 0 ? liveFeed[0].symbol : '-' 
     };
 
-    // Build tickers (HVD and patterns)
+    // Build tickers (HVD and patterns) - no limits, show all data
     const tickers = {
-      hvd: logs.hvd.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 7),
-      patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => b.time.localeCompare(a.time)).slice(0, 7)
+      hvd: logs.hvd.sort((a, b) => b.time.localeCompare(a.time)),
+      patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => b.time.localeCompare(a.time))
     };
 
     // Get latest Nifty data (from Indicator2 sheet, filtered by ticker name)
