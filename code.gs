@@ -1670,8 +1670,10 @@ function getDashboardData() {
     });
 
     // Calculate KPIs
-    // totalSignals: count of cards in live feed
-    // syncedSignals: count of cards in synced signals feed (dashboardSyncedList)
+    // totalSignals: count of cards in live feed (all Indicator1 signals)
+    // syncedSignals: count of cards in sync signal feed (dashboardSyncedList.length)
+    //   - Changed from syncedSymbols.size (unique symbol count) to dashboardSyncedList.length
+    //   - This shows actual number of synced signal cards as per user requirement
     const kpi = { 
       totalSignals: liveFeed.length, 
       syncedSignals: dashboardSyncedList.length, 
