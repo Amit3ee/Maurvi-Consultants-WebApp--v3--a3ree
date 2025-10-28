@@ -323,8 +323,26 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   
   try {
-    // Acquire lock with 60 second timeout (increased from 30)
-    lock.waitLock(60000);
+    // Acquire lock with 120 second timeout to handle high concurrent load
+    // Retry up to 3 times with exponential backoff if lock fails
+    let lockAcquired = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+    const lockTimeout = 120000; // 120 seconds
+    
+    while (!lockAcquired && retryCount < maxRetries) {
+      try {
+        lock.waitLock(lockTimeout);
+        lockAcquired = true;
+      } catch (lockErr) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          throw new Error(`Failed to acquire lock after ${maxRetries} retries: ${lockErr.message}`);
+        }
+        // Exponential backoff: wait 1s, 2s, 4s
+        Utilities.sleep(Math.pow(2, retryCount - 1) * 1000);
+      }
+    }
     
     const postData = e.postData.contents;
     if (!postData) { throw new Error("Received empty postData."); }
@@ -391,7 +409,8 @@ function doPost(e) {
           status: 'success', 
           indicator: indicatorType,
           symbol: symbol,
-          time: time
+          time: time,
+          note: 'Nifty signal stored in Indicator2 sheet only'
         })).setMimeType(ContentService.MimeType.JSON);
       }
       
@@ -426,6 +445,8 @@ function doPost(e) {
     
     if (targetRow === undefined) {
       // Symbol not yet in Indicator1 sheet
+      // CRITICAL: Only Indicator1 signals create new rows
+      // Indicator2 signals for non-existent symbols should NOT create rows
       if (indicatorType === 'Indicator1') {
         // Only Indicator1 signals create new rows
         targetRow = ind1Sheet.getLastRow() + 1;
@@ -441,13 +462,14 @@ function doPost(e) {
       } else {
         // Indicator2 signal for a symbol not yet in Indicator1 sheet
         // Don't create a row, just log and return success
+        // This prevents rows with blank Indicator1 reasons
         Logger.log(`Indicator2 signal for "${symbol}" - no Indicator1 row exists yet. Signal stored in Indicator2 sheet only.`);
         return ContentService.createTextOutput(JSON.stringify({ 
           status: 'success', 
           indicator: indicatorType,
           symbol: symbol,
           time: time,
-          note: 'Stored in Indicator2 sheet only - no Indicator1 row exists'
+          note: 'Stored in Indicator2 sheet only - no Indicator1 row exists (preventing blank Indicator1 reason)'
         })).setMimeType(ContentService.MimeType.JSON);
       }
     } else {
@@ -473,10 +495,34 @@ function doPost(e) {
 
   } catch (err) {
     Logger.log(`doPost CRITICAL ERROR: ${err.message} Stack: ${err.stack}. Received Data: ${e.postData ? e.postData.contents : 'No postData'}`);
-    _logErrorToSheet(logSheet, 'doPost Error', err, e.postData ? e.postData.contents : 'No postData');
+    
+    // Enhanced error logging with more context
+    const errorContext = {
+      timestamp: new Date().toISOString(),
+      message: err.message,
+      stack: err.stack,
+      receivedData: e.postData ? e.postData.contents : 'No postData',
+      errorType: err.name || 'Unknown'
+    };
+    
+    // Log to sheet if possible
+    _logErrorToSheet(logSheet, 'doPost Error', err, JSON.stringify(errorContext));
+    
+    // Return detailed error for lock timeout issues
+    if (err.message && err.message.includes('lock')) {
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: 'error', 
+        message: 'Server busy - concurrent request limit reached. Please retry.',
+        errorType: 'lock_timeout',
+        retryable: true
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'error', 
-      message: err.message 
+      message: err.message,
+      errorType: 'processing_error',
+      retryable: false
     })).setMimeType(ContentService.MimeType.JSON);
   } finally {
     // Always release the lock
@@ -1927,6 +1973,100 @@ function testOpenSheet() { /* ... (unchanged) ... */
 }
 
 /**
+ * Diagnostic function to check if today's sheets are properly set up
+ * Run this to verify daily sheet creation is working
+ */
+function checkDailySheetSetup() {
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = new Date();
+    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    
+    Logger.log(`=== Daily Sheet Setup Check (${dateSuffix}) ===`);
+    
+    const requiredSheets = [
+      `Indicator1_${dateSuffix}`,
+      `Indicator2_${dateSuffix}`,
+      `DebugLogs_${dateSuffix}`
+    ];
+    
+    const results = {
+      date: dateSuffix,
+      allSheetsExist: true,
+      sheets: {}
+    };
+    
+    requiredSheets.forEach(sheetName => {
+      const sheet = ss.getSheetByName(sheetName);
+      const exists = sheet !== null;
+      const hasHeaders = exists && sheet.getLastRow() >= 1;
+      const rowCount = exists ? sheet.getLastRow() : 0;
+      
+      results.sheets[sheetName] = {
+        exists: exists,
+        hasHeaders: hasHeaders,
+        rowCount: rowCount
+      };
+      
+      if (!exists) {
+        results.allSheetsExist = false;
+        Logger.log(`❌ MISSING: ${sheetName}`);
+      } else {
+        Logger.log(`✅ EXISTS: ${sheetName} (${rowCount} rows)`);
+      }
+    });
+    
+    // Check for old sheets that should be purged
+    const purgeDate = new Date(today);
+    purgeDate.setDate(today.getDate() - 14);
+    const purgeDateSuffix = Utilities.formatDate(purgeDate, scriptTimeZone, 'yyyy-MM-dd');
+    
+    const allSheets = ss.getSheets();
+    const oldSheets = allSheets.filter(sheet => {
+      const name = sheet.getName();
+      return name.includes(`_${purgeDateSuffix}`);
+    });
+    
+    results.oldSheets = {
+      purgeDate: purgeDateSuffix,
+      count: oldSheets.length,
+      names: oldSheets.map(s => s.getName())
+    };
+    
+    Logger.log(`\nOld sheets (${purgeDateSuffix}): ${oldSheets.length} found`);
+    if (oldSheets.length > 0) {
+      Logger.log(`⚠️ These sheets should be purged: ${oldSheets.map(s => s.getName()).join(', ')}`);
+    }
+    
+    // Check cache status
+    const cache = CacheService.getScriptCache();
+    const cacheKey = `symbolRowMap_${dateSuffix}`;
+    const cachedMap = cache.get(cacheKey);
+    results.cache = {
+      exists: cachedMap !== null,
+      symbolCount: cachedMap ? Object.keys(JSON.parse(cachedMap)).length : 0
+    };
+    
+    Logger.log(`\nCache status: ${cachedMap ? `✅ ${results.cache.symbolCount} symbols cached` : '❌ No cache'}`);
+    
+    // Summary
+    Logger.log(`\n=== Summary ===`);
+    if (results.allSheetsExist) {
+      Logger.log(`✅ All required sheets exist for ${dateSuffix}`);
+    } else {
+      Logger.log(`❌ Some sheets are missing! Run dailySetupAndMaintenance() to create them.`);
+    }
+    
+    return results;
+    
+  } catch (err) {
+    Logger.log(`checkDailySheetSetup ERROR: ${err.message} Stack: ${err.stack}`);
+    return { error: err.message, stack: err.stack };
+  }
+}
+
+/**
  * Test function for dailySetupAndMaintenance
  */
 function testDailySetup() {
@@ -1943,7 +2083,6 @@ function testDailySetup() {
     const sheetNames = [
       `Indicator1_${today}`,
       `Indicator2_${today}`,
-      `Nifty_${today}`,
       `DebugLogs_${today}`
     ];
     
@@ -2073,6 +2212,135 @@ function testDynamicRowMapping() {
   }
 }
 
+/**
+ * Analyzes debug logs for patterns and issues
+ * Helps identify lock timeout patterns, error frequencies, and system health
+ */
+function analyzeDebugLogs(dateStr) {
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    
+    // Use today's date if not specified
+    if (!dateStr) {
+      dateStr = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    }
+    
+    const logSheet = ss.getSheetByName(`DebugLogs_${dateStr}`);
+    
+    if (!logSheet) {
+      Logger.log(`No debug logs found for ${dateStr}`);
+      return { error: `No debug logs found for ${dateStr}` };
+    }
+    
+    Logger.log(`=== Analyzing Debug Logs for ${dateStr} ===`);
+    
+    const data = logSheet.getDataRange().getValues();
+    const headers = data[0];
+    const rows = data.slice(1); // Skip header
+    
+    if (rows.length === 0) {
+      Logger.log('No errors logged for this date');
+      return { date: dateStr, totalErrors: 0 };
+    }
+    
+    // Analyze errors
+    const analysis = {
+      date: dateStr,
+      totalErrors: rows.length,
+      errorTypes: {},
+      errorsByHour: {},
+      lockTimeouts: 0,
+      symbolsAffected: new Set(),
+      contexts: {}
+    };
+    
+    rows.forEach(row => {
+      const timestamp = row[0];
+      const context = row[1] || 'Unknown';
+      const errorMessage = row[2] || '';
+      const details = row[3] || '';
+      
+      // Count by context
+      analysis.contexts[context] = (analysis.contexts[context] || 0) + 1;
+      
+      // Identify lock timeouts
+      if (errorMessage.toLowerCase().includes('lock timeout')) {
+        analysis.lockTimeouts++;
+        
+        // Extract symbol from details if present
+        try {
+          const detailsObj = JSON.parse(details);
+          if (detailsObj.scrip) {
+            analysis.symbolsAffected.add(detailsObj.scrip);
+          } else if (detailsObj.ticker) {
+            analysis.symbolsAffected.add(detailsObj.ticker);
+          }
+        } catch (e) {
+          // Details not JSON, skip
+        }
+      }
+      
+      // Analyze by hour
+      if (timestamp) {
+        try {
+          const date = new Date(timestamp);
+          const hour = date.getHours();
+          const hourKey = `${hour}:00`;
+          analysis.errorsByHour[hourKey] = (analysis.errorsByHour[hourKey] || 0) + 1;
+        } catch (e) {
+          // Invalid timestamp, skip
+        }
+      }
+      
+      // Categorize error types
+      const errorType = errorMessage.split(':')[0] || 'Unknown';
+      analysis.errorTypes[errorType] = (analysis.errorTypes[errorType] || 0) + 1;
+    });
+    
+    // Convert Set to Array for JSON serialization
+    analysis.symbolsAffected = Array.from(analysis.symbolsAffected);
+    
+    // Log summary
+    Logger.log(`\n=== Summary ===`);
+    Logger.log(`Total Errors: ${analysis.totalErrors}`);
+    Logger.log(`Lock Timeouts: ${analysis.lockTimeouts} (${((analysis.lockTimeouts/analysis.totalErrors)*100).toFixed(1)}%)`);
+    Logger.log(`Unique Symbols Affected: ${analysis.symbolsAffected.length}`);
+    
+    Logger.log(`\n=== Errors by Context ===`);
+    Object.entries(analysis.contexts).forEach(([context, count]) => {
+      Logger.log(`  ${context}: ${count}`);
+    });
+    
+    Logger.log(`\n=== Errors by Hour ===`);
+    Object.entries(analysis.errorsByHour)
+      .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+      .forEach(([hour, count]) => {
+        Logger.log(`  ${hour}: ${count}`);
+      });
+    
+    Logger.log(`\n=== Error Types ===`);
+    Object.entries(analysis.errorTypes)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([type, count]) => {
+        Logger.log(`  ${type}: ${count}`);
+      });
+    
+    if (analysis.symbolsAffected.length > 0) {
+      Logger.log(`\n=== Top Affected Symbols ===`);
+      Logger.log(`  ${analysis.symbolsAffected.slice(0, 10).join(', ')}`);
+      if (analysis.symbolsAffected.length > 10) {
+        Logger.log(`  ... and ${analysis.symbolsAffected.length - 10} more`);
+      }
+    }
+    
+    return analysis;
+    
+  } catch (err) {
+    Logger.log(`analyzeDebugLogs ERROR: ${err.message} Stack: ${err.stack}`);
+    return { error: err.message, stack: err.stack };
+  }
+}
 
 // --- LARGE MOCK DATA FUNCTIONS ---
 
