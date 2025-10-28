@@ -2884,8 +2884,9 @@
              
              const formatReason = (reason) => {
                  if (!reason) return '';
-                 // If reason is HVD, don't show it again
-                 if (reason.toLowerCase().includes('hvd')) return '';
+                 // If reason is HVD with capital, show only capital value
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
                  return reason;
              };
              

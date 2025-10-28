@@ -112,6 +112,27 @@ function dailySetupAndMaintenance() {
 // --- WEB APP ---
 
 /**
+ * Formats a reason for display, including capital value for HVD signals.
+ * @param {string} indicatorType - Either "Indicator1" or "Indicator2"
+ * @param {string} reason - The reason text (e.g., "HVD", "Bullish Engulfing")
+ * @param {string} capitalDeployedCr - Capital deployed in crores (can be undefined/null/empty for non-HVD signals)
+ * @return {string} Formatted reason (e.g., "HVD (150 Cr.)" or original reason)
+ */
+function formatReasonWithCapital(indicatorType, reason, capitalDeployedCr) {
+  // For Indicator2 HVD signals with capital value, format as "HVD (XXX Cr.)"
+  const isIndicator2 = indicatorType === 'Indicator2';
+  const isHVD = reason && reason.toUpperCase() === 'HVD';
+  const hasValidCapital = capitalDeployedCr && 
+                          typeof capitalDeployedCr === 'string' && 
+                          capitalDeployedCr.trim().length > 0;
+  
+  if (isIndicator2 && isHVD && hasValidCapital) {
+    return `HVD (${capitalDeployedCr.trim()} Cr.)`;
+  }
+  return reason;
+}
+
+/**
  * Writes data to a specific row in the correct columns based on source.
  * @param {Sheet} sheet - The sheet to write to
  * @param {number} row - The target row number
@@ -477,7 +498,9 @@ function doPost(e) {
     }
     
     // Write data to the correct row based on indicator type
-    writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
+    // For HVD signals, include capital value in the reason
+    const reasonToWrite = formatReasonWithCapital(indicatorType, data.reason, data.capital_deployed_cr);
+    writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     
     // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
     const cacheService = CacheService.getScriptCache();
@@ -2197,7 +2220,10 @@ function testDynamicRowMapping() {
         Logger.log(`  → Using existing row ${targetRow} for symbol "${symbol}"`);
       }
       
-      writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
+      // Write data to the correct row based on indicator type
+      // For HVD signals, include capital value in the reason
+      const reasonToWrite = formatReasonWithCapital(indicatorType, data.reason, data.capital_deployed_cr);
+      writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     });
     
     Logger.log('=== Test completed ===');
@@ -2435,11 +2461,13 @@ function populateLargeMockData() {
         const second = Math.floor(Math.random() * 60);
         const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
         const reason = reasons2[Math.floor(Math.random() * reasons2.length)];
-        ind2Data.push(reason, timeStr);
-        
         // Also add to Indicator2 sheet
         const capital = reason === 'HVD' ? String(Math.floor(Math.random() * 500) + 50) : '';
         ind2Sheet.appendRow([dateSuffix, timeStr, symbol, reason, capital]);
+        
+        // For HVD signals, include capital value in the reason for Indicator1 sheet
+        const reasonForInd1 = formatReasonWithCapital('Indicator2', reason, capital);
+        ind2Data.push(reasonForInd1, timeStr);
       }
       if (ind2Data.length > 0) {
         ind1Sheet.getRange(row, 12, 1, ind2Data.length).setValues([ind2Data]);
