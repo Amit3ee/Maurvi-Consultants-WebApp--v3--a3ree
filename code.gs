@@ -2213,6 +2213,135 @@ function testDynamicRowMapping() {
   }
 }
 
+/**
+ * Analyzes debug logs for patterns and issues
+ * Helps identify lock timeout patterns, error frequencies, and system health
+ */
+function analyzeDebugLogs(dateStr) {
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const scriptTimeZone = Session.getScriptTimeZone();
+    
+    // Use today's date if not specified
+    if (!dateStr) {
+      dateStr = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    }
+    
+    const logSheet = ss.getSheetByName(`DebugLogs_${dateStr}`);
+    
+    if (!logSheet) {
+      Logger.log(`No debug logs found for ${dateStr}`);
+      return { error: `No debug logs found for ${dateStr}` };
+    }
+    
+    Logger.log(`=== Analyzing Debug Logs for ${dateStr} ===`);
+    
+    const data = logSheet.getDataRange().getValues();
+    const headers = data[0];
+    const rows = data.slice(1); // Skip header
+    
+    if (rows.length === 0) {
+      Logger.log('No errors logged for this date');
+      return { date: dateStr, totalErrors: 0 };
+    }
+    
+    // Analyze errors
+    const analysis = {
+      date: dateStr,
+      totalErrors: rows.length,
+      errorTypes: {},
+      errorsByHour: {},
+      lockTimeouts: 0,
+      symbolsAffected: new Set(),
+      contexts: {}
+    };
+    
+    rows.forEach(row => {
+      const timestamp = row[0];
+      const context = row[1] || 'Unknown';
+      const errorMessage = row[2] || '';
+      const details = row[3] || '';
+      
+      // Count by context
+      analysis.contexts[context] = (analysis.contexts[context] || 0) + 1;
+      
+      // Identify lock timeouts
+      if (errorMessage.toLowerCase().includes('lock timeout')) {
+        analysis.lockTimeouts++;
+        
+        // Extract symbol from details if present
+        try {
+          const detailsObj = JSON.parse(details);
+          if (detailsObj.scrip) {
+            analysis.symbolsAffected.add(detailsObj.scrip);
+          } else if (detailsObj.ticker) {
+            analysis.symbolsAffected.add(detailsObj.ticker);
+          }
+        } catch (e) {
+          // Details not JSON, skip
+        }
+      }
+      
+      // Analyze by hour
+      if (timestamp) {
+        try {
+          const date = new Date(timestamp);
+          const hour = date.getHours();
+          const hourKey = `${hour}:00`;
+          analysis.errorsByHour[hourKey] = (analysis.errorsByHour[hourKey] || 0) + 1;
+        } catch (e) {
+          // Invalid timestamp, skip
+        }
+      }
+      
+      // Categorize error types
+      const errorType = errorMessage.split(':')[0] || 'Unknown';
+      analysis.errorTypes[errorType] = (analysis.errorTypes[errorType] || 0) + 1;
+    });
+    
+    // Convert Set to Array for JSON serialization
+    analysis.symbolsAffected = Array.from(analysis.symbolsAffected);
+    
+    // Log summary
+    Logger.log(`\n=== Summary ===`);
+    Logger.log(`Total Errors: ${analysis.totalErrors}`);
+    Logger.log(`Lock Timeouts: ${analysis.lockTimeouts} (${((analysis.lockTimeouts/analysis.totalErrors)*100).toFixed(1)}%)`);
+    Logger.log(`Unique Symbols Affected: ${analysis.symbolsAffected.length}`);
+    
+    Logger.log(`\n=== Errors by Context ===`);
+    Object.entries(analysis.contexts).forEach(([context, count]) => {
+      Logger.log(`  ${context}: ${count}`);
+    });
+    
+    Logger.log(`\n=== Errors by Hour ===`);
+    Object.entries(analysis.errorsByHour)
+      .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+      .forEach(([hour, count]) => {
+        Logger.log(`  ${hour}: ${count}`);
+      });
+    
+    Logger.log(`\n=== Error Types ===`);
+    Object.entries(analysis.errorTypes)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([type, count]) => {
+        Logger.log(`  ${type}: ${count}`);
+      });
+    
+    if (analysis.symbolsAffected.length > 0) {
+      Logger.log(`\n=== Top Affected Symbols ===`);
+      Logger.log(`  ${analysis.symbolsAffected.slice(0, 10).join(', ')}`);
+      if (analysis.symbolsAffected.length > 10) {
+        Logger.log(`  ... and ${analysis.symbolsAffected.length - 10} more`);
+      }
+    }
+    
+    return analysis;
+    
+  } catch (err) {
+    Logger.log(`analyzeDebugLogs ERROR: ${err.message} Stack: ${err.stack}`);
+    return { error: err.message, stack: err.stack };
+  }
+}
 
 // --- LARGE MOCK DATA FUNCTIONS ---
 
