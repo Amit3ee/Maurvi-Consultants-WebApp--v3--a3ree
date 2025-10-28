@@ -2476,20 +2476,20 @@
              }
              
             // Process text to add human-like pauses
-            // Convert comma-separated letters (e.g., "H, D, F, C") to have better pauses
             let processedText = text;
             
             // Add slight pause after each spelled letter by ensuring commas exist
-            // But also add periods for longer pauses between words
             if (text.includes(',')) {
                 // Already has commas for spelling, just ensure they're consistent
                 processedText = text.replace(/,\s*/g, ', '); // Normalize comma spacing
             }
             
-            // Add pauses between distinct words (not spelled letters)
-            // If text has both spelled letters and words, add a longer pause between them
-            processedText = processedText.replace(/([a-z])\s+([A-Z])/g, '$1. $2'); // Add period between lowercase and uppercase
-            processedText = processedText.replace(/\s+(bank|motors|power|steel|finance|services|ports|green|paints|consumer|products|financial)\s*/gi, '. $1. '); // Add pauses around common words
+            // Add pauses around common words in stock names for better pronunciation
+            // This targets words that typically come after spelled letters or in compound names
+            const pauseWords = ['bank', 'motors', 'power', 'steel', 'finance', 'services', 
+                               'ports', 'green', 'paints', 'consumer', 'products', 'financial'];
+            const pausePattern = new RegExp(`\\b(${pauseWords.join('|')})\\b`, 'gi');
+            processedText = processedText.replace(pausePattern, '. $1. ');
             
             const utterance = new SpeechSynthesisUtterance(processedText);
             
