@@ -63,7 +63,7 @@ The code already has proper logic (lines 428-470) to prevent this:
 
 **Code Changes**:
 ```javascript
-// Lock acquisition with retry (code.gs lines 321-340)
+// Lock acquisition with retry (code.gs lines 326-345)
 let lockAcquired = false;
 let retryCount = 0;
 const maxRetries = 3;
@@ -306,7 +306,7 @@ For issues or questions:
 
 ---
 
-**Date of Fix**: 2025-10-28
+**Date of Fix**: October 2025
 **Version**: v3-a3ree
 **Issues Resolved**: 3 (1 false alarm, 2 actual fixes)
 **Breaking Changes**: None

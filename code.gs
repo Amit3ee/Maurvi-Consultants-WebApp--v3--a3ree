@@ -2083,7 +2083,6 @@ function testDailySetup() {
     const sheetNames = [
       `Indicator1_${today}`,
       `Indicator2_${today}`,
-      `Nifty_${today}`,
       `DebugLogs_${today}`
     ];
     
