@@ -403,7 +403,7 @@ function doPost(e) {
       
       // Check if this is a Nifty signal - if so, we're done (no row mapping needed)
       const symbolUpper = (symbol || '').toUpperCase();
-      if (symbolUpper === 'NIFTY' || symbolUpper === 'NIFTY1!') {
+      if (symbolUpper === 'NIFTY' || symbolUpper === 'NIFTY1!' || symbolUpper === 'NIFTY 50') {
         Logger.log(`Nifty signal processed: ${symbol}`);
         return ContentService.createTextOutput(JSON.stringify({ 
           status: 'success', 
@@ -477,7 +477,12 @@ function doPost(e) {
     }
     
     // Write data to the correct row based on indicator type
-    writeDataToRow(ind1Sheet, targetRow, indicatorType, data.reason, time);
+    // Format the reason: if HVD with capital, format as "HVD (X Cr)"
+    let reasonToWrite = data.reason;
+    if (indicatorType === 'Indicator2' && data.reason && data.reason.toUpperCase() === 'HVD' && data.capital_deployed_cr) {
+      reasonToWrite = `HVD (${data.capital_deployed_cr} Cr)`;
+    }
+    writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     
     // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
     const cacheService = CacheService.getScriptCache();
@@ -1515,7 +1520,7 @@ function getDashboardData() {
     // Extract Nifty data from Indicator2 sheet
     const niftyData = ind2Data.filter(row => {
       const ticker = (row[2] || '').toUpperCase();
-      return ticker === 'NIFTY' || ticker === 'NIFTY1!';
+      return ticker === 'NIFTY' || ticker === 'NIFTY1!' || ticker === 'NIFTY 50';
     });
 
     // Build live feed from Indicator1 data (signals from indicator 1 only)
@@ -1558,7 +1563,7 @@ function getDashboardData() {
     ind2Data.forEach(row => {
       const ticker = (row[2] || '').toUpperCase();
       // Skip Nifty entries in logs
-      if (ticker === 'NIFTY' || ticker === 'NIFTY1!') return;
+      if (ticker === 'NIFTY' || ticker === 'NIFTY1!' || ticker === 'NIFTY 50') return;
       
       const reason = (row[3] || '').toLowerCase();
       const symbol = row[2];
@@ -2165,7 +2170,8 @@ function testDynamicRowMapping() {
         ind2Sheet.appendRow([today, time, symbol, data.reason, data.capital_deployed_cr || '']);
         
         // Skip row mapping for Nifty
-        if (symbol === 'NIFTY' || symbol === 'Nifty1!') {
+        const symbolUpper = (symbol || '').toUpperCase();
+        if (symbolUpper === 'NIFTY' || symbolUpper === 'NIFTY1!' || symbolUpper === 'NIFTY 50') {
           Logger.log(`  → Nifty signal processed: ${symbol}`);
           return;
         }
