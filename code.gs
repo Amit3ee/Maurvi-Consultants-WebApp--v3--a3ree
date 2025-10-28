@@ -1413,7 +1413,16 @@ function verifyGuestOTP(otp) {
 
 // --- DATA-READING FUNCTIONS ---
 
-/** Utility to get sheet data - Enhanced with auto-creation (no caching for real-time updates) */
+/**
+ * Utility to get sheet data - Enhanced with auto-creation (no caching for real-time updates)
+ * 
+ * Reads data directly from Google Sheets without caching to ensure real-time accuracy.
+ * Automatically creates date-suffixed sheets if they don't exist and it's today's date.
+ * 
+ * @param {string} sheetName - Name of the sheet to read (e.g., "Indicator1_2025-10-28")
+ * @return {Array[]} 2D array of sheet values (including headers), or empty array if sheet is empty, 
+ *                   or error object with {error, stack} properties if an error occurs
+ */
 function _getSheetData(sheetName) {
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
@@ -2516,7 +2525,7 @@ function eraseMockData() {
       Logger.log(`Cleared ${rowCount} rows from ${ind2SheetName}`);
     }
     
-    // Clear cache (only symbolRowMap is still cached for row lookup)
+    // Clear symbolRowMap cache as part of data erasure
     const cache = CacheService.getScriptCache();
     cache.remove(`symbolRowMap_${dateSuffix}`);
     Logger.log('Cleared symbol row map cache');
