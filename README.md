@@ -156,6 +156,7 @@ For detailed alert format specifications, see [ALERT_FORMATS.md](ALERT_FORMATS.m
 
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide with step-by-step instructions
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture and design decisions
+- **[DATA_SYNC_TROUBLESHOOTING.md](DATA_SYNC_TROUBLESHOOTING.md)** - Troubleshooting guide for data sync issues
 
 ## 🔧 Testing
 
@@ -170,7 +171,26 @@ testDynamicRowMapping()
 
 // Test 3: Open sheet access
 testOpenSheet()
+
+// Test 4: Check data sync health (troubleshooting)
+checkDataSyncHealth()
 ```
+
+## 🩺 Health Monitoring
+
+To diagnose data sync issues, run the health check function:
+
+```javascript
+checkDataSyncHealth()
+```
+
+This provides:
+- Sheet existence verification
+- Data row counts and freshness
+- Cache status and performance
+- Data fetch timing metrics
+
+For detailed troubleshooting steps, see [DATA_SYNC_TROUBLESHOOTING.md](DATA_SYNC_TROUBLESHOOTING.md)
 
 ## 🎨 UI Features
 
@@ -214,11 +234,14 @@ testOpenSheet()
 
 ## ⚡ Performance
 
-- **Script Lock**: Prevents race conditions in concurrent webhooks
+- **Script Lock**: Prevents race conditions in concurrent webhooks (120s timeout in `doPost()`)
 - **Caching**: Symbol-row mapping cached for 24 hours (O(1) lookups)
+- **Fast Data Cache**: Sheet data cached for 5 seconds (matching frontend poll interval)
+- **Retry Logic**: Exponential backoff for failed operations (handles quotas gracefully)
 - **Batch Operations**: Efficient sheet reads/writes
-- **15-Second Polling**: Real-time updates without overwhelming quota
+- **5-Second Polling**: Frontend polls every 5 seconds (see `index.html` line 2612)
 - **Date-Suffixed Sheets**: Keeps individual sheets small and fast
+- **Safe Cache Wrappers**: Graceful degradation when cache service fails
 
 ## 🌟 Key Innovations
 
@@ -230,6 +253,7 @@ testOpenSheet()
 6. **Voice Narration**: Accessibility feature with Indian English voice
 7. **Glassmorphic UI**: Modern design with smooth animations
 8. **AI Integration**: Gemini-powered analysis with Google Search grounding
+9. **Resilient Data Sync**: Retry logic and safe operations prevent data sync failures
 
 ## 📊 Limitations
 

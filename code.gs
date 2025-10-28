@@ -96,7 +96,7 @@ function dailySetupAndMaintenance() {
     // 3. Clear cache for the new day (self-healing)
     const cache = CacheService.getScriptCache();
     const cacheKey = `symbolRowMap_${currentDateSuffix}`;
-    cache.remove(cacheKey);
+    safeCacheRemove(cache, cacheKey);
     Logger.log(`Cleared cache for key: ${cacheKey}`);
     
     Logger.log('Daily setup and maintenance completed successfully.');
@@ -105,6 +105,95 @@ function dailySetupAndMaintenance() {
     Logger.log(`dailySetupAndMaintenance ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(logSheet, 'dailySetupAndMaintenance Error', err, '');
     throw err;
+  }
+}
+
+
+// --- RETRY LOGIC AND QUOTA HANDLING ---
+
+/**
+ * Retry wrapper for sheet operations with exponential backoff.
+ * Handles quota exhaustion and temporary failures.
+ * @param {Function} operation - The operation to retry
+ * @param {number} maxRetries - Maximum number of retry attempts (default: 3)
+ * @param {number} initialDelay - Initial delay in ms (default: 1000)
+ * @returns {any} Result of the operation
+ */
+function retryOperation(operation, maxRetries = 3, initialDelay = 1000) {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return operation();
+    } catch (err) {
+      lastError = err;
+      const errorMsg = err.message || '';
+      
+      // Check if it's a quota or rate limit error
+      const isQuotaError = errorMsg.includes('quota') || 
+                          errorMsg.includes('rate limit') ||
+                          errorMsg.includes('Service invoked too many times');
+      
+      // Check if it's a temporary error worth retrying
+      const isTemporaryError = errorMsg.includes('timeout') ||
+                              errorMsg.includes('temporarily unavailable') ||
+                              errorMsg.includes('Service error') ||
+                              isQuotaError;
+      
+      if (attempt < maxRetries && isTemporaryError) {
+        const delay = initialDelay * Math.pow(2, attempt);
+        Logger.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms. Error: ${errorMsg}`);
+        Utilities.sleep(delay);
+      } else {
+        // No more retries or not a retryable error
+        throw err;
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Safe cache get with fallback to null on errors
+ * @param {Cache} cache - Cache service instance
+ * @param {string} key - Cache key
+ * @returns {string|null} Cached value or null
+ */
+function safeCacheGet(cache, key) {
+  try {
+    return cache.get(key);
+  } catch (err) {
+    Logger.log(`Cache get error for key ${key}: ${err.message}`);
+    return null;
+  }
+}
+
+/**
+ * Safe cache put with error handling
+ * @param {Cache} cache - Cache service instance
+ * @param {string} key - Cache key
+ * @param {string} value - Value to cache
+ * @param {number} ttl - Time to live in seconds
+ */
+function safeCachePut(cache, key, value, ttl) {
+  try {
+    cache.put(key, value, ttl);
+  } catch (err) {
+    Logger.log(`Cache put error for key ${key}: ${err.message}`);
+    // Continue without caching - not critical
+  }
+}
+
+/**
+ * Safe cache remove with error handling
+ * @param {Cache} cache - Cache service instance
+ * @param {string} key - Cache key
+ */
+function safeCacheRemove(cache, key) {
+  try {
+    cache.remove(key);
+  } catch (err) {
+    Logger.log(`Cache remove error for key ${key}: ${err.message}`);
+    // Continue - not critical
   }
 }
 
@@ -427,7 +516,7 @@ function doPost(e) {
     // Get the row map from cache
     const cacheKey = `symbolRowMap_${dateSuffix}`;
     const cache = CacheService.getScriptCache();
-    const cachedMap = cache.get(cacheKey);
+    const cachedMap = safeCacheGet(cache, cacheKey);
     let symbolMap = {};
     
     // Parse cached map with error handling
@@ -456,7 +545,7 @@ function doPost(e) {
         
         // Update and save the map
         symbolMap[symbol] = targetRow;
-        cache.put(cacheKey, JSON.stringify(symbolMap), 86400); // Cache for 24 hours
+        safeCachePut(cache, cacheKey, JSON.stringify(symbolMap), 86400); // Cache for 24 hours
         
         Logger.log(`New symbol "${symbol}" assigned to row ${targetRow} by Indicator1`);
       } else {
@@ -486,8 +575,8 @@ function doPost(e) {
     
     // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
     const cacheService = CacheService.getScriptCache();
-    cacheService.remove(`sheetData_Indicator1_${dateSuffix}`);
-    cacheService.remove(`sheetData_Indicator2_${dateSuffix}`);
+    safeCacheRemove(cacheService, `sheetData_Indicator1_${dateSuffix}`);
+    safeCacheRemove(cacheService, `sheetData_Indicator2_${dateSuffix}`);
     Logger.log(`Cache cleared for immediate data refresh`);
     
     return ContentService.createTextOutput(JSON.stringify({ 
@@ -566,7 +655,7 @@ function generateOTPServer(email) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const formattedOTP = `${otp.substring(0, 3)}-${otp.substring(3, 6)}`;
     const cache = CacheService.getScriptCache();
-    cache.put(`otp_${email}`, otp, OTP_VALIDITY_MINUTES * 60);
+    safeCachePut(cache, `otp_${email}`, otp, OTP_VALIDITY_MINUTES * 60);
     Logger.log(`Generated OTP ${formattedOTP} for ${email}`);
     MailApp.sendEmail({
       to: email,
@@ -788,13 +877,13 @@ function verifyOTPServer(email, otp) {
   }
   try {
       const cache = CacheService.getScriptCache();
-      const storedOTP = cache.get(`otp_${email}`);
+      const storedOTP = safeCacheGet(cache, `otp_${email}`);
       if (!storedOTP) { Logger.log(`verifyOTPServer: OTP expired or not found for ${email}`); return { status: 'error', message: 'OTP expired or was invalid. Please request a new one.' }; }
       const submittedOTP = otp.replace('-', '');
       if (submittedOTP === storedOTP) {
         const sessionToken = Utilities.computeHmacSha256Signature(email + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
-        cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
-        cache.remove(`otp_${email}`);
+        safeCachePut(cache, `session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
+        safeCacheRemove(cache, `otp_${email}`);
         Logger.log(`verifyOTPServer: OTP verified for ${email}. Session token created.`);
         return { status: 'success', sessionToken: sessionToken, userInfo: { name: email.split('@')[0] } };
       } else {
@@ -811,9 +900,9 @@ function verifyOTPServer(email, otp) {
 function verifySessionServer(sessionToken) {
   try {
       const cache = CacheService.getScriptCache();
-      const email = cache.get(`session_${sessionToken}`);
+      const email = safeCacheGet(cache, `session_${sessionToken}`);
       if (email) {
-        cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
+        safeCachePut(cache, `session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
         Logger.log(`verifySessionServer: Valid session found for ${email}. Refreshed.`);
         return { status: 'success', userInfo: { name: email.split('@')[0], email: email } };
       } else {
@@ -1123,7 +1212,7 @@ function verifySocialLogin(idToken, provider) {
     if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
       const sessionToken = Utilities.computeHmacSha256Signature(email + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
       const cache = CacheService.getScriptCache();
-      cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
+      safeCachePut(cache, `session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
       Logger.log(`verifySocialLogin: Admin ${email} logged in via ${provider}`);
       return { 
         status: 'success', 
@@ -1146,7 +1235,7 @@ function verifySocialLogin(idToken, provider) {
     // User is approved, create session
     const sessionToken = Utilities.computeHmacSha256Signature(email + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
     const cache = CacheService.getScriptCache();
-    cache.put(`session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
+    safeCachePut(cache, `session_${sessionToken}`, email, SESSION_VALIDITY_HOURS * 3600);
     
     Logger.log(`verifySocialLogin: User ${email} logged in via ${provider}`);
     return { 
@@ -1170,7 +1259,7 @@ function generateGuestOTP() {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const formattedOTP = `${otp.substring(0, 3)}-${otp.substring(3, 6)}`;
     const cache = CacheService.getScriptCache();
-    cache.put(`guest_otp`, otp, OTP_VALIDITY_MINUTES * 60);
+    safeCachePut(cache, `guest_otp`, otp, OTP_VALIDITY_MINUTES * 60);
     Logger.log(`Generated guest OTP ${formattedOTP}`);
     
     // Send OTP to admin
@@ -1392,7 +1481,7 @@ function generateGuestOTP() {
 function verifyGuestOTP(otp) {
   try {
     const cache = CacheService.getScriptCache();
-    const storedOTP = cache.get(`guest_otp`);
+    const storedOTP = safeCacheGet(cache, `guest_otp`);
     if (!storedOTP) {
       Logger.log(`verifyGuestOTP: OTP expired or not found`);
       return { status: 'error', message: 'OTP expired or was invalid. Please request a new one.' };
@@ -1400,8 +1489,8 @@ function verifyGuestOTP(otp) {
     const submittedOTP = otp.replace('-', '');
     if (submittedOTP === storedOTP) {
       const sessionToken = Utilities.computeHmacSha256Signature('guest_' + new Date().getTime(), Utilities.getUuid()).map(b => (b + 256).toString(16).slice(-2)).join('');
-      cache.put(`session_${sessionToken}`, 'guest@maurvi.local', SESSION_VALIDITY_HOURS * 3600);
-      cache.remove(`guest_otp`);
+      safeCachePut(cache, `session_${sessionToken}`, 'guest@maurvi.local', SESSION_VALIDITY_HOURS * 3600);
+      safeCacheRemove(cache, `guest_otp`);
       Logger.log(`verifyGuestOTP: Guest OTP verified. Session token created.`);
       return { status: 'success', sessionToken: sessionToken, userInfo: { name: 'Guest User', email: 'guest@maurvi.local' } };
     } else {
@@ -1417,69 +1506,87 @@ function verifyGuestOTP(otp) {
 
 // --- DATA-READING FUNCTIONS ---
 
-/** Utility to get sheet data with caching - Enhanced with auto-creation */
+/** Utility to get sheet data with caching - Enhanced with auto-creation and retry logic */
 function _getSheetData(sheetName) {
   const cache = CacheService.getScriptCache();
   const cacheKey = `sheetData_${sheetName}`;
-  const cachedData = cache.get(cacheKey);
-  if (cachedData != null) { return JSON.parse(cachedData); }
+  
+  // Use safe cache get
+  const cachedData = safeCacheGet(cache, cacheKey);
+  if (cachedData != null) { 
+    try {
+      return JSON.parse(cachedData);
+    } catch (parseErr) {
+      Logger.log(`Cache parse error for ${sheetName}, will fetch fresh data: ${parseErr.message}`);
+      safeCacheRemove(cache, cacheKey);
+    }
+  }
 
   try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    let sheet = ss.getSheetByName(sheetName);
-    
-    // Auto-create sheet if it doesn't exist (for date-suffixed sheets)
-    if (!sheet) {
-      Logger.log(`_getSheetData: Sheet not found - ${sheetName}. Attempting to create...`);
+    // Wrap sheet operations in retry logic
+    const data = retryOperation(() => {
+      const ss = SpreadsheetApp.openById(SHEET_ID);
+      let sheet = ss.getSheetByName(sheetName);
       
-      // Extract date suffix and sheet type
-      const scriptTimeZone = Session.getScriptTimeZone();
-      const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
-      
-      // Only auto-create if it's today's sheet
-      if (sheetName.includes(`_${today}`)) {
-        try {
-          // Insert at position 0 to maintain correct ordering
-          sheet = ss.insertSheet(sheetName, 0);
-          Logger.log(`Auto-created sheet: ${sheetName} at position 0`);
-          
-          // Add headers based on sheet type
-          if (sheetName.startsWith('Indicator1_')) {
-            const headers = ['Symbol'];
-            for (let i = 1; i <= 5; i++) {
-              headers.push(`Reason ${i}`, `Time ${i}`);
+      // Auto-create sheet if it doesn't exist (for date-suffixed sheets)
+      if (!sheet) {
+        Logger.log(`_getSheetData: Sheet not found - ${sheetName}. Attempting to create...`);
+        
+        // Extract date suffix and sheet type
+        const scriptTimeZone = Session.getScriptTimeZone();
+        const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+        
+        // Only auto-create if it's today's sheet
+        if (sheetName.includes(`_${today}`)) {
+          try {
+            // Insert at position 0 to maintain correct ordering
+            sheet = ss.insertSheet(sheetName, 0);
+            Logger.log(`Auto-created sheet: ${sheetName} at position 0`);
+            
+            // Add headers based on sheet type
+            if (sheetName.startsWith('Indicator1_')) {
+              const headers = ['Symbol'];
+              for (let i = 1; i <= 5; i++) {
+                headers.push(`Reason ${i}`, `Time ${i}`);
+              }
+              for (let i = 1; i <= 21; i++) {
+                headers.push(`Sync Reason ${i}`, `Sync Time ${i}`);
+              }
+              sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+            } else if (sheetName.startsWith('Indicator2_')) {
+              sheet.getRange('A1:E1').setValues([['Date', 'Time', 'Ticker', 'Reason', 'Capital (Cr)']]);
+            } else if (sheetName.startsWith('DebugLogs_')) {
+              sheet.getRange('A1:E1').setValues([['Timestamp', 'Context', 'Error Message', 'Details', 'Stack']]);
             }
-            for (let i = 1; i <= 21; i++) {
-              headers.push(`Sync Reason ${i}`, `Sync Time ${i}`);
-            }
-            sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-          } else if (sheetName.startsWith('Indicator2_')) {
-            sheet.getRange('A1:E1').setValues([['Date', 'Time', 'Ticker', 'Reason', 'Capital (Cr)']]);
-          } else if (sheetName.startsWith('DebugLogs_')) {
-            sheet.getRange('A1:E1').setValues([['Timestamp', 'Context', 'Error Message', 'Details', 'Stack']]);
+            
+            Logger.log(`Headers added to ${sheetName}`);
+          } catch (createErr) {
+            Logger.log(`Failed to auto-create sheet: ${createErr.message}`);
+            _logErrorToSheet(null, '_getSheetData Auto-Create Error', createErr, `Sheet: ${sheetName}`);
+            return [];
           }
-          
-          Logger.log(`Headers added to ${sheetName}`);
-        } catch (createErr) {
-          Logger.log(`Failed to auto-create sheet: ${createErr.message}`);
-          _logErrorToSheet(null, '_getSheetData Auto-Create Error', createErr, `Sheet: ${sheetName}`);
+        } else {
+          // Not today's sheet - don't create
+          Logger.log(`_getSheetData: Sheet not found and not today's sheet - ${sheetName}`);
+          _logErrorToSheet(null, '_getSheetData Error', new Error('Sheet not found'), `Sheet: ${sheetName}`);
           return [];
         }
-      } else {
-        // Not today's sheet - don't create
-        Logger.log(`_getSheetData: Sheet not found and not today's sheet - ${sheetName}`);
-        _logErrorToSheet(null, '_getSheetData Error', new Error('Sheet not found'), `Sheet: ${sheetName}`);
-        return [];
       }
-    }
+      
+      const lastRow = sheet.getLastRow();
+      let sheetData = [];
+      if (lastRow > 0) { 
+        sheetData = sheet.getDataRange().getDisplayValues();
+      } else { 
+        Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); 
+      }
+      
+      return sheetData;
+    }, 3, 500); // 3 retries with 500ms initial delay
     
-    const lastRow = sheet.getLastRow();
-    let data = [];
-    if (lastRow > 0) { data = sheet.getDataRange().getDisplayValues(); }
-    else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
-    
-    // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    cache.put(cacheKey, JSON.stringify(data), 30);
+    // Use very short cache TTL for near real-time updates (5 seconds to match polling interval)
+    // This ensures data appears fresh and prevents stale data issues
+    safeCachePut(cache, cacheKey, JSON.stringify(data), 5);
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
@@ -1491,6 +1598,7 @@ function _getSheetData(sheetName) {
 /** Gets all data for the dashboard - uses today's date-suffixed sheets */
 function getDashboardData() {
   try {
+    const fetchStartTime = new Date().getTime();
     Logger.log('getDashboardData: Function started.');
     const scriptTimeZone = Session.getScriptTimeZone();
     const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
@@ -1500,8 +1608,12 @@ function getDashboardData() {
     const ind1SheetName = `Indicator1_${today}`;
     const ind2SheetName = `Indicator2_${today}`;
 
+    const dataFetchStart = new Date().getTime();
     const ind1FullData = _getSheetData(ind1SheetName);
     const ind2FullData = _getSheetData(ind2SheetName);
+    const dataFetchEnd = new Date().getTime();
+    
+    Logger.log(`getDashboardData: Data fetch took ${dataFetchEnd - dataFetchStart}ms`);
 
     if (ind1FullData.error || ind2FullData.error) { 
       throw new Error(`Error fetching sheet data: Ind1(${ind1FullData.error}), Ind2(${ind2FullData.error})`); 
@@ -1688,13 +1800,135 @@ function getDashboardData() {
       reason: latestNifty[3] 
     } : null;
 
-    Logger.log('getDashboardData: Successfully processed all data.');
+    const fetchEndTime = new Date().getTime();
+    const totalTime = fetchEndTime - fetchStartTime;
+    Logger.log(`getDashboardData: Successfully processed all data in ${totalTime}ms`);
+    Logger.log(`getDashboardData: Returning ${liveFeed.length} live feed items, ${syncedSymbols.size} synced symbols`);
 
     return { kpi, niftyData: niftyDataObj, tickers, dashboardSyncedList, liveFeed, logs };
   } catch (err) {
     Logger.log(`getDashboardData CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, 'getDashboardData Error', err, '');
     return { error: `Server error in getDashboardData: ${err.message}`, stack: err.stack };
+  }
+}
+
+/**
+ * Health check function to diagnose data sync issues
+ * Call this manually to check system health
+ */
+function checkDataSyncHealth() {
+  try {
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const ind1SheetName = `Indicator1_${today}`;
+    const ind2SheetName = `Indicator2_${today}`;
+    
+    Logger.log('=== Data Sync Health Check ===');
+    Logger.log(`Date: ${today}`);
+    Logger.log(`Time: ${Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss')}`);
+    
+    // Check sheet existence
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const ind1Sheet = ss.getSheetByName(ind1SheetName);
+    const ind2Sheet = ss.getSheetByName(ind2SheetName);
+    
+    if (!ind1Sheet) {
+      Logger.log(`❌ ERROR: ${ind1SheetName} not found`);
+      return { status: 'error', message: `${ind1SheetName} not found` };
+    }
+    if (!ind2Sheet) {
+      Logger.log(`❌ ERROR: ${ind2SheetName} not found`);
+      return { status: 'error', message: `${ind2SheetName} not found` };
+    }
+    
+    Logger.log(`✅ Sheets exist`);
+    
+    // Check data counts
+    const ind1Rows = ind1Sheet.getLastRow();
+    const ind2Rows = ind2Sheet.getLastRow();
+    Logger.log(`Indicator1 rows (including header): ${ind1Rows}`);
+    Logger.log(`Indicator2 rows (including header): ${ind2Rows}`);
+    
+    // Check cache status
+    const cache = CacheService.getScriptCache();
+    const cacheKey = `symbolRowMap_${today}`;
+    const cachedMap = safeCacheGet(cache, cacheKey);
+    
+    if (cachedMap) {
+      try {
+        const symbolMap = JSON.parse(cachedMap);
+        Logger.log(`✅ Cache exists with ${Object.keys(symbolMap).length} symbols`);
+      } catch (e) {
+        Logger.log(`⚠️ Cache exists but parse failed: ${e.message}`);
+      }
+    } else {
+      Logger.log(`⚠️ No cache found for symbol row map`);
+    }
+    
+    // Check sheet data cache
+    const ind1CacheKey = `sheetData_${ind1SheetName}`;
+    const ind2CacheKey = `sheetData_${ind2SheetName}`;
+    const ind1Cached = safeCacheGet(cache, ind1CacheKey);
+    const ind2Cached = safeCacheGet(cache, ind2CacheKey);
+    
+    Logger.log(`Indicator1 data cache: ${ind1Cached ? '✅ Present' : '❌ Missing'}`);
+    Logger.log(`Indicator2 data cache: ${ind2Cached ? '✅ Present' : '❌ Missing'}`);
+    
+    // Test data retrieval
+    Logger.log('\n=== Testing Data Retrieval ===');
+    const startTime = new Date().getTime();
+    const dashboardData = getDashboardData();
+    const endTime = new Date().getTime();
+    
+    if (dashboardData.error) {
+      Logger.log(`❌ getDashboardData failed: ${dashboardData.error}`);
+      return { status: 'error', message: dashboardData.error };
+    }
+    
+    Logger.log(`✅ getDashboardData succeeded in ${endTime - startTime}ms`);
+    Logger.log(`Total signals: ${dashboardData.kpi?.totalSignals || 0}`);
+    Logger.log(`Synced signals: ${dashboardData.kpi?.syncedSignals || 0}`);
+    Logger.log(`Live feed items: ${dashboardData.liveFeed?.length || 0}`);
+    
+    // Check for recent data
+    if (dashboardData.liveFeed && dashboardData.liveFeed.length > 0) {
+      const latestTime = dashboardData.liveFeed[0].time;
+      Logger.log(`Latest signal time: ${latestTime}`);
+      
+      // Check if latest signal is recent (within last 2 hours)
+      const now = new Date();
+      const latestSignalTime = new Date(`${today}T${latestTime}`);
+      const ageMinutes = (now - latestSignalTime) / 1000 / 60;
+      
+      if (ageMinutes > 120) {
+        Logger.log(`⚠️ Latest signal is ${ageMinutes.toFixed(0)} minutes old - may indicate no new data`);
+      } else {
+        Logger.log(`✅ Latest signal is ${ageMinutes.toFixed(0)} minutes old - data is fresh`);
+      }
+    } else {
+      Logger.log(`⚠️ No signals found - this may be expected if it's early in the day`);
+    }
+    
+    Logger.log('\n=== Health Check Complete ===');
+    return {
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      sheetsExist: true,
+      dataRows: { ind1: ind1Rows, ind2: ind2Rows },
+      cacheStatus: {
+        symbolMap: !!cachedMap,
+        ind1Data: !!ind1Cached,
+        ind2Data: !!ind2Cached
+      },
+      dataFetchTime: endTime - startTime,
+      signalCount: dashboardData.kpi?.totalSignals || 0
+    };
+    
+  } catch (err) {
+    Logger.log(`Health check failed: ${err.message}`);
+    Logger.log(`Stack: ${err.stack}`);
+    return { status: 'error', message: err.message, stack: err.stack };
   }
 }
 
@@ -2047,7 +2281,7 @@ function checkDailySheetSetup() {
     // Check cache status
     const cache = CacheService.getScriptCache();
     const cacheKey = `symbolRowMap_${dateSuffix}`;
-    const cachedMap = cache.get(cacheKey);
+    const cachedMap = safeCacheGet(cache, cacheKey);
     results.cache = {
       exists: cachedMap !== null,
       symbolCount: cachedMap ? Object.keys(JSON.parse(cachedMap)).length : 0
@@ -2136,7 +2370,7 @@ function testDynamicRowMapping() {
     
     // Clear cache for testing
     const cache = CacheService.getScriptCache();
-    cache.remove(`symbolRowMap_${today}`);
+    safeCacheRemove(cache, `symbolRowMap_${today}`);
     
     // Clear test data (keep headers)
     if (ind1Sheet.getLastRow() > 1) {
@@ -2179,7 +2413,7 @@ function testDynamicRowMapping() {
       
       // Dynamic Row Mapping
       const cacheKey = `symbolRowMap_${today}`;
-      const cachedMap = cache.get(cacheKey);
+      const cachedMap = safeCacheGet(cache, cacheKey);
       let symbolMap = {};
       
       if (cachedMap !== null) {
@@ -2197,7 +2431,7 @@ function testDynamicRowMapping() {
         targetRow = ind1Sheet.getLastRow() + 1;
         ind1Sheet.getRange(targetRow, 1).setValue(symbol);
         symbolMap[symbol] = targetRow;
-        cache.put(cacheKey, JSON.stringify(symbolMap), 86400);
+        safeCachePut(cache, cacheKey, JSON.stringify(symbolMap), 86400);
         Logger.log(`  → New symbol "${symbol}" assigned to row ${targetRow}`);
       } else {
         Logger.log(`  → Using existing row ${targetRow} for symbol "${symbol}"`);
@@ -2398,7 +2632,7 @@ function populateLargeMockData() {
     
     // Clear existing cache
     const cache = CacheService.getScriptCache();
-    cache.remove(`symbolRowMap_${dateSuffix}`);
+    safeCacheRemove(cache, `symbolRowMap_${dateSuffix}`);
     
     // Clear existing data (keep headers)
     if (ind1Sheet.getLastRow() > 1) {
@@ -2466,7 +2700,8 @@ function populateLargeMockData() {
     }
     
     // Clear cache to force fresh data load
-    cache.removeAll([`sheetData_${ind1SheetName}`, `sheetData_${ind2SheetName}`]);
+    safeCacheRemove(cache, `sheetData_${ind1SheetName}`);
+    safeCacheRemove(cache, `sheetData_${ind2SheetName}`);
     
     const message = `Large mock data populated successfully!\n` +
                     `- Symbols: ${symbols.length}\n` +
@@ -2529,11 +2764,9 @@ function eraseMockData() {
     
     // Clear cache
     const cache = CacheService.getScriptCache();
-    cache.removeAll([
-      `symbolRowMap_${dateSuffix}`,
-      `sheetData_${ind1SheetName}`,
-      `sheetData_${ind2SheetName}`
-    ]);
+    safeCacheRemove(cache, `symbolRowMap_${dateSuffix}`);
+    safeCacheRemove(cache, `sheetData_${ind1SheetName}`);
+    safeCacheRemove(cache, `sheetData_${ind2SheetName}`);
     Logger.log('Cleared all relevant caches');
     
     const message = `Mock data erased successfully!\n` +
@@ -2659,10 +2892,10 @@ function refreshRearrangeCurrentData() {
     // Update cache with new symbol map
     const cache = CacheService.getScriptCache();
     const cacheKey = `symbolRowMap_${dateSuffix}`;
-    cache.put(cacheKey, JSON.stringify(newSymbolMap), 86400);
+    safeCachePut(cache, cacheKey, JSON.stringify(newSymbolMap), 86400);
     
     // Clear data cache to force refresh
-    cache.remove(`sheetData_${ind1SheetName}`);
+    safeCacheRemove(cache, `sheetData_${ind1SheetName}`);
     
     const message = `Data refreshed and rearranged successfully!\n` +
                     `- Unique symbols: ${symbols.length}\n` +
