@@ -40,12 +40,14 @@ cacheService.remove(`sheetData_Indicator2_${dateSuffix}`);
 - Cache naturally expires anyway, so forced clearing was redundant
 
 #### 2. Optimized Cache Duration
-**What was changed:**
+**What was changed in _getSheetData function:**
 ```javascript
 // OLD: Cache for 30 seconds
+const cacheKey = `sheetData_${sheetName}`;
 cache.put(cacheKey, JSON.stringify(data), 30);
 
 // NEW: Cache for 60 seconds
+const cacheKey = `sheetData_${sheetName}`;
 cache.put(cacheKey, JSON.stringify(data), 60);
 ```
 
@@ -169,6 +171,6 @@ If you continue to experience issues:
 
 - `code.gs` - Removed cache clearing, optimized TTL
 - `DATA_REFLECTION_FIX.md` - Technical documentation
-- `DEPLOYMENT_NOTES.md` - This summary
+- `FIX_SUMMARY.md` - This user-friendly summary
 
 All changes are backward compatible and require no client-side updates.
