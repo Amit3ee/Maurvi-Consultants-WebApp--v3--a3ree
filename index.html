@@ -2739,7 +2739,7 @@
                  const latestReasonColor = getReasonColor(latestReason.reason);
                  const ind1Color = getReasonColor(signal.ind1Reason);
                  
-                 const getGlowClass=(syncReason)=>{if(!syncReason)return "";const r=syncReason.toLowerCase();if(r.includes("hvd")||r.includes("significant deployed capital"))return "card-glow-hvd";if(r.includes("oversold"))return "card-glow-oversold";if(r.includes("overbought"))return "card-glow-overbought";return "";};const glowClass=getGlowClass(latestReason.reason);return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol.replace(/'/g, "\'")}')">
+                 const getGlowClass=(syncReason)=>{if(!syncReason)return "";const r=syncReason.toLowerCase();if(r.includes("hvd")||r.includes("significant deployed capital"))return "card-glow-hvd";if(r.includes("oversold"))return "card-glow-oversold";if(r.includes("overbought"))return "card-glow-overbought";return "";};const glowClass=getGlowClass(latestReason.reason);return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol.replace(/'/g, "\\'")}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
@@ -2838,7 +2838,7 @@
                  const reasonColor = getReasonColor(latestReason.reason);
                  
                  
-                 return `<div class="signal-card material material-regular interactive " onclick="showLiveFeedDetail('${signal.symbol.replace(/'/g, "\')}')">
+                 return `<div class="signal-card material material-regular interactive " onclick="showLiveFeedDetail('${signal.symbol.replace(/'/g, "\\'")}')">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
@@ -2989,7 +2989,7 @@
                   const latestReasonColor = getReasonColor(latestReason.reason);
                   const ind1Color = getReasonColor(signal.reason);
                   
-                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol.replace(/'/g, "\'")}', '${signal.time}')">
+                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol.replace(/'/g, "\\'")}', '${signal.time}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
