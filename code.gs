@@ -1658,7 +1658,7 @@ function getDashboardData() {
 
     // Calculate KPIs
     // totalSignals = number of cards in "Live Feed" section (all Indicator1 signals)
-    // syncedSignals = number of cards in "Sync Signal Feed" section (symbols with sync events)
+    // syncedSignals = number of items displayed in "Sync Signal Feed" section (dashboard synced list)
     const kpi = { 
       totalSignals: liveFeed.length, 
       syncedSignals: dashboardSyncedList.length, 
@@ -2459,8 +2459,7 @@ function populateLargeMockData() {
     }
     
     // Note: Sheet data cache clearing removed since _getSheetData no longer uses caching
-    // Only symbolRowMap cache remains (for row mapping optimization)
-    cache.remove(`symbolRowMap_${dateSuffix}`);
+    // symbolRowMap cache was already cleared at the beginning of this function
     
     const message = `Large mock data populated successfully!\n` +
                     `- Symbols: ${symbols.length}\n` +
