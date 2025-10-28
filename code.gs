@@ -484,11 +484,7 @@ function doPost(e) {
     }
     writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     
-    // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
-    const cacheService = CacheService.getScriptCache();
-    cacheService.remove(`sheetData_Indicator1_${dateSuffix}`);
-    cacheService.remove(`sheetData_Indicator2_${dateSuffix}`);
-    Logger.log(`Cache cleared for immediate data refresh`);
+    // No cache clearing needed - _getSheetData now returns real-time data
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'success', 
@@ -1417,13 +1413,17 @@ function verifyGuestOTP(otp) {
 
 // --- DATA-READING FUNCTIONS ---
 
-/** Utility to get sheet data with caching - Enhanced with auto-creation */
+/**
+ * Utility to get sheet data - Enhanced with auto-creation (no caching for real-time updates)
+ * 
+ * Reads data directly from Google Sheets without caching to ensure real-time accuracy.
+ * Automatically creates date-suffixed sheets if they don't exist and it's today's date.
+ * 
+ * @param {string} sheetName - Name of the sheet to read (e.g., "Indicator1_2025-10-28")
+ * @return {Array[]} 2D array of sheet values (including headers), or empty array if sheet is empty, 
+ *                   or error object with {error, stack} properties if an error occurs
+ */
 function _getSheetData(sheetName) {
-  const cache = CacheService.getScriptCache();
-  const cacheKey = `sheetData_${sheetName}`;
-  const cachedData = cache.get(cacheKey);
-  if (cachedData != null) { return JSON.parse(cachedData); }
-
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
     let sheet = ss.getSheetByName(sheetName);
@@ -1478,8 +1478,7 @@ function _getSheetData(sheetName) {
     if (lastRow > 0) { data = sheet.getDataRange().getDisplayValues(); }
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
     
-    // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    cache.put(cacheKey, JSON.stringify(data), 30);
+    // No caching - always return fresh data for real-time updates
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
@@ -1956,7 +1955,7 @@ function populateSheetWithMockData() { /* ... (unchanged) ... */
     if (ind2Data.length > 0) { ind2Sheet.getRange(2, 1, ind2Data.length, ind2Data[0].length).setValues(ind2Data); }
     if (niftyData.length > 0) { niftySheet.getRange(2, 1, niftyData.length, niftyData[0].length).setValues(niftyData); }
 
-    CacheService.getScriptCache().removeAll([`sheetData_${SHEET_INDICATOR_1}`, `sheetData_${SHEET_INDICATOR_2}`, `sheetData_${SHEET_NIFTY}`]);
+    // No cache clearing needed - _getSheetData now returns real-time data
     const message = "Mock data populated successfully!"; Logger.log(message); SpreadsheetApp.flush(); return message;
   } catch (err) {
     const errorMessage = "Error populating mock data: " + err.message; Logger.log(errorMessage + ` Stack: ${err.stack}`);
@@ -2465,8 +2464,7 @@ function populateLargeMockData() {
       ind2Sheet.appendRow([dateSuffix, timeStr, ticker, reason, '']);
     }
     
-    // Clear cache to force fresh data load
-    cache.removeAll([`sheetData_${ind1SheetName}`, `sheetData_${ind2SheetName}`]);
+    // No cache clearing needed - _getSheetData now returns real-time data
     
     const message = `Large mock data populated successfully!\n` +
                     `- Symbols: ${symbols.length}\n` +
@@ -2527,14 +2525,10 @@ function eraseMockData() {
       Logger.log(`Cleared ${rowCount} rows from ${ind2SheetName}`);
     }
     
-    // Clear cache
+    // Clear symbolRowMap cache as part of data erasure
     const cache = CacheService.getScriptCache();
-    cache.removeAll([
-      `symbolRowMap_${dateSuffix}`,
-      `sheetData_${ind1SheetName}`,
-      `sheetData_${ind2SheetName}`
-    ]);
-    Logger.log('Cleared all relevant caches');
+    cache.remove(`symbolRowMap_${dateSuffix}`);
+    Logger.log('Cleared symbol row map cache');
     
     const message = `Mock data erased successfully!\n` +
                     `- Total rows cleared: ${clearedRows}\n` +
@@ -2661,8 +2655,7 @@ function refreshRearrangeCurrentData() {
     const cacheKey = `symbolRowMap_${dateSuffix}`;
     cache.put(cacheKey, JSON.stringify(newSymbolMap), 86400);
     
-    // Clear data cache to force refresh
-    cache.remove(`sheetData_${ind1SheetName}`);
+    // No data cache clearing needed - _getSheetData now returns real-time data
     
     const message = `Data refreshed and rearranged successfully!\n` +
                     `- Unique symbols: ${symbols.length}\n` +
