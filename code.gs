@@ -1640,22 +1640,25 @@ function getDashboardData() {
         const ind1Reason = row[1] || '';
         const ind1Time = row[2] || '';
         
-        ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
-        dashboardSyncedList.push({
-          symbol: symbol,
-          ind1Reason: ind1Reason,
-          ind1Time: ind1Time,
-          ind2Reasons: ind2Reasons
-        });
-        
-        // Update status in liveFeed for synced signals
-        liveFeed.forEach(feedItem => {
-          if (feedItem.symbol === symbol && feedItem.status !== 'Synced') {
-            feedItem.status = 'Synced';
-            feedItem.syncTime = ind2Reasons[0].time;
-            feedItem.syncReason = ind2Reasons[0].reason;
-          }
-        });
+        // Only add to dashboard if ind1Reason is not blank (Issue: signals with blank indicator 1 reason should not appear)
+        if (ind1Reason && ind1Reason !== '') {
+          ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
+          dashboardSyncedList.push({
+            symbol: symbol,
+            ind1Reason: ind1Reason,
+            ind1Time: ind1Time,
+            ind2Reasons: ind2Reasons
+          });
+          
+          // Update status in liveFeed for synced signals (only if ind1Reason is not blank)
+          liveFeed.forEach(feedItem => {
+            if (feedItem.symbol === symbol && feedItem.status !== 'Synced') {
+              feedItem.status = 'Synced';
+              feedItem.syncTime = ind2Reasons[0].time;
+              feedItem.syncReason = ind2Reasons[0].reason;
+            }
+          });
+        }
       }
     });
 
