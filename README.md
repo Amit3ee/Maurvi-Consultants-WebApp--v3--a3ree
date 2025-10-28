@@ -234,12 +234,12 @@ For detailed troubleshooting steps, see [DATA_SYNC_TROUBLESHOOTING.md](DATA_SYNC
 
 ## ⚡ Performance
 
-- **Script Lock**: Prevents race conditions in concurrent webhooks (120s timeout)
+- **Script Lock**: Prevents race conditions in concurrent webhooks (120s timeout in `doPost()`)
 - **Caching**: Symbol-row mapping cached for 24 hours (O(1) lookups)
-- **Fast Data Cache**: Sheet data cached for 5 seconds for near real-time updates
+- **Fast Data Cache**: Sheet data cached for 5 seconds (matching frontend poll interval)
 - **Retry Logic**: Exponential backoff for failed operations (handles quotas gracefully)
 - **Batch Operations**: Efficient sheet reads/writes
-- **5-Second Polling**: Real-time updates matching cache expiration
+- **5-Second Polling**: Frontend polls every 5 seconds (see `index.html` line 2612)
 - **Date-Suffixed Sheets**: Keeps individual sheets small and fast
 - **Safe Cache Wrappers**: Graceful degradation when cache service fails
 
