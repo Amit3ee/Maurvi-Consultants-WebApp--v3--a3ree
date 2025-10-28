@@ -1598,6 +1598,7 @@ function _getSheetData(sheetName) {
 /** Gets all data for the dashboard - uses today's date-suffixed sheets */
 function getDashboardData() {
   try {
+    const fetchStartTime = new Date().getTime();
     Logger.log('getDashboardData: Function started.');
     const scriptTimeZone = Session.getScriptTimeZone();
     const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
@@ -1607,8 +1608,12 @@ function getDashboardData() {
     const ind1SheetName = `Indicator1_${today}`;
     const ind2SheetName = `Indicator2_${today}`;
 
+    const dataFetchStart = new Date().getTime();
     const ind1FullData = _getSheetData(ind1SheetName);
     const ind2FullData = _getSheetData(ind2SheetName);
+    const dataFetchEnd = new Date().getTime();
+    
+    Logger.log(`getDashboardData: Data fetch took ${dataFetchEnd - dataFetchStart}ms`);
 
     if (ind1FullData.error || ind2FullData.error) { 
       throw new Error(`Error fetching sheet data: Ind1(${ind1FullData.error}), Ind2(${ind2FullData.error})`); 
@@ -1795,13 +1800,135 @@ function getDashboardData() {
       reason: latestNifty[3] 
     } : null;
 
-    Logger.log('getDashboardData: Successfully processed all data.');
+    const fetchEndTime = new Date().getTime();
+    const totalTime = fetchEndTime - fetchStartTime;
+    Logger.log(`getDashboardData: Successfully processed all data in ${totalTime}ms`);
+    Logger.log(`getDashboardData: Returning ${liveFeed.length} live feed items, ${syncedSymbols.size} synced symbols`);
 
     return { kpi, niftyData: niftyDataObj, tickers, dashboardSyncedList, liveFeed, logs };
   } catch (err) {
     Logger.log(`getDashboardData CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, 'getDashboardData Error', err, '');
     return { error: `Server error in getDashboardData: ${err.message}`, stack: err.stack };
+  }
+}
+
+/**
+ * Health check function to diagnose data sync issues
+ * Call this manually to check system health
+ */
+function checkDataSyncHealth() {
+  try {
+    const scriptTimeZone = Session.getScriptTimeZone();
+    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const ind1SheetName = `Indicator1_${today}`;
+    const ind2SheetName = `Indicator2_${today}`;
+    
+    Logger.log('=== Data Sync Health Check ===');
+    Logger.log(`Date: ${today}`);
+    Logger.log(`Time: ${Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss')}`);
+    
+    // Check sheet existence
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const ind1Sheet = ss.getSheetByName(ind1SheetName);
+    const ind2Sheet = ss.getSheetByName(ind2SheetName);
+    
+    if (!ind1Sheet) {
+      Logger.log(`❌ ERROR: ${ind1SheetName} not found`);
+      return { status: 'error', message: `${ind1SheetName} not found` };
+    }
+    if (!ind2Sheet) {
+      Logger.log(`❌ ERROR: ${ind2SheetName} not found`);
+      return { status: 'error', message: `${ind2SheetName} not found` };
+    }
+    
+    Logger.log(`✅ Sheets exist`);
+    
+    // Check data counts
+    const ind1Rows = ind1Sheet.getLastRow();
+    const ind2Rows = ind2Sheet.getLastRow();
+    Logger.log(`Indicator1 rows (including header): ${ind1Rows}`);
+    Logger.log(`Indicator2 rows (including header): ${ind2Rows}`);
+    
+    // Check cache status
+    const cache = CacheService.getScriptCache();
+    const cacheKey = `symbolRowMap_${today}`;
+    const cachedMap = safeCacheGet(cache, cacheKey);
+    
+    if (cachedMap) {
+      try {
+        const symbolMap = JSON.parse(cachedMap);
+        Logger.log(`✅ Cache exists with ${Object.keys(symbolMap).length} symbols`);
+      } catch (e) {
+        Logger.log(`⚠️ Cache exists but parse failed: ${e.message}`);
+      }
+    } else {
+      Logger.log(`⚠️ No cache found for symbol row map`);
+    }
+    
+    // Check sheet data cache
+    const ind1CacheKey = `sheetData_${ind1SheetName}`;
+    const ind2CacheKey = `sheetData_${ind2SheetName}`;
+    const ind1Cached = safeCacheGet(cache, ind1CacheKey);
+    const ind2Cached = safeCacheGet(cache, ind2CacheKey);
+    
+    Logger.log(`Indicator1 data cache: ${ind1Cached ? '✅ Present' : '❌ Missing'}`);
+    Logger.log(`Indicator2 data cache: ${ind2Cached ? '✅ Present' : '❌ Missing'}`);
+    
+    // Test data retrieval
+    Logger.log('\n=== Testing Data Retrieval ===');
+    const startTime = new Date().getTime();
+    const dashboardData = getDashboardData();
+    const endTime = new Date().getTime();
+    
+    if (dashboardData.error) {
+      Logger.log(`❌ getDashboardData failed: ${dashboardData.error}`);
+      return { status: 'error', message: dashboardData.error };
+    }
+    
+    Logger.log(`✅ getDashboardData succeeded in ${endTime - startTime}ms`);
+    Logger.log(`Total signals: ${dashboardData.kpi?.totalSignals || 0}`);
+    Logger.log(`Synced signals: ${dashboardData.kpi?.syncedSignals || 0}`);
+    Logger.log(`Live feed items: ${dashboardData.liveFeed?.length || 0}`);
+    
+    // Check for recent data
+    if (dashboardData.liveFeed && dashboardData.liveFeed.length > 0) {
+      const latestTime = dashboardData.liveFeed[0].time;
+      Logger.log(`Latest signal time: ${latestTime}`);
+      
+      // Check if latest signal is recent (within last 2 hours)
+      const now = new Date();
+      const latestSignalTime = new Date(`${today}T${latestTime}`);
+      const ageMinutes = (now - latestSignalTime) / 1000 / 60;
+      
+      if (ageMinutes > 120) {
+        Logger.log(`⚠️ Latest signal is ${ageMinutes.toFixed(0)} minutes old - may indicate no new data`);
+      } else {
+        Logger.log(`✅ Latest signal is ${ageMinutes.toFixed(0)} minutes old - data is fresh`);
+      }
+    } else {
+      Logger.log(`⚠️ No signals found - this may be expected if it's early in the day`);
+    }
+    
+    Logger.log('\n=== Health Check Complete ===');
+    return {
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      sheetsExist: true,
+      dataRows: { ind1: ind1Rows, ind2: ind2Rows },
+      cacheStatus: {
+        symbolMap: !!cachedMap,
+        ind1Data: !!ind1Cached,
+        ind2Data: !!ind2Cached
+      },
+      dataFetchTime: endTime - startTime,
+      signalCount: dashboardData.kpi?.totalSignals || 0
+    };
+    
+  } catch (err) {
+    Logger.log(`Health check failed: ${err.message}`);
+    Logger.log(`Stack: ${err.stack}`);
+    return { status: 'error', message: err.message, stack: err.stack };
   }
 }
 
