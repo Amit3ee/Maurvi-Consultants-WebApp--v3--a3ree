@@ -1,0 +1,262 @@
+Symbol	Reason 1	Time 1	Reason 2	Time 2	Reason 3	Time 3	Reason 4	Time 4	Reason 5	Time 5	Sync Reason 1	Sync Time 1	Sync Reason 2	Sync Time 2	Sync Reason 3	Sync Time 3	Sync Reason 4	Sync Time 4	Sync Reason 5	Sync Time 5	Sync Reason 6	Sync Time 6	Sync Reason 7	Sync Time 7	Sync Reason 8	Sync Time 8	Sync Reason 9	Sync Time 9	Sync Reason 10	Sync Time 10	Sync Reason 11	Sync Time 11	Sync Reason 12	Sync Time 12	Sync Reason 13	Sync Time 13	Sync Reason 14	Sync Time 14	Sync Reason 15	Sync Time 15	Sync Reason 16	Sync Time 16	Sync Reason 17	Sync Time 17	Sync Reason 18	Sync Time 18	Sync Reason 19	Sync Time 19	Sync Reason 20	Sync Time 20	Sync Reason 21	Sync Time 21
+ONGC	Demand Zone	11:40:17	Demand Zone	12:02:29	Demand Zone	12:20:51					Bearish Engulfing	11:45:17	Bearish Engulfing	12:05:07	Bearish Engulfing	13:00:05	Bearish Piercing	14:00:07	Bearish Engulfing	14:35:04																																
+PATANJALI	Supply Zone	11:41:08	Supply Zone	12:02:41							HVD	11:41:49	HVD	11:49:02	Bullish Engulfing	12:10:28	Bullish Engulfing	15:00:15	Bearish Piercing	15:10:27																																
+SONACOMS	SMA200	11:45:16	SMA200	12:02:17							Bullish Engulfing	14:40:16																																								
+MANAPPURAM	BB-Lower	11:46:12	BB-Lower	12:02:19	BB-Lower	12:20:50																																														
+ICICIBANK	Supply Zone	11:47:13	Supply Zone	12:02:12	Supply Zone	12:20:51					Bullish Engulfing	15:30:42																																								
+HFCL	Demand Zone	12:00:25	Demand Zone	12:02:27	Demand Zone	12:20:52					Bullish Engulfing	14:20:16																																								
+IRFC	Supply Zone	12:00:56	Supply Zone	12:02:16	Supply Zone	12:20:55	Supply Zone	12:31:38																																												
+POLICYBZR	Supply Zone	12:01:56	SMA200	12:17:48	Supply Zone	12:20:40					Bullish Engulfing	12:20:14	Bearish Engulfing	14:05:09	Overbought	14:05:26	HVD	14:39:02	Overbought	15:25:34	Bearish Engulfing	15:25:49	HVD	15:27:44	Bullish Engulfing	15:30:12																										
+CNXENERGY	Demand Zone	12:01:57	Demand Zone	12:20:41							Bearish Piercing	12:05:06	Bullish Engulfing	13:05:01	Bearish Engulfing	13:20:19	Bearish Piercing	14:10:04	Bullish Piercing	14:55:03	Evening Star	15:31:05																														
+BAJFINANCE	Demand Zone	12:01:58	Demand Zone	12:20:38							Bearish Engulfing	14:50:07	Bearish Engulfing	15:05:08	Bearish Piercing	15:15:12																																				
+CNXPHARMA	Demand Zone	12:01:59	Demand Zone	12:20:40							Bearish Engulfing	12:15:05	Bullish Piercing	12:35:08	Bullish Engulfing	12:55:06	Bullish Engulfing	13:15:02	Bullish Piercing	13:40:07	Bullish Engulfing	13:50:06	Evening Star	14:15:06	Bullish Piercing	14:55:02	Bearish Piercing	15:15:11	Bearish Engulfing	15:25:39																						
+MPHASIS	Supply Zone	12:01:59	BB-Upper	12:02:09	Supply Zone	12:20:42					Overbought	12:50:04	Bearish Piercing	12:50:21	Bearish Engulfing	13:05:14	Overbought	13:05:15	HVD	13:09:24	Evening Star	14:10:17	Overbought	14:10:28	Bullish Piercing	15:00:09	Evening Star	15:20:16	Overbought	15:20:24																						
+SBILIFE	BB-Upper	12:02:00	Supply Zone	12:02:15	BB-Upper	12:20:43					Bullish Engulfing	14:30:16																																								
+IDEA	SMA200	12:02:01	SMA200	12:20:36							Bullish Engulfing	13:25:08	Bullish Piercing	15:20:19																																						
+PETRONET	Demand Zone	12:02:06	Demand Zone	12:20:42							Bullish Engulfing	14:25:19																																								
+LTF	Demand Zone	12:02:07	Demand Zone	12:20:46							Bullish Engulfing	12:40:13	Bearish Piercing	12:50:22	Bearish Engulfing	13:30:08	Bearish Engulfing	14:35:07	Bearish Engulfing	15:05:15																																
+ADANIGREEN	BB-Lower	12:02:08	BB-Lower	12:20:53							Bearish Piercing	12:05:03	Bullish Engulfing	13:40:19	Bullish Engulfing	14:05:16	Bearish Engulfing	15:00:12	Bullish Piercing	15:05:13																																
+INDUSTOWER	BB-Upper	12:02:10	SMA200	12:02:33	Supply Zone	12:02:35	SMA200	12:20:56			Bearish Engulfing	12:10:05	Overbought	12:10:12	Bullish Piercing	12:40:05	Overbought	14:25:03	Bearish Piercing	14:25:04	Bullish Piercing	15:10:02	Bearish Piercing	15:15:08	Overbought	15:15:09	Bullish Piercing	15:20:02																								
+RELIANCE	BB-Upper	12:02:10									Bearish Engulfing	13:20:28	Overbought	13:20:31	Bearish Engulfing	13:30:11	Overbought	13:30:21																																		
+RECLTD	Demand Zone	12:02:12									Bullish Engulfing	14:10:23	Bearish Piercing	14:40:20																																						
+PNBHOUSING	SMA200	12:02:14	SMA200	12:20:54							Bullish Piercing	12:45:10	Bearish Engulfing	14:30:10	Overbought	14:30:15	Morning Star	14:40:09	Bearish Engulfing	15:15:38	Overbought	15:15:46																														
+NIFTY_OIL_AND_GAS	BB-Upper	12:02:16	BB-Upper	12:20:54							Bullish Piercing	13:05:08	Bearish Engulfing	13:20:02	Bullish Engulfing	14:20:08	Bullish Engulfing	14:30:03	Bullish Piercing	14:55:07	Bearish Engulfing	15:15:05	Bullish Engulfing	15:20:04																												
+PRESTIGE	Supply Zone	12:02:17									Bullish Engulfing	12:10:08	Bearish Piercing	13:00:09	Overbought	13:00:17	Bullish Engulfing	13:10:24	HVD	13:17:13	Bearish Engulfing	14:05:18	Overbought	14:05:19	Bullish Piercing	14:20:23																										
+AXISBANK	Supply Zone	12:02:18	Supply Zone	12:26:38							Bearish Engulfing	13:30:20	Bearish Piercing	15:15:44	Bullish Piercing	15:25:03																																				
+ZYDUSLIFE	Supply Zone	12:02:20	BB-Upper	12:20:50							Bearish Engulfing	13:45:24	Bullish Piercing	14:35:18	Bullish Piercing	15:10:14																																				
+OBEROIRLTY	SMA200	12:02:21	BB-Upper	12:02:38	SMA200	12:20:47	BB-Upper	12:20:49			Bearish Engulfing	12:05:12	Overbought	12:05:17	Bullish Engulfing	13:35:17	Bullish Piercing	13:55:14	Bearish Engulfing	14:05:13	Overbought	14:05:14	Bullish Engulfing	14:30:07																												
+PIIND	BB-Upper	12:02:22									Bearish Piercing	12:30:11	Morning Star	12:50:06	Bearish Engulfing	15:15:46																																				
+HG1!	BB-Upper	12:02:23	BB-Upper	16:51:00	BB-Upper	22:44:00					Morning Star	12:45:07	Bearish Engulfing	13:20:20	Bullish Engulfing	13:35:25	Bearish Engulfing	13:45:05	Bearish Engulfing	14:05:13	Bearish Piercing	15:35:30	Bearish Engulfing	16:45:15	Bearish Piercing	17:05:15	HVD	18:55:13	Bullish Piercing	19:15:11	HVD	19:23:43	Bullish Engulfing	20:25:06	Bearish Piercing	20:30:10	Bullish Engulfing	21:15:11	Bullish Engulfing	22:15:06	Bullish Engulfing	23:05:29	Evening Star	23:35:12								
+GRASIM	BB-Upper	12:02:24									HVD	12:29:54	HVD	13:14:24	Bullish Engulfing	13:15:11	Bullish Piercing	13:40:17	Overbought	13:45:02	Bearish Engulfing	13:45:03	Bullish Piercing	13:50:10	Overbought	14:05:08	Bearish Engulfing	14:05:20	HVD	14:52:48	Bullish Engulfing	15:10:05																				
+COFORGE	Supply Zone	12:02:25	BB-Upper	12:02:31	BB-Upper	12:20:48					Bullish Engulfing	12:20:13	Bullish Engulfing	12:35:03	Bullish Piercing	12:55:24	Morning Star	13:15:13	Bullish Piercing	13:40:03	Bearish Engulfing	13:55:01	Overbought	13:55:05	Overbought	14:55:09	Evening Star	14:55:10																								
+CROMPTON	BB-Upper	12:02:28	Supply Zone	12:02:35							Bearish Piercing	14:05:14	Bearish Piercing	14:35:20	Bullish Engulfing	15:10:15																																				
+EXIDEIND	BB-Lower	12:02:29	SMA200	13:09:17	Demand Zone	15:15:41					Bearish Engulfing	13:05:13	Bullish Piercing	14:35:18	HVD	15:05:29	Bullish Engulfing	15:25:45	Oversold	15:25:51																																
+NCC	BB-Upper	12:02:30	Supply Zone	12:02:38	Supply Zone	12:20:39	Supply Zone	12:20:52			Bearish Engulfing	12:05:04	Bullish Engulfing	13:20:24	Bearish Piercing	13:35:07	Overbought	13:35:08	Overbought	13:45:23	Bearish Engulfing	13:45:26	Overbought	15:15:42	Bearish Engulfing	15:15:48																										
+CNXINFRA	Supply Zone	12:02:32	Supply Zone	12:20:55	BB-Upper	12:31:49					Bullish Piercing	13:05:04	Bearish Engulfing	13:10:11	Bullish Engulfing	13:15:11	Bearish Engulfing	13:20:02	Bearish Engulfing	13:30:10	Bullish Engulfing	13:40:20	Bullish Engulfing	14:20:11	Bullish Engulfing	14:35:11	Bullish Piercing	15:20:07																								
+MCX	Supply Zone	12:02:32	Supply Zone	12:20:45							Overbought	12:35:06	Evening Star	12:35:11	Bullish Engulfing	12:40:02	Bullish Engulfing	13:15:06	Bullish Engulfing	13:35:09	Bearish Engulfing	14:15:04	Overbought	14:15:14	Overbought	14:40:12	Bearish Engulfing	14:40:16	Overbought	15:00:02	Bearish Piercing	15:00:04																				
+DOGEUSD	SMA200	12:02:33									Bearish Engulfing	12:05:07	Bullish Engulfing	12:20:17	Bearish Engulfing	13:00:06	Bullish Engulfing	13:30:19	Bearish Engulfing	13:55:21	Bearish Engulfing	14:20:11	HVD	14:45:17	HVD	14:51:37	HVD	15:08:24	Bearish Piercing	15:15:43	Bullish Engulfing	15:50:08	HVD	16:52:55	Bearish Piercing	17:20:15	Bullish Piercing	17:45:10	Bearish Engulfing	17:50:07	Bullish Engulfing	18:35:05	HVD	19:11:41	Morning Star	19:20:06	Oversold	19:20:07	Evening Star	19:35:06	Oversold	19:55:03
+ALUMINIUM1!	BB-Upper	12:02:37	BB-Upper	17:46:56	BB-Upper	21:21:45					Bullish Engulfing	16:10:34																																								
+BHARTIARTL	BB-Upper	12:02:38	BB-Upper	12:20:48							Bullish Engulfing	13:15:03	Bullish Engulfing	14:10:24	Bearish Engulfing	15:05:02	Overbought	15:05:11																																		
+KFINTECH	BB-Upper	12:02:39	BB-Upper	12:20:49							Overbought	14:15:18	Bearish Engulfing	14:15:20	Bearish Engulfing	14:30:12	Overbought	14:30:13	Bullish Piercing	14:35:13																																
+DRREDDY	Demand Zone	12:02:41	BB-Upper	14:21:36							Bearish Piercing	12:45:12	Bullish Engulfing	13:50:09	Bearish Engulfing	14:50:09	Bullish Engulfing	15:20:31																																		
+CYIENT	Supply Zone	12:02:42	Supply Zone	12:20:46							Bullish Engulfing	12:35:12	Bearish Piercing	12:55:09	Overbought	12:55:14	Bearish Engulfing	14:00:16	Overbought	14:00:21	Overbought	14:45:17	Bearish Engulfing	14:45:19	Bearish Engulfing	15:00:15	Bullish Engulfing	15:05:16																								
+											HVD	13:03:33	HVD	13:41:58	Bearish Engulfing	15:15:38																																				
+											Bearish Piercing	13:55:12	Bullish Engulfing	15:00:08	Bullish Engulfing	15:10:25	Bullish Engulfing	15:40:04	Bullish Piercing	18:30:05	Bearish Engulfing	19:05:07	Bearish Engulfing	19:50:05	Bullish Piercing	19:55:01	Bullish Engulfing	20:45:07	Morning Star	21:35:07	Bullish Engulfing	22:00:10	Bearish Engulfing	22:15:05																		
+											Bullish Engulfing	13:55:11	Bearish Piercing	14:05:26	Morning Star	14:15:07	HVD	14:32:29	Overbought	15:05:09	Bearish Piercing	15:05:10	Bullish Piercing	15:10:11	HVD	15:20:08	HVD	15:24:12																								
+											Bullish Engulfing	12:50:23	Bearish Engulfing	14:25:13	Bearish Piercing	14:45:14	Bearish Engulfing	15:31:12																																		
+											Bearish Engulfing	12:20:26	Bearish Engulfing	12:40:12	Bullish Engulfing	13:15:20	Evening Star	13:25:12	HVD	13:28:52	HVD	14:04:17	Bearish Engulfing	14:25:02	Bullish Engulfing	14:45:12																										
+											Bearish Piercing	12:30:09	Bearish Engulfing	12:40:04	Morning Star	12:50:05	Bullish Piercing	13:35:10	Bullish Engulfing	13:45:04	Bullish Piercing	14:05:09	Bearish Engulfing	14:30:06	Bearish Engulfing	14:50:02																										
+											Bullish Piercing	12:35:11	Bullish Piercing	13:15:19	Bearish Engulfing	14:55:19	Evening Star	15:30:10																																		
+											Bearish Piercing	13:00:14	Evening Star	15:15:48	Bearish Engulfing	15:25:02																																				
+											Bullish Piercing	13:15:27	Bearish Engulfing	13:20:22	Bearish Engulfing	14:10:26	Bullish Engulfing	14:20:14	Bearish Engulfing	14:35:22	Bearish Engulfing	15:05:16	Bullish Engulfing	15:10:27	Bullish Engulfing	15:20:11																										
+											HVD	12:47:44	Bearish Piercing	12:55:18	HVD	13:49:16	Evening Star	13:50:11	Bullish Piercing	14:15:08	Bearish Engulfing	15:15:39	HVD	15:22:56																												
+											Bullish Piercing	13:55:15	Bearish Engulfing	14:10:14	Bearish Engulfing	14:25:11	Bearish Engulfing	14:55:11	Bearish Piercing	15:15:36	Bullish Engulfing	15:20:32																														
+											Bearish Engulfing	12:35:10	Bullish Engulfing	13:30:14	Bearish Piercing	14:00:06	Bearish Piercing	14:15:13	Bullish Engulfing	14:30:09	Bearish Engulfing	14:45:04																														
+											Morning Star	13:00:13	Bullish Piercing	14:55:14																																						
+											Bearish Engulfing	12:20:27	Bullish Engulfing	13:05:10	HVD	13:21:28	HVD	13:42:05	HVD	13:53:56	Morning Star	14:05:03	Oversold	14:05:06																												
+											HVD	12:18:52	Bearish Engulfing	13:05:05	Bullish Engulfing	13:35:15	Bearish Piercing	13:40:23	Bullish Engulfing	14:50:02	Bullish Engulfing	15:20:33																														
+											Bearish Engulfing	14:25:19	Overbought	14:25:20	Bullish Engulfing	15:20:17																																				
+											Bearish Engulfing	12:30:02	Bearish Engulfing	12:55:10	Bearish Engulfing	13:20:06	Bearish Engulfing	13:45:07	Bearish Piercing	14:15:03	Bearish Engulfing	14:40:04	Bearish Piercing	15:15:03	Bullish Engulfing	15:20:19																										
+											Bullish Piercing	13:25:06	Bearish Engulfing	13:30:30	Morning Star	13:45:14	Bullish Engulfing	15:05:07	Bullish Engulfing	15:25:52	Bearish Engulfing	16:15:02	Evening Star	16:30:01	Bullish Engulfing	16:35:03	Evening Star	17:00:04	Bullish Engulfing	17:40:05	Bearish Engulfing	18:00:05	Bullish Engulfing	19:25:06	Evening Star	20:10:07	Bearish Piercing	22:10:03	Bearish Piercing	22:40:07												
+											Bearish Engulfing	12:55:07	Bearish Engulfing	13:15:25	Bearish Engulfing	13:50:05	Bullish Engulfing	14:10:19	Bearish Engulfing	14:35:03	Bullish Piercing	15:20:25	Bullish Engulfing	15:31:04																												
+											Bearish Engulfing	12:45:11	Bearish Engulfing	13:10:12	Bullish Piercing	13:15:21	Bearish Engulfing	13:20:28	Bearish Engulfing	13:35:08	Bearish Piercing	14:40:02	Bearish Piercing	15:00:16	Bullish Engulfing	15:20:30																										
+											Bearish Piercing	12:30:16	Oversold	13:40:25	Bullish Engulfing	13:40:27	Bullish Engulfing	15:10:09	Oversold	15:10:24																																
+											Bearish Piercing	12:20:10	Bearish Piercing	12:45:06	Morning Star	13:15:17	Bullish Engulfing	13:30:14	Bullish Piercing	13:40:22	Bullish Piercing	14:55:16																														
+											Bullish Engulfing	13:25:09																																								
+											Bearish Piercing	12:30:04	Morning Star	12:55:22	Bullish Engulfing	13:40:23	Bearish Engulfing	13:45:10	Bullish Engulfing	14:45:18	Bullish Piercing	14:55:12	Bearish Engulfing	15:25:50																												
+											Bearish Piercing	13:05:16																																								
+											Bullish Engulfing	14:20:12	Bearish Piercing	15:25:40																																						
+											Bearish Engulfing	12:20:21																																								
+											Bearish Engulfing	12:35:44	Bullish Piercing	13:16:02	Bearish Piercing	13:50:20	Bullish Engulfing	14:10:42	HVD	14:23:26	HVD	14:25:27	Bearish Engulfing	14:40:06	Bearish Engulfing	15:00:19	Bullish Engulfing	15:35:14	Bullish Piercing	16:31:04	Bearish Engulfing	16:35:14	Bullish Engulfing	17:00:11	Morning Star	17:20:28	Bullish Engulfing	17:35:21	Bearish Engulfing	18:00:28	Evening Star	18:40:11	Bearish Engulfing	19:00:25	Bullish Engulfing	19:30:18	Bearish Engulfing	19:35:05	Bullish Engulfing	20:00:09	Oversold	20:00:11
+											Bearish Engulfing	12:20:23	Bullish Piercing	12:55:17	Bullish Engulfing	14:25:09	Bearish Piercing	14:45:10	Bearish Engulfing	15:25:05																																
+SHRIRAMFIN	BB-Upper	12:26:45									Bullish Piercing	13:10:03	Bullish Engulfing	13:25:20	Bearish Piercing	13:30:24	Bullish Engulfing	14:20:21	Bullish Engulfing	15:10:19	Bullish Engulfing	15:10:21	Bullish Piercing	15:20:30																												
+ADANIENT	BB-Lower	12:33:16									Bullish Piercing	13:25:19	Bearish Piercing	15:00:06	Morning Star	15:25:17																																				
+KPITTECH	BB-Upper	13:02:45									Evening Star	13:10:19	Overbought	13:10:19	Overbought	13:20:03	Bearish Piercing	13:20:11	Bullish Piercing	13:35:18	Bullish Engulfing	13:45:22	Bearish Piercing	14:10:05	Overbought	14:10:22	Bearish Engulfing	14:40:11	Overbought	14:40:19	Overbought	15:00:17	Bearish Engulfing	15:00:21																		
+APLAPOLLO	BB-Upper	13:31:57									Bearish Engulfing	14:45:16	Bearish Engulfing	15:25:33																																						
+ASTRAL	SMA200	13:38:47									HVD	13:39:15	Bearish Engulfing	13:50:09	Bullish Engulfing	14:15:17	Bearish Engulfing	14:30:17	Bullish Engulfing	15:05:22																																
+VBL	BB-Upper	13:49:35									Bearish Engulfing	14:35:15																																								
+JINDALSTEL	Supply Zone	14:44:42																																																		
+CNXPSUBANK	BB-Upper	15:21:36																																																		
+BANKBARODA	BB-Upper	15:29:31									HVD	15:29:33																																								
+SI1!	Demand Zone	19:43:00	Demand Zone	20:35:36							HVD	19:43:57	HVD	19:49:26	HVD	19:58:56	Bullish Piercing	20:25:04	Oversold	20:25:08	Bearish Engulfing	23:20:07	Bearish Engulfing	23:45:09																												
+XAUUSD	Demand Zone	19:47:14									Oversold	21:00:07	Bullish Engulfing	21:00:12	Bearish Piercing	21:10:04	Bullish Engulfing	21:45:08	Oversold	21:45:10	Bearish Engulfing	21:55:05	Bullish Piercing	22:55:05	Oversold	22:55:05	Oversold	23:20:05	Morning Star	23:20:10	Bearish Engulfing	23:35:05	Oversold	23:40:07	Bullish Engulfing	23:40:10	Bearish Engulfing	23:50:06														
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				
+																																																				

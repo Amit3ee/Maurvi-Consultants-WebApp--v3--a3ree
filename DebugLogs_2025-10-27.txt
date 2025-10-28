@@ -1,0 +1,136 @@
+Timestamp	Context	Error Message	Details	Stack
+10-27-2025 9:08:31	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""JIOFIN"", ""timestamp"": ""2025-10-27 03:37:59"", ""reason"": ""Demand Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:194:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:08:31	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""TITAGARH"", ""timestamp"": ""2025-10-27 03:37:59"", ""reason"": ""Supply Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:194:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:08:31	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""SAMMAANCAP"", ""timestamp"": ""2025-10-27 03:37:59"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:194:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:08:31	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""NCC"", ""timestamp"": ""2025-10-27 03:37:58"", ""reason"": ""Supply Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:194:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:32	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""TITAN1!"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:34	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""POLYCAB1!"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:34	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""NESTLEIND"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:34	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""APLAPOLLO1!"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:34	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""MFSL1!"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:34	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""ANGELONE"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:20:35	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537000000"", ""ticker"": ""VBL"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:191:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:30:36	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761537600000"", ""ticker"": ""IEX"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:194:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 9:55:34	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761539100000"", ""ticker"": ""BAJAJ_AUTO"", ""reason"": ""Bullish Piercing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:194:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:49	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""GRASIM"", ""timestamp"": ""2025-10-27 06:50:45"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:49	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""ZYDUSLIFE"", ""timestamp"": ""2025-10-27 06:50:45"", ""reason"": ""Supply Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:49	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""RELIANCE"", ""timestamp"": ""2025-10-27 06:50:45"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:50	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""CROMPTON"", ""timestamp"": ""2025-10-27 06:50:45"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:50	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""NCC"", ""timestamp"": ""2025-10-27 06:50:46"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:51	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""DRREDDY"", ""timestamp"": ""2025-10-27 06:50:48"", ""reason"": ""Demand Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:52	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""RECLTD"", ""timestamp"": ""2025-10-27 06:50:48"", ""reason"": ""Demand Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:52	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""SONACOMS"", ""timestamp"": ""2025-10-27 06:50:47"", ""reason"": ""SMA200""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:52	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""SBILIFE"", ""timestamp"": ""2025-10-27 06:50:49"", ""reason"": ""Supply Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:53	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""DOGEUSD"", ""timestamp"": ""2025-10-27 06:50:51"", ""reason"": ""SMA200""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:53	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""PRESTIGE"", ""timestamp"": ""2025-10-27 06:50:49"", ""reason"": ""Supply Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:21:53	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""PATANJALI"", ""timestamp"": ""2025-10-27 06:50:50"", ""reason"": ""Supply Zone""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:22:02	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""MPHASIS"", ""timestamp"": ""2025-10-27 06:50:59"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:22:03	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""PIIND"", ""timestamp"": ""2025-10-27 06:51:01"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:22:58	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""scrip"": ""ALUMINIUM1!"", ""timestamp"": ""2025-10-27 06:51:54"", ""reason"": ""BB-Upper""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:02	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""NIFTY_OIL_AND_GAS"", ""reason"": ""Bullish Piercing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:04	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""EXIDEIND"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:04	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""CNXINFRA"", ""reason"": ""Evening Star""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:04	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""IDEA"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:04	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""RELIANCE"", ""reason"": ""Bullish Piercing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:05	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""INDUSINDBK"", ""reason"": ""Bearish Piercing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:05	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""JSWENERGY"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:05	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548102024"", ""ticker"": ""POWERGRID"", ""reason"": ""HVD"", ""capital_deployed_cr"": ""29.48""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:06	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""DIXON"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:06	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""BANKBARODA"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:07	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""DLF"", ""reason"": ""Bullish Piercing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:08	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""PIIND"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:14	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""ADANIGREEN"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:14	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""SILVER1!"", ""reason"": ""Bearish Piercing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 12:26:27	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761548100000"", ""ticker"": ""ABB"", ""reason"": ""Bullish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 13:13:04	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761550920000"", ""ticker"": ""NIFTY"", ""reason"": ""Bearish Engulfing""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
+10-27-2025 13:13:17	doPost Error	Lock timeout: another process was holding the lock for too long.	"{""timestamp"": ""1761550935748"", ""ticker"": ""NYKAA"", ""reason"": ""HVD"", ""capital_deployed_cr"": ""4.18""}"	"Exception: Lock timeout: another process was holding the lock for too long.
+    at doPost (Code:327:10)
+    at __GS_INTERNAL_top_function_call__.gs:1:8"
