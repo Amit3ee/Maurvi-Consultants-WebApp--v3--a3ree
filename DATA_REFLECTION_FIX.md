@@ -39,7 +39,7 @@ Cache TTL was set to only 30 seconds, forcing frequent sheet reads and increased
 ## Solution Implemented
 
 ### Change 1: Removed Unnecessary Cache Clearing
-**File:** `code.gs` lines 487-491
+**File:** `code.gs` (original lines 487-491 in doPost function)
 
 **Before:**
 ```javascript
@@ -62,7 +62,7 @@ Logger.log(`Cache cleared for immediate data refresh`);
 - Eliminated unnecessary cache service API calls
 
 ### Change 2: Increased Cache TTL
-**File:** `code.gs` line 1482
+**File:** `code.gs` (in _getSheetData function, around line 1480)
 
 **Before:**
 ```javascript
