@@ -38,27 +38,37 @@ Indicator2_2025-01-15
 - Enables efficient data purging (delete old sheets)
 - No need for date filtering queries
 
-### 3. Two-Sheet Pattern for Indicator2
+### 3. Selective Row Mapping for Indicator2
 **Problem**: Indicator2 signals need to appear in both:
 1. Indicator2 sheet (for logs/history)
-2. Indicator1 sheet (for synchronization)
+2. Indicator1 sheet (for synchronization - but only if symbol already exists)
 
-**Solution**: Dual write pattern:
+**Solution**: Conditional sync pattern:
 ```javascript
-if (data.source === "Indicator2") {
-  // Write to Indicator2 sheet (append-only log)
+if (indicatorType === 'Indicator2') {
+  // Always write to Indicator2 sheet (append-only log)
   ind2Sheet.appendRow([...]);
   
-  // Continue to write to Indicator1 sheet (sync columns)
-  // Falls through to dynamic row mapping logic
+  // Check if this is Nifty - if so, skip row mapping
+  if (symbolUpper === 'NIFTY' || symbolUpper === 'NIFTY1!') {
+    return success; // No row mapping for Nifty
+  }
+  
+  // For non-Nifty, check if symbol exists in Indicator1 sheet
+  if (targetRow === undefined) {
+    // Symbol not in Indicator1 sheet - only store in Indicator2
+    return success;
+  }
+  // Symbol exists - sync to Indicator1 sheet sync columns
 }
 ```
 
 **Benefits**:
 - Complete audit trail in Indicator2 sheet
-- Synchronization data in Indicator1 sheet
-- No data duplication issues
+- Synchronization only for symbols with Indicator1 signals
+- No orphaned rows in Indicator1 sheet
 - Each sheet optimized for its use case
+- Nifty signals handled separately
 
 ## Data Flow
 
@@ -72,16 +82,24 @@ TradingView Alert
     ↓
 [Validation] → Check required fields
     ↓
+[Indicator Detection] → Check JSON keys
+    ├─ "scrip" key → Indicator1
+    └─ "ticker" key → Indicator2
+    ↓
 [Source Routing]
     ├─ Indicator2? → Write to Indicator2 sheet
-    ├─ NIFTY? → Write to Nifty sheet & return
+    ├─ NIFTY/Nifty1!? → Return success (no row mapping)
     └─ Continue to row mapping
     ↓
 [Cache Lookup] → symbolRowMap_{date}
     ├─ Found? → Use existing row
-    └─ Not found? → Create new row & cache
+    └─ Not found?
+        ├─ Indicator1? → Create new row & cache
+        └─ Indicator2? → Return success (no row created)
     ↓
 [writeDataToRow] → Write to appropriate columns
+    ├─ Indicator1 → Columns B-K (5 pairs)
+    └─ Indicator2 → Columns L-BA (21 pairs)
     ↓
 [Response] → Return success JSON
     ↓
@@ -98,13 +116,15 @@ Frontend Request
     ↓
 [Parallel Read] → _getSheetData() with caching
     ├─ Indicator1_{date}
-    ├─ Indicator2_{date}
-    └─ Nifty_{date}
+    └─ Indicator2_{date}
+    ↓
+[Extract Nifty] → Filter Indicator2 data
+    └─ ticker = "NIFTY" or "Nifty1!" (case-insensitive)
     ↓
 [Data Processing]
     ├─ Build liveFeed from Indicator1 (cols B-K)
-    ├─ Build logs from Indicator2 (categorized)
-    └─ Build dashboardSyncedList (symbols with sync events from cols L-U)
+    ├─ Build logs from Indicator2 (categorized, synced only)
+    └─ Build dashboardSyncedList (symbols with sync events from cols L-BA)
     ↓
 [KPI Calculation]
     ├─ Total signals
@@ -129,12 +149,13 @@ Symbol Ind1-1   Ind1-2   Ind1-3   Ind1-4   Ind1-5   Ind2-1   Ind2-2   Ind2-3   I
 - H: Reason 4, I: Time 4
 - J: Reason 5, K: Time 5
 
-**Indicator2 Sync Events** (Columns L-U):
+### Indicator2 Sync Events** (Columns L-BA):
 - L: Sync Reason 1, M: Sync Time 1
 - N: Sync Reason 2, O: Sync Time 2
-- P: Sync Reason 3, Q: Sync Time 3
-- R: Sync Reason 4, S: Sync Time 4
-- T: Sync Reason 5, U: Sync Time 5
+- ...continuing up to...
+- AZ: Sync Reason 21, BA: Sync Time 21
+
+**Note**: 21 pairs = 42 columns total (L through BA)
 
 ## Key Functions
 

@@ -9,6 +9,15 @@
     <!-- Fonts (from new file) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Microsoft Authentication Library (MSAL) -->
+    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
+    
+    <!-- Apple Sign In -->
+    <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
 
     <!-- NEW STYLES (from uploaded file) -->
     <style>
@@ -41,6 +50,7 @@
             --orange: #FF9F0A; 
             --red: #FF453A; 
             --teal: #64D2FF;
+            --purple: #BF5AF2; /* Apple System Purple for overbought indicators */
             
             /* Light mode system colors */
             --violet-light: #007AFF;
@@ -50,6 +60,7 @@
             --orange-light: #FF9500;
             --red-light: #FF3B30;
             --teal-light: #5AC8FA;
+            --purple-light: #AF52DE; /* Light mode purple */
         }
         html.dark {
             --bg-color: var(--bg-dark);
@@ -101,7 +112,7 @@
         }
         
         html.dark body {
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1e 100%);
+            background: #000000;
         }
 
         .dynamic-background {
@@ -110,6 +121,74 @@
             z-index: -1;
             overflow: hidden;
             background-color: transparent;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* Hide dynamic background when simple background is active */
+        body.simple-bg .dynamic-background {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Simple 2-blob dynamic background */
+        .simple-dynamic-background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        body.simple-bg .simple-dynamic-background {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .simple-liquid-blob {
+            position: absolute;
+            filter: blur(120px);
+            opacity: 0.6;
+            width: 50vmax;
+            height: 50vmax;
+        }
+        
+        #simple-liquid-blue {
+            background: hsla(212, 100%, 30%, 0.7);
+            top: 0;
+            left: 0;
+            animation: simple-liquid-blue-flow 20s infinite alternate ease-in-out;
+        }
+        
+        #simple-liquid-green {
+            background: hsla(135, 60%, 25%, 0.7);
+            bottom: 0;
+            right: 0;
+            animation: simple-liquid-green-flow 20s infinite alternate ease-in-out;
+        }
+        
+        @keyframes simple-liquid-blue-flow {
+            from {
+                transform: translate(-20%, -20%) rotate(0deg);
+                border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            }
+            to {
+                transform: translate(40%, 40%) rotate(180deg);
+                border-radius: 70% 30% 40% 60% / 60% 40% 50% 50%;
+            }
+        }
+        
+        @keyframes simple-liquid-green-flow {
+            from {
+                transform: translate(20%, 20%) rotate(0deg);
+                border-radius: 60% 40% 30% 70% / 50% 50% 70% 50%;
+            }
+            to {
+                transform: translate(-40%, -40%) rotate(-180deg);
+                border-radius: 30% 70% 50% 50% / 50% 30% 70% 40%;
+            }
         }
 
         /* Base Material Style - V6 with Glassmorphism */
@@ -226,7 +305,8 @@
         /* Modal Styles */
         .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
         .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
-        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; border-radius: 1.5rem; /* Match material */ width: calc(100% - 32px); max-width: 520px; padding: 24px; }
+        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; border-radius: 1.5rem; /* Match material */ width: calc(100% - 32px); max-width: 520px; max-height: calc(100vh - 64px); padding: 24px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .modal-content::-webkit-scrollbar { display: none; }
         .modal-backdrop.visible .modal-content { transform: scale(1); }
 
         /* Ticker Styles */
@@ -715,8 +795,64 @@
             min-width: 200px; /* Ensure cards don't get too compressed */
         }
         .signal-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        
+        /* Card glow effects for specific sync reasons with animation */
+        @keyframes glow-pulse-orange {
+            0%, 100% {
+                box-shadow: 0 0 0 1.5px var(--orange), 0 0 12px rgba(255, 159, 10, 0.4), 0 0 24px rgba(255, 159, 10, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 1.5px var(--orange), 0 0 20px rgba(255, 159, 10, 0.6), 0 0 32px rgba(255, 159, 10, 0.3);
+            }
+        }
+        
+        @keyframes glow-pulse-blue {
+            0%, 100% {
+                box-shadow: 0 0 0 1.5px var(--blue), 0 0 12px rgba(10, 132, 255, 0.4), 0 0 24px rgba(10, 132, 255, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 1.5px var(--blue), 0 0 20px rgba(10, 132, 255, 0.6), 0 0 32px rgba(10, 132, 255, 0.3);
+            }
+        }
+        
+        @keyframes glow-pulse-purple {
+            0%, 100% {
+                box-shadow: 0 0 0 1.5px var(--purple), 0 0 12px rgba(191, 90, 242, 0.4), 0 0 24px rgba(191, 90, 242, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 1.5px var(--purple), 0 0 20px rgba(191, 90, 242, 0.6), 0 0 32px rgba(191, 90, 242, 0.3);
+            }
+        }
+        
+        .card-glow-hvd {
+            animation: glow-pulse-orange 2.5s ease-in-out infinite;
+            border-color: var(--orange);
+        }
+        .card-glow-hvd:hover {
+            animation: none;
+            box-shadow: 0 0 0 1.5px var(--orange), 0 0 24px rgba(255, 159, 10, 0.7), 0 0 40px rgba(255, 159, 10, 0.4), var(--shadow-hover);
+        }
+        
+        .card-glow-oversold {
+            animation: glow-pulse-blue 2.5s ease-in-out infinite;
+            border-color: var(--blue);
+        }
+        .card-glow-oversold:hover {
+            animation: none;
+            box-shadow: 0 0 0 1.5px var(--blue), 0 0 24px rgba(10, 132, 255, 0.7), 0 0 40px rgba(10, 132, 255, 0.4), var(--shadow-hover);
+        }
+        
+        .card-glow-overbought {
+            animation: glow-pulse-purple 2.5s ease-in-out infinite;
+            border-color: var(--purple);
+        }
+        .card-glow-overbought:hover {
+            animation: none;
+            box-shadow: 0 0 0 1.5px var(--purple), 0 0 24px rgba(191, 90, 242, 0.7), 0 0 40px rgba(191, 90, 242, 0.4), var(--shadow-hover);
+        }
+        
         .symbol-name { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
-        .timestamp { font-size: 0.8rem; color: var(--text-secondary); }
+        .timestamp { font-size: 0.875rem; color: var(--text-secondary); font-weight: 500; }
         
         /* Add gap between card sections */
         .card-section-gap { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--material-border); }
@@ -736,11 +872,63 @@
         }
 
         /* Sync Events in Modal */
-        .sync-event-item { padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--material-border); }
+        .sync-event-item { 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            margin-bottom: 10px; 
+            border: 1px solid var(--material-border); 
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+        .sync-event-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
         html.light .sync-event-item { background-color: rgba(0, 0, 0, 0.03); }
         html.dark .sync-event-item { background-color: var(--material-thin); }
+        
+        /* Event sections with different transparency */
+        .trigger-events-section { opacity: 1; }
+        .sync-events-section { opacity: 0.95; }
         .sync-event-reason { font-weight: 600; }
         .sync-event-time { font-size: 13px; color: var(--text-secondary); }
+        
+        /* Logo Animation */
+        @keyframes logo-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Logo Spin Zoom Animation - Anti-clockwise */
+        @keyframes logo-spin-zoom {
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.2) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(360deg); }
+        }
+        
+        /* Container Feedback Animation */
+        @keyframes container-bounce {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            75% { transform: scale(0.98); }
+        }
+        
+        .logo-spin-zoom-animation {
+            animation: logo-spin-zoom 0.8s ease-in-out;
+        }
+        
+        .container-feedback-animation {
+            animation: container-bounce 0.8s ease-in-out;
+        }
+        
+        #loginLogoContainer, #headerLogoContainer {
+            animation: logo-pulse 2s ease-in-out infinite;
+        }
+        #loginLogoContainer:hover, #headerLogoContainer:hover {
+            animation: logo-pulse 0.5s ease-in-out infinite;
+        }
 
         /* Date Cards */
         .date-card { padding: 1.25rem; text-align: center; }
@@ -811,11 +999,25 @@
         <div id="liquid-green" class="liquid-blob"></div>
         <div id="liquid-purple" class="liquid-blob"></div>
     </div>
+    
+    <!-- Simple 2-blob dynamic background -->
+    <div class="simple-dynamic-background">
+        <div id="simple-liquid-blue" class="simple-liquid-blob"></div>
+        <div id="simple-liquid-green" class="simple-liquid-blob"></div>
+    </div>
 
-    <!--Login View Redesigned (and adapted for OTP)-->
+    <!--Login View Redesigned with Social Login and Guest Login-->
     <div id="loginView" class="min-h-screen flex items-center justify-center p-4 animate-in relative z-10 transition-opacity duration-500 overflow-hidden">
         <div class="w-full max-w-md relative">
-            <button id="theme-toggle-login" class="absolute top-4 right-4 z-50 material material-thin header-button flex items-center justify-center rounded-full text-lg interactive"></button>
+            <div class="absolute top-4 right-4 z-50 flex items-center space-x-2">
+                <button id="bg-toggle-login" class="material material-thin header-button flex items-center justify-center rounded-full text-lg interactive" title="Toggle Background">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <path d="M12 1v6m0 6v6m6-6h6M1 12h6"></path>
+                    </svg>
+                </button>
+                <button id="theme-toggle-login" class="material material-thin header-button flex items-center justify-center rounded-full text-lg interactive"></button>
+            </div>
             <div class="material material-thick p-8 md:p-10 text-center">
 
                 <!-- NEW LOGO -->
@@ -824,29 +1026,84 @@
                 </div>
 
                 <h1 class="text-2xl font-bold mb-1 company-name-font login-title whitespace-nowrap tracking-tight">Maurvi Consultants</h1>
-                <h2 id="login-subtitle" class="mb-6 login-subtitle font-medium">Enter Email to Sign In</h2>
+                <h2 id="login-subtitle" class="mb-6 login-subtitle font-medium">Choose Sign-In Method</h2>
 
-                <div class="space-y-6">
-                    <!-- Email input (hidden) -->
-                    <input type="email" id="email-input" class="email-input hidden" value="amit3ree@gmail.com" readonly>
+                <!-- Social Login Section -->
+                <div id="social-login-section" class="space-y-4 mb-6">
+                    <p class="text-sm text-secondary font-medium mb-3">Sign in with your account</p>
+                    
+                    <!-- Google Sign In -->
+                    <button id="google-signin-btn" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-lg border-2 material material-regular interactive hover:border-[#4285F4] transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span class="font-semibold">Continue with Google</span>
+                    </button>
+                    
+                    <!-- Microsoft Sign In -->
+                    <button id="microsoft-signin-btn" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-lg border-2 material material-regular interactive hover:border-[#00A4EF] transition-all">
+                        <svg width="20" height="20" viewBox="0 0 23 23">
+                            <path fill="#f25022" d="M0 0h11v11H0z"/>
+                            <path fill="#00a4ef" d="M12 0h11v11H12z"/>
+                            <path fill="#7fba00" d="M0 12h11v11H0z"/>
+                            <path fill="#ffb900" d="M12 12h11v11H12z"/>
+                        </svg>
+                        <span class="font-semibold">Continue with Microsoft</span>
+                    </button>
+                    
+                    <!-- Apple Sign In -->
+                    <button id="apple-signin-btn" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-lg border-2 material material-regular interactive hover:border-[#000000] dark:hover:border-[#FFFFFF] transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                        </svg>
+                        <span class="font-semibold">Continue with Apple</span>
+                    </button>
+
+                    <!-- Approval Waiting Message -->
+                    <div id="approval-waiting" class="hidden p-4 material material-regular rounded-lg border-2 border-orange-500">
+                        <div class="flex items-center justify-center space-x-2 mb-2">
+                            <svg class="animate-spin h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span class="font-semibold text-orange-500">Waiting for Approval</span>
+                        </div>
+                        <p class="text-sm text-secondary">Your account registration is pending admin approval. You will receive an email once approved.</p>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="flex items-center my-6">
+                    <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+                    <span class="px-4 text-sm text-secondary font-medium">OR</span>
+                    <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+
+                <!-- Guest Login Section -->
+                <div id="guest-login-section" class="space-y-4">
+                    <p class="text-sm text-secondary font-medium mb-3">Guest Login (Temporary Access)</p>
 
                     <!-- OTP inputs (styled as PIN) - Always visible but blocked initially -->
                     <div id="otp-area" class="flex justify-center items-center space-x-2">
-                        <!-- OTP inputs will be generated here -->
-                         <input type="tel" maxlength="1" class="otp-input" data-index="0" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="1" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="2" autocomplete="off" disabled>
-                         <span class="otp-separator">-</span>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="3" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="4" autocomplete="off" disabled>
-                         <input type="tel" maxlength="1" class="otp-input" data-index="5" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="0" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="1" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="2" autocomplete="off" disabled>
+                        <span class="otp-separator">-</span>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="3" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="4" autocomplete="off" disabled>
+                        <input type="tel" maxlength="1" class="otp-input" data-index="5" autocomplete="off" disabled>
                     </div>
 
                     <!-- Generate OTP Button -->
                     <button id="generate-otp-btn" class="w-full text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-blue-500/40 transform hover:scale-105 bg-gradient-theme text-base interactive">
-                        <span id="loginButtonText">Generate OTP</span>
+                        <span id="loginButtonText">Request Guest OTP</span>
                         <span id="loginSpinner" class="hidden"><svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></span>
                     </button>
+
+                    <p class="text-xs text-secondary italic">OTP will be sent to admin. Please ask admin for the code.</p>
                 </div>
 
                 <!-- Progress Bar -->
@@ -874,6 +1131,13 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4">
+                 <!-- Background Toggle Button -->
+                <button id="bg-toggle" class="material material-regular header-button flex-shrink-0 flex items-center justify-center rounded-full text-lg interactive" title="Toggle Background">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <path d="M12 1v6m0 6v6m6-6h6M1 12h6"></path>
+                    </svg>
+                </button>
                  <!-- Main Tabs (Adapted IDs) -->
                 <div id="main-tabs" class="material material-regular p-1.5 flex space-x-2 rounded-full segmented-control">
                     <div id="main-tab-slider" class="liquid-slider"></div>
@@ -1044,6 +1308,19 @@
         </svg>
     </div>
 
+    <!-- Calculator Floating Button -->
+    <button id="calculator-float-button" class="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-theme shadow-lg flex items-center justify-center z-50 interactive hover:shadow-2xl transition-all duration-300" title="Calculator" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="16" y1="14" x2="16" y2="18"></line>
+            <line x1="8" y1="14" x2="8" y2="14"></line>
+            <line x1="8" y1="18" x2="8" y2="18"></line>
+            <line x1="12" y1="14" x2="12" y2="14"></line>
+            <line x1="12" y1="18" x2="12" y2="18"></line>
+        </svg>
+    </button>
+
     <!-- Gemini Floating Button -->
     <button id="gemini-float-button" class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-theme shadow-lg flex items-center justify-center z-50 interactive hover:shadow-2xl transition-all duration-300" title="Gemini AI Assistant" style="display: none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1089,6 +1366,49 @@
         </div>
     </div>
 
+    <!-- Calculator Panel -->
+    <div id="calculator-panel" class="fixed bottom-6 right-24 w-80 md:w-96 opacity-0 pointer-events-none transition-all duration-500 ease-in-out z-[150]" style="position: fixed; bottom: 24px; right: 96px; width: 320px; transform: scale(0.5);">
+        <div class="material material-ultrathick backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+            <!-- Calculator Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">Calculator</h2>
+                <button id="close-calculator" class="material material-regular w-8 h-8 flex items-center justify-center rounded-full text-sm interactive">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Calculator Display -->
+            <div class="material material-regular p-4 rounded-2xl mb-4 overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <button id="calc-clear-screen" class="mr-2 w-6 h-6 flex items-center justify-center rounded-full text-xs interactive hover:bg-red-500/20 transition-colors" title="Clear Screen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div id="calc-history" class="text-xs text-secondary text-right h-6 overflow-y-auto hide-scrollbar flex-1"></div>
+                </div>
+                <input type="text" id="calc-display" inputmode="decimal" class="w-full text-right text-3xl font-bold bg-transparent border-none outline-none" value="0">
+            </div>
+            
+            <!-- Calculator History -->
+            <div id="calc-history-panel" class="material material-thin rounded-2xl p-3 mb-4 max-h-32 overflow-y-auto hide-scrollbar">
+                <div class="text-xs text-secondary mb-2 font-semibold">History</div>
+                <div id="calc-history-list" class="space-y-1 text-xs">
+                    <div class="text-center text-secondary opacity-50">No calculations yet</div>
+                </div>
+            </div>
+            
+            <!-- Calculator Clear Button -->
+            <button id="calc-clear" class="w-full mb-4 px-4 py-3 rounded-xl bg-gradient-theme text-white font-semibold interactive">
+                Clear All
+            </button>
+        </div>
+    </div>
+
     <!-- Gradient Definition for SVG -->
     <svg class="absolute w-0 h-0"><defs><linearGradient id="logoGradientHeader" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0A84FF"/><stop offset="100%" stop-color="#30D158"/></linearGradient></defs></svg>
 
@@ -1109,6 +1429,7 @@
          const AppState = {
             theme: localStorage.getItem('theme') || 'dark',
             narrationEnabled: localStorage.getItem('narration') !== 'false',
+            background: localStorage.getItem('background') || 'complex',
             sessionToken: localStorage.getItem('sessionToken') || null,
             otpTimer: null,
             userInfo: null,
@@ -1120,7 +1441,11 @@
             pollingInterval: null,
             speechVoices: [],
             geminiChatHistory: [],
-            geminiChatOpen: false
+            geminiChatOpen: false,
+            calculatorOpen: false,
+            calculatorExpression: '',
+            calculatorHistory: JSON.parse(localStorage.getItem('calculatorHistory') || '[]'),
+            calculatorLastClear: localStorage.getItem('calculatorLastClear') || new Date().toDateString()
         };
 
         // --- DOM ELEMENTS CACHE ---
@@ -1133,6 +1458,12 @@
 
         function cacheDOM() {
             DOM.loginView = document.getElementById('loginView');
+            DOM.googleSigninBtn = document.getElementById('google-signin-btn');
+            DOM.microsoftSigninBtn = document.getElementById('microsoft-signin-btn');
+            DOM.appleSigninBtn = document.getElementById('apple-signin-btn');
+            DOM.approvalWaiting = document.getElementById('approval-waiting');
+            DOM.socialLoginSection = document.getElementById('social-login-section');
+            DOM.guestLoginSection = document.getElementById('guest-login-section');
             DOM.emailInput = document.getElementById('email-input');
             DOM.otpArea = document.getElementById('otp-area');
             DOM.otpInputs = DOM.otpArea.querySelectorAll('.otp-input');
@@ -1150,6 +1481,7 @@
             DOM.logos = { login: document.getElementById('loginLogoContainer'), header: document.getElementById('headerLogoContainer') };
             DOM.headerDate = document.getElementById('headerDate');
             DOM.volumeToggle = document.getElementById('volume-toggle');
+            DOM.bgToggle = document.getElementById('bg-toggle');
             DOM.geminiChatToggle = document.getElementById('gemini-chat-toggle');
             DOM.geminiFloatButton = document.getElementById('gemini-float-button');
             DOM.geminiChatPanel = document.getElementById('gemini-chat-panel');
@@ -1157,6 +1489,15 @@
             DOM.geminiMessages = document.getElementById('gemini-messages');
             DOM.geminiInput = document.getElementById('gemini-input');
             DOM.geminiSend = document.getElementById('gemini-send');
+            DOM.calculatorFloatButton = document.getElementById('calculator-float-button');
+            DOM.calculatorPanel = document.getElementById('calculator-panel');
+            DOM.closeCalculator = document.getElementById('close-calculator');
+            DOM.calcDisplay = document.getElementById('calc-display');
+            DOM.calcHistory = document.getElementById('calc-history');
+            DOM.calcHistoryList = document.getElementById('calc-history-list');
+            DOM.calcClear = document.getElementById('calc-clear');
+            DOM.calcClearScreen = document.getElementById('calc-clear-screen');
+            DOM.bgToggleLogin = document.getElementById('bg-toggle-login');
             DOM.userInfo = { name: document.getElementById('user-name') };
             DOM.mainTabs = document.getElementById('main-tabs');
             DOM.tabs = DOM.mainTabs.querySelectorAll('.tab-button');
@@ -1203,6 +1544,7 @@
         function initializeApp() {
             // Don't show loading on init - causes buffering effect
             applyTheme(AppState.theme);
+            applyBackground(AppState.background);
             injectIcons();
             setupEventListeners();
             initializeOTPInputs(); // Call OTP setup
@@ -1210,6 +1552,14 @@
             checkExistingSession(); // Check for existing session first
             updateClock();
             setInterval(updateClock, 1000); // Start clock
+        }
+        
+        function applyBackground(background) {
+            if (background === 'simple') {
+                document.body.classList.add('simple-bg');
+            } else {
+                document.body.classList.remove('simple-bg');
+            }
         }
 
         // --- ICONS & THEME ---
@@ -1241,7 +1591,10 @@
         function setupEventListeners() {
             addSafeEventListener(DOM.themeToggles.login, 'click', toggleTheme);
             addSafeEventListener(DOM.themeToggles.app, 'click', toggleTheme);
-            addSafeEventListener(DOM.generateOTPBtn, 'click', handleOTPGeneration);
+            addSafeEventListener(DOM.generateOTPBtn, 'click', handleGuestOTPGeneration);
+            addSafeEventListener(DOM.googleSigninBtn, 'click', () => handleSocialLogin('google'));
+            addSafeEventListener(DOM.microsoftSigninBtn, 'click', () => handleSocialLogin('microsoft'));
+            addSafeEventListener(DOM.appleSigninBtn, 'click', () => handleSocialLogin('apple'));
             addSafeEventListener(DOM.logos.login, 'click', (e) => handleLogoClick(e.currentTarget)); // Use function directly
             addSafeEventListener(DOM.logos.header, 'click', (e) => {
                 handleLogoClick(e.currentTarget); // Use function directly
@@ -1253,11 +1606,19 @@
             });
 
             addSafeEventListener(DOM.volumeToggle, 'click', toggleNarration);
+            addSafeEventListener(DOM.bgToggle, 'click', toggleBackground);
+            addSafeEventListener(DOM.bgToggleLogin, 'click', toggleBackground);
             // Gemini chat toggle removed from header
             addSafeEventListener(DOM.geminiFloatButton, 'click', toggleGeminiChat);
             addSafeEventListener(DOM.closeGeminiChat, 'click', toggleGeminiChat);
             addSafeEventListener(DOM.geminiSend, 'click', sendGeminiMessage);
             addSafeEventListener(DOM.geminiInput, 'keypress', (e) => { if (e.key === 'Enter') sendGeminiMessage(); });
+            // Calculator event listeners
+            addSafeEventListener(DOM.calculatorFloatButton, 'click', toggleCalculator);
+            addSafeEventListener(DOM.closeCalculator, 'click', toggleCalculator);
+            addSafeEventListener(DOM.calcClear, 'click', clearCalculator);
+            addSafeEventListener(DOM.calcClearScreen, 'click', clearCalculatorScreen);
+            addSafeEventListener(DOM.calcDisplay, 'keydown', handleCalculatorInput);
             addSafeEventListener(DOM.modal.backdrop, 'click', (e) => { if (e.target === DOM.modal.backdrop) hideZoomedCard(); });
             addSafeEventListener(DOM.dashboard.niftyCard, 'click', showNiftyDetail);
             addSafeEventListener(DOM.historical.backButton, 'click', showHistoricalDates);
@@ -1312,11 +1673,11 @@
             if (logoContainer.classList.contains('container-feedback-animation')) return;
 
             logoContainer.classList.add('container-feedback-animation');
-            if(logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
+            if (logoSvg) logoSvg.classList.add('logo-spin-zoom-animation');
 
             const onAnimationEnd = () => {
                 logoContainer.classList.remove('container-feedback-animation');
-                 if(logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
+                if (logoSvg) logoSvg.classList.remove('logo-spin-zoom-animation');
             };
 
             logoContainer.addEventListener('animationend', onAnimationEnd, { once: true });
@@ -1375,54 +1736,347 @@
             DOM.appView.style.display = 'none';
         }
 
-        function handleOTPGeneration() {
-            const email = DOM.emailInput.value;
-            if (!email || !email.includes('@')) {
-                showLoginMessage('Invalid email address.', 'error');
+        // --- SOCIAL LOGIN FUNCTIONS ---
+        
+        function handleSocialLogin(provider) {
+            console.log(`Initiating ${provider} login...`);
+            showLoginMessage(`Signing in with ${provider}...`, 'info');
+            
+            // Disable all social buttons during login
+            DOM.googleSigninBtn.disabled = true;
+            DOM.microsoftSigninBtn.disabled = true;
+            DOM.appleSigninBtn.disabled = true;
+            
+            // In a real implementation, you would:
+            // 1. Initialize OAuth flow for the selected provider
+            // 2. Get ID token from provider
+            // 3. Send to backend for verification
+            
+            // For demonstration, we'll simulate OAuth flow
+            // In production, use proper OAuth libraries like Google Sign-In, MSAL, etc.
+            
+            if (provider === 'google') {
+                initGoogleSignIn();
+            } else if (provider === 'microsoft') {
+                initMicrosoftSignIn();
+            } else if (provider === 'apple') {
+                initAppleSignIn();
+            }
+        }
+        
+        function initGoogleSignIn() {
+            // Initialize Google Sign-In with One Tap
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.initialize({
+                    client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with your Google Client ID
+                    callback: handleGoogleCallback,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                
+                // Display the One Tap prompt
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        // If One Tap is not displayed, show the Sign-In button
+                        google.accounts.id.renderButton(
+                            DOM.googleSigninBtn,
+                            {
+                                theme: 'outline',
+                                size: 'large',
+                                width: '100%',
+                                text: 'continue_with',
+                                shape: 'rectangular'
+                            }
+                        );
+                    }
+                });
+            } else {
+                console.error('Google Sign-In library not loaded');
+                showLoginMessage('Google Sign-In is temporarily unavailable. Please try guest login.', 'error');
+                // Re-enable buttons
+                setTimeout(() => {
+                    DOM.googleSigninBtn.disabled = false;
+                    DOM.microsoftSigninBtn.disabled = false;
+                    DOM.appleSigninBtn.disabled = false;
+                }, 2000);
+            }
+        }
+        
+        function handleGoogleCallback(response) {
+            console.log('Google Sign-In successful');
+            
+            // Decode the JWT credential
+            try {
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                
+                const userData = JSON.parse(jsonPayload);
+                console.log('Google user data:', userData);
+                
+                // Extract user information
+                const userInfo = {
+                    email: userData.email,
+                    name: userData.name || userData.given_name || userData.email.split('@')[0]
+                };
+                
+                handleSocialLoginSuccess('google', userInfo, response.credential);
+            } catch (error) {
+                console.error('Error decoding Google credential:', error);
+                showLoginMessage('Failed to process Google Sign-In. Please try again.', 'error');
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
+            }
+        }
+        
+        function initMicrosoftSignIn() {
+            // Initialize Microsoft Authentication Library (MSAL)
+            if (typeof msal !== 'undefined') {
+                const msalConfig = {
+                    auth: {
+                        clientId: 'YOUR_MICROSOFT_CLIENT_ID', // Replace with your Microsoft App Client ID
+                        authority: 'https://login.microsoftonline.com/common',
+                        redirectUri: window.location.origin + window.location.pathname
+                    },
+                    cache: {
+                        cacheLocation: 'localStorage',
+                        storeAuthStateInCookie: false
+                    }
+                };
+                
+                const msalInstance = new msal.PublicClientApplication(msalConfig);
+                
+                const loginRequest = {
+                    scopes: ['openid', 'profile', 'email', 'User.Read']
+                };
+                
+                msalInstance.loginPopup(loginRequest)
+                    .then(response => {
+                        console.log('Microsoft Sign-In successful:', response);
+                        
+                        // Get user account information
+                        const account = response.account;
+                        const userInfo = {
+                            email: account.username,
+                            name: account.name || account.username.split('@')[0]
+                        };
+                        
+                        handleSocialLoginSuccess('microsoft', userInfo, response.idToken);
+                    })
+                    .catch(error => {
+                        console.error('Microsoft Sign-In error:', error);
+                        if (error.errorCode !== 'user_cancelled') {
+                            showLoginMessage('Microsoft Sign-In failed. Please try again.', 'error');
+                        }
+                        // Re-enable buttons
+                        DOM.googleSigninBtn.disabled = false;
+                        DOM.microsoftSigninBtn.disabled = false;
+                        DOM.appleSigninBtn.disabled = false;
+                    });
+            } else {
+                console.error('Microsoft MSAL library not loaded');
+                showLoginMessage('Microsoft Sign-In is temporarily unavailable. Please try guest login.', 'error');
+                // Re-enable buttons
+                setTimeout(() => {
+                    DOM.googleSigninBtn.disabled = false;
+                    DOM.microsoftSigninBtn.disabled = false;
+                    DOM.appleSigninBtn.disabled = false;
+                }, 2000);
+            }
+        }
+        
+        function initAppleSignIn() {
+            // Initialize Apple Sign-In
+            if (typeof AppleID !== 'undefined' && AppleID.auth) {
+                AppleID.auth.init({
+                    clientId: 'YOUR_APPLE_SERVICE_ID', // Replace with your Apple Service ID
+                    scope: 'name email',
+                    redirectURI: window.location.origin + window.location.pathname,
+                    state: 'apple_signin_' + Date.now(),
+                    usePopup: true
+                });
+                
+                AppleID.auth.signIn()
+                    .then(response => {
+                        console.log('Apple Sign-In successful:', response);
+                        
+                        // Decode the ID token to get user information
+                        try {
+                            const base64Url = response.authorization.id_token.split('.')[1];
+                            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                            }).join(''));
+                            
+                            const tokenData = JSON.parse(jsonPayload);
+                            
+                            // Get user info from response or token
+                            const userInfo = {
+                                email: tokenData.email || (response.user && response.user.email),
+                                name: (response.user && response.user.name) ? 
+                                      `${response.user.name.firstName} ${response.user.name.lastName}`.trim() : 
+                                      (tokenData.email ? tokenData.email.split('@')[0] : 'Apple User')
+                            };
+                            
+                            handleSocialLoginSuccess('apple', userInfo, response.authorization.id_token);
+                        } catch (error) {
+                            console.error('Error decoding Apple ID token:', error);
+                            showLoginMessage('Failed to process Apple Sign-In. Please try again.', 'error');
+                            DOM.googleSigninBtn.disabled = false;
+                            DOM.microsoftSigninBtn.disabled = false;
+                            DOM.appleSigninBtn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Apple Sign-In error:', error);
+                        if (error.error !== 'popup_closed_by_user') {
+                            showLoginMessage('Apple Sign-In failed. Please try again.', 'error');
+                        }
+                        // Re-enable buttons
+                        DOM.googleSigninBtn.disabled = false;
+                        DOM.microsoftSigninBtn.disabled = false;
+                        DOM.appleSigninBtn.disabled = false;
+                    });
+            } else {
+                console.error('Apple Sign-In library not loaded');
+                showLoginMessage('Apple Sign-In is temporarily unavailable. Please try guest login.', 'error');
+                // Re-enable buttons
+                setTimeout(() => {
+                    DOM.googleSigninBtn.disabled = false;
+                    DOM.microsoftSigninBtn.disabled = false;
+                    DOM.appleSigninBtn.disabled = false;
+                }, 2000);
+            }
+        }
+        
+        function handleSocialLoginSuccess(provider, userData, idToken) {
+            console.log(`${provider} login successful:`, userData);
+            
+            // Use the actual ID token from OAuth provider
+            // In production, this token will be verified by the backend
+            const tokenToSend = idToken || btoa(JSON.stringify({
+                email: userData.email,
+                name: userData.name,
+                provider: provider
+            }));
+            
+            // First, register the user
+            google.script.run
+                .withSuccessHandler((response) => onSocialRegistration(response, tokenToSend, provider))
+                .withFailureHandler(onSocialLoginError)
+                .registerSocialUser(userData.email, userData.name, provider);
+        }
+        
+        function onSocialRegistration(response, token, provider) {
+            console.log("Social registration response:", response);
+            
+            if (response.status === 'error') {
+                showLoginMessage(response.message || 'Registration failed', 'error');
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
                 return;
             }
-
-            DOM.generateOTPBtn.disabled = true;
-            DOM.loginButtonText.textContent = 'Sending...';
-            DOM.loginSpinner.classList.remove('hidden');
-            showLoginMessage('Sending OTP...', 'info');
-            console.log("Generating OTP for:", email);
-
+            
+            if (!response.approved) {
+                // Show waiting for approval message
+                DOM.socialLoginSection.classList.add('hidden');
+                DOM.guestLoginSection.classList.add('hidden');
+                DOM.approvalWaiting.classList.remove('hidden');
+                showLoginMessage('Account pending approval', 'info');
+                return;
+            }
+            
+            // User is approved, verify login
             google.script.run
-                .withSuccessHandler(onOTPGenerated)
-                .withFailureHandler(onOTPError)
-                .generateOTPServer(email);
+                .withSuccessHandler(onSocialLoginVerified)
+                .withFailureHandler(onSocialLoginError)
+                .verifySocialLogin(token, provider);
+        }
+        
+        function onSocialLoginVerified(response) {
+            console.log("Social login verification response:", response);
+            
+            if (response.status === 'pending_approval') {
+                DOM.socialLoginSection.classList.add('hidden');
+                DOM.guestLoginSection.classList.add('hidden');
+                DOM.approvalWaiting.classList.remove('hidden');
+                showLoginMessage(response.message, 'info');
+                DOM.googleSigninBtn.disabled = false;
+                DOM.microsoftSigninBtn.disabled = false;
+                DOM.appleSigninBtn.disabled = false;
+                return;
+            }
+            
+            if (response.status === 'success') {
+                showLoginMessage('Login Successful!', 'success');
+                AppState.sessionToken = response.sessionToken;
+                AppState.userInfo = response.userInfo;
+                localStorage.setItem('sessionToken', AppState.sessionToken);
+                setTimeout(transitionToApp, 500);
+            } else {
+                onSocialLoginError({ message: response.message || 'Login failed' });
+            }
+        }
+        
+        function onSocialLoginError(error) {
+            console.error("Social login error:", error);
+            showLoginMessage(error.message || 'Social login failed', 'error');
+            DOM.googleSigninBtn.disabled = false;
+            DOM.microsoftSigninBtn.disabled = false;
+            DOM.appleSigninBtn.disabled = false;
         }
 
-        function onOTPGenerated(response) {
-            console.log("OTP generation response:", response);
+        // --- GUEST LOGIN FUNCTIONS ---
+
+        function handleGuestOTPGeneration() {
+            DOM.generateOTPBtn.disabled = true;
+            DOM.loginButtonText.textContent = 'Requesting OTP...';
+            DOM.loginSpinner.classList.remove('hidden');
+            console.log("Generating guest OTP");
+
+            google.script.run
+                .withSuccessHandler(onGuestOTPGenerated)
+                .withFailureHandler(onGuestOTPError)
+                .generateGuestOTP();
+        }
+
+        function onGuestOTPGenerated(response) {
+            console.log("Guest OTP generation response:", response);
             DOM.loginSpinner.classList.add('hidden');
             if (response && response.status === 'success') {
-                // Don't show thumbsup or any message - just enable OTP inputs
-                DOM.loginMessage.innerHTML = '';
-                DOM.loginMessage.className = 'text-center text-sm mt-4 h-5';
+                // Show message to ask admin for OTP
+                showLoginMessage('OTP sent to admin. Please ask admin for the code.', 'info');
                 
                 // Enable OTP inputs
                 DOM.otpInputs.forEach(input => {
                     input.disabled = false;
                 });
                 
-                DOM.loginSubtitle.textContent = 'Enter OTP Sent to Email';
-                DOM.loginButtonText.textContent = 'Resend OTP';
+                DOM.loginSubtitle.textContent = 'Enter OTP from Admin';
+                DOM.loginButtonText.textContent = 'Request New OTP';
                 DOM.generateOTPBtn.disabled = false;
                 if (DOM.otpInputs.length > 0) DOM.otpInputs[0].focus();
                 startOTPTimer(180);
             } else {
-                onOTPError({ message: (response && response.message) || 'Failed to send OTP.' });
+                onGuestOTPError({ message: (response && response.message) || 'Failed to generate OTP.' });
             }
         }
 
-        function onOTPError(error) {
-            console.error("OTP Error:", error);
+        function onGuestOTPError(error) {
+            console.error("Guest OTP Error:", error);
             DOM.loginSpinner.classList.add('hidden');
             showLoginMessage(error.message || 'An unknown error occurred.', 'error');
             DOM.generateOTPBtn.disabled = false;
-            DOM.loginButtonText.textContent = 'Generate OTP';
+            DOM.loginButtonText.textContent = 'Request Guest OTP';
+        }
+
+        function handleOTPGeneration() {
+            // Legacy function - now redirects to guest OTP
+            handleGuestOTPGeneration();
         }
 
          function startOTPTimer(seconds) {
@@ -1446,9 +2100,9 @@
                         input.value = '';
                     });
                     
-                    DOM.loginSubtitle.textContent = 'Enter Email to Sign In';
-                    DOM.loginButtonText.textContent = 'Generate OTP';
-                    showLoginMessage('OTP expired. Please generate a new one.', 'error');
+                    DOM.loginSubtitle.textContent = 'Choose Sign-In Method';
+                    DOM.loginButtonText.textContent = 'Request Guest OTP';
+                    showLoginMessage('OTP expired. Please request a new one.', 'error');
                 }
             }, 1000);
         }
@@ -1514,11 +2168,11 @@
             if (otp.length === 6) {
                 // Don't show full-screen loading - just show message
                 showLoginMessage('Verifying OTP...', 'info');
-                console.log("Verifying OTP:", otp);
+                console.log("Verifying guest OTP:", otp);
                 google.script.run
                     .withSuccessHandler(onOTPVerified)
                     .withFailureHandler(onVerifyError)
-                    .verifyOTPServer(DOM.emailInput.value, otp);
+                    .verifyGuestOTP(otp);
             }
         }
 
@@ -1568,10 +2222,16 @@
                 DOM.userInfo.name.textContent = `User: ${AppState.userInfo.name}`;
             }
 
-            // Show Gemini floating button
+            // Show Gemini and Calculator floating buttons
             if (DOM.geminiFloatButton) {
                 DOM.geminiFloatButton.style.display = 'flex';
             }
+            if (DOM.calculatorFloatButton) {
+                DOM.calculatorFloatButton.style.display = 'flex';
+            }
+            
+            // Check if we need to clear calculator history (new day)
+            checkCalculatorDayClear();
 
             handleResize();
             loadAppData();
@@ -1621,9 +2281,27 @@
 
         // --- NARRATION / SPEECH ---
         function loadSpeechVoices() {
-            const setVoices = () => { AppState.speechVoices = window.speechSynthesis.getVoices(); console.log("Voices loaded:", AppState.speechVoices.length); };
-             try { window.speechSynthesis.onvoiceschanged = setVoices; } catch (e) { console.warn("Could not set onvoiceschanged handler:", e); }
+            const setVoices = () => { 
+                AppState.speechVoices = window.speechSynthesis.getVoices(); 
+                console.log("Voices loaded:", AppState.speechVoices.length); 
+                if (AppState.speechVoices.length > 0) {
+                    console.log("Available voices:", AppState.speechVoices.map(v => `${v.name} (${v.lang})`));
+                }
+            };
+            try { 
+                // Set handler for when voices change
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = setVoices;
+                }
+            } catch (e) { 
+                console.warn("Could not set onvoiceschanged handler:", e); 
+            }
+            // Try to load voices immediately
             setVoices();
+            // If voices not loaded yet, wait a bit and try again
+            if (AppState.speechVoices.length === 0) {
+                setTimeout(setVoices, 100);
+            }
         }
         function toggleNarration() {
             AppState.narrationEnabled = !AppState.narrationEnabled;
@@ -1633,19 +2311,132 @@
             DOM.volumeToggle.addEventListener('animationend', () => DOM.volumeToggle.classList.remove('volume-icon-animation'), { once: true });
             if (AppState.narrationEnabled) speakText('Narration enabled', true);
         }
+        
+        function toggleBackground() {
+            const body = document.body;
+            body.classList.toggle('simple-bg');
+            const isSimple = body.classList.contains('simple-bg');
+            localStorage.setItem('background', isSimple ? 'simple' : 'complex');
+            
+            // Add animation effect to button
+            if (DOM.bgToggle) {
+                DOM.bgToggle.classList.add('theme-icon-animation');
+                setTimeout(() => DOM.bgToggle.classList.remove('theme-icon-animation'), 500);
+            }
+        }
+        
         function speakSymbol(symbol) {
              if (!symbol) return;
+            
+            // Smart narration rules for specific symbols
+            const upperSymbol = symbol.toUpperCase();
+            const narrationRules = {
+                // Forex pairs - spell each currency separately
+                'GBPUSD': 'G, B, P, U, S, D',
+                'EURUSD': 'E, U, R, U, S, D',
+                'USDJPY': 'U, S, D, J, P, Y',
+                'AUDUSD': 'A, U, D, U, S, D',
+                'USDCAD': 'U, S, D, C, A, D',
+                'NZDUSD': 'N, Z, D, U, S, D',
+                'USDCHF': 'U, S, D, C, H, F',
+                'GBPJPY': 'G, B, P, J, P, Y',
+                'EURJPY': 'E, U, R, J, P, Y',
+                'EURGBP': 'E, U, R, G, B, P',
+                
+                // Crypto pairs - speak crypto name then spell USD
+                'BTCUSD': 'bitcoin, U, S, D',
+                'ETHUSD': 'ethereum, U, S, D',
+                'DOGEUSD': 'doge, U, S, D',
+                'SHIBAUSD': 'shiba, U, S, D',
+                'ADAUSD': 'cardano, U, S, D',
+                'SOLUSD': 'solana, U, S, D',
+                'DOTUSD': 'polkadot, U, S, D',
+                
+                // Indian stocks - speak as word if recognizable, else spell
+                'TATA': 'tata',
+                'TATAMOTORS': 'tata motors',
+                'TATAPOWER': 'tata power',
+                'TATASTEEL': 'tata steel',
+                'TCS': 'T, C, S',
+                'HDFC': 'H, D, F, C',
+                'HDFCBANK': 'H, D, F, C, bank',
+                'ICICI': 'I, C, I, C, I',
+                'ICICIBANK': 'I, C, I, C, I, bank',
+                'SBI': 'S, B, I',
+                'SBIN': 'S, B, I, N',
+                'RELIANCE': 'reliance',
+                'INFY': 'infosys',
+                'WIPRO': 'wipro',
+                'HINDALCO': 'hindalco',
+                'JINDAL': 'jindal',
+                'VEDANTA': 'vedanta',
+                'SAIL': 'sail',
+                'BHARTIARTL': 'bharti airtel',
+                'JIO': 'jio',
+                'JIOFIN': 'jio, fin',
+                'ADANI': 'adani',
+                'ADANIPORTS': 'adani ports',
+                'ADANIGREEN': 'adani green',
+                'ITC': 'I, T, C',
+                'LT': 'L, T',
+                'MARUTI': 'maruti',
+                'BAJAJ': 'bajaj',
+                'BAJFINANCE': 'bajaj finance',
+                'BAJAJFINSV': 'bajaj financial services',
+                'KOTAKBANK': 'kotak bank',
+                'AXISBANK': 'axis bank',
+                'YESBANK': 'yes bank',
+                'PNB': 'P, N, B',
+                'BANKBARODA': 'bank of baroda',
+                'ONGC': 'O, N, G, C',
+                'NTPC': 'N, T, P, C',
+                'POWERGRID': 'power grid',
+                'INDIGO': 'indigo',
+                'SPICEJET': 'spice jet',
+                'DABUR': 'dabur',
+                'BRITANNIA': 'britannia',
+                'NESTLE': 'nestle',
+                'HUL': 'H, U, L',
+                'GODREJCP': 'godrej consumer products',
+                'MARICO': 'marico',
+                'PIDILITE': 'pidilite',
+                'ASIAN': 'asian',
+                'ASIANPAINT': 'asian paints',
+                'TITAN': 'titan',
+                'DMART': 'D, mart',
+                'ZOMATO': 'zomato',
+                'PAYTM': 'paytm',
+                'NYKAA': 'nykaa'
+            };
+            
+            // Check if we have a custom rule for this symbol
+            if (narrationRules[upperSymbol]) {
+                speakText(narrationRules[upperSymbol], false);
+                return;
+            }
+            
+            // Check if symbol starts with any known pattern
+            for (const [key, value] of Object.entries(narrationRules)) {
+                if (upperSymbol.startsWith(key)) {
+                    const remaining = symbol.substring(key.length);
+                    const textToSpeak = value + (remaining ? ', ' + remaining : '');
+                    speakText(textToSpeak, false);
+                    return;
+                }
+            }
+            
+            // Default behavior for other symbols
             const parts = symbol.split(/[\s-]+/);
             let textToSpeak = '';
             if (parts.length > 0) {
                 const firstWord = parts[0];
-                // Always spell out first word if it has 4 or fewer letters
+                // Spell out first word if it has 4 or fewer letters and is all uppercase
                 if (firstWord.length <= 4 && /^[A-Z]+$/.test(firstWord)) { 
                     textToSpeak = firstWord.split('').join(', '); 
                 } else { 
                     textToSpeak = firstWord; 
                 }
-                // Always speak the second word (if exists) as a word, not spelled out
+                // Speak the second word (if exists) as a word, not spelled out
                 if (parts.length > 1) { 
                     textToSpeak += ' ' + parts.slice(1).join(' '); 
                 }
@@ -1653,9 +2444,37 @@
             speakText(textToSpeak, false);
         }
         function speakText(text, isAnnouncement = false) {
-             if (!AppState.narrationEnabled || !window.speechSynthesis) { console.log("Narration disabled or not supported."); return; }
-             if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); }
-             if (AppState.speechVoices.length === 0) { loadSpeechVoices(); }
+             if (!AppState.narrationEnabled) { 
+                 console.log("Narration disabled."); 
+                 return; 
+             }
+             
+             if (!window.speechSynthesis) { 
+                 console.error("SpeechSynthesis not supported in this browser."); 
+                 return; 
+             }
+             
+             // Cancel any ongoing speech
+             if (window.speechSynthesis.speaking) { 
+                 window.speechSynthesis.cancel(); 
+             }
+             
+             // Load voices if not loaded
+             if (AppState.speechVoices.length === 0) { 
+                 loadSpeechVoices(); 
+                 // If still no voices, try again after a short delay
+                 if (AppState.speechVoices.length === 0) {
+                     setTimeout(() => {
+                         if (AppState.speechVoices.length > 0) {
+                             speakText(text, isAnnouncement);
+                         } else {
+                             console.warn("No voices available for speech synthesis");
+                         }
+                     }, 200);
+                     return;
+                 }
+             }
+             
             const utterance = new SpeechSynthesisUtterance(text);
             
             // Priority 1: Indian English female voice (en-IN, female)
@@ -1704,7 +2523,14 @@
             utterance.rate = 0.9; 
             utterance.pitch = 1.05; // Slightly higher pitch for female voice
             utterance.volume = 1.0;
-            utterance.onerror = (event) => { console.error("SpeechSynthesisUtterance.onerror:", event); };
+            utterance.onerror = (event) => { 
+                console.error("SpeechSynthesisUtterance.onerror:", event); 
+            };
+            utterance.onend = () => {
+                console.log("Speech completed:", text);
+            };
+            
+            console.log("Speaking:", text);
             window.speechSynthesis.speak(utterance);
         }
 
@@ -1752,12 +2578,21 @@
                 }
             } catch(e) { console.warn("Error processing latest synced symbol for speech:", e); }
 
+            // Preserve historicalDates when updating AppState.data
+            const historicalDates = AppState.data.historicalDates;
+            const currentHistoricalData = AppState.data.currentHistoricalData;
             AppState.data = data;
+            if (historicalDates) {
+                AppState.data.historicalDates = historicalDates;
+            }
+            if (currentHistoricalData) {
+                AppState.data.currentHistoricalData = currentHistoricalData;
+            }
             renderCurrentView();
             if (!AppState.pollingInterval) {
                 console.log("Starting polling interval.");
-                // Reduced polling to 15 seconds for faster updates
-                AppState.pollingInterval = setInterval(loadAppData, 15000);
+                // Reduced polling to 5 seconds for much faster updates
+                AppState.pollingInterval = setInterval(loadAppData, 5000);
             }
         }
         function onDataError(error) {
@@ -1843,11 +2678,10 @@
                     const isBullish = reason.toLowerCase().includes('bullish'); 
                     const icon = isBullish ? ICONS.bull : ICONS.bear; 
                     const colorClass = isBullish ? 'ticker-bullish' : 'ticker-bearish';
-                    // Show pattern name from reason
+                    // Show marker BEFORE pattern name, then show pattern name
                     return `<div class="ticker-item ${colorClass} ${size}">
                         <span class="symbol">${symbol}</span>
-                        <span class="details">${reason}</span>
-                        <span class="${isBullish ? 'bull-icon' : 'bear-icon'}">${icon}</span>
+                        <span class="details"><span class="${isBullish ? 'bull-icon' : 'bear-icon'}">${icon}</span> ${reason}</span>
                     </div>`; 
                 }
              }).join('');
@@ -1882,23 +2716,24 @@
              
              container.innerHTML = signals.map(signal => {
                  const latestReason = signal.ind2Reasons[0] || {};
-                 const oldReasons = signal.ind2Reasons.slice(1);
+                 const secondReason = signal.ind2Reasons[1] || null;
+                 
                  const latestReasonText = formatReason(latestReason.reason);
                  const latestReasonColor = getReasonColor(latestReason.reason);
                  const ind1Color = getReasonColor(signal.ind1Reason);
                  
-                 return `<div class="signal-card material material-regular interactive" onclick="showDashboardSyncDetail('${signal.symbol}')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="symbol-name">${signal.symbol}</h3>
-                                    ${signal.ind1Reason ? `<p class="text-sm font-semibold mt-2" style="color: ${ind1Color}; font-size: 0.95rem;">${signal.ind1Reason}</p>` : ''}
+                 const getGlowClass=(syncReason)=>{if(!syncReason)return "";const r=syncReason.toLowerCase();if(r.includes("hvd")||r.includes("significant deployed capital"))return "card-glow-hvd";if(r.includes("oversold"))return "card-glow-oversold";if(r.includes("overbought"))return "card-glow-overbought";return "";};const glowClass=getGlowClass(latestReason.reason);return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol}')">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h3 class="symbol-name mb-2">${signal.symbol}</h3>
+                                    ${signal.ind1Reason ? `<p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.ind1Reason}</p>` : ''}
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-xs text-secondary">${latestReason.time || ''}</p>
-                                    <p class="text-sm font-semibold mt-1" style="color: ${latestReasonColor};">${latestReasonText}</p>
+                                <div class="text-right flex-shrink-0 ml-4">
+                                    <p class="text-xs text-secondary mb-1">${latestReason.time || ''}</p>
+                                    <p class="text-xs font-semibold" style="color: ${latestReasonColor}; font-size: 0.875rem;">${latestReasonText}</p>
+                                    ${secondReason ? `<p class="text-xs font-medium mt-1" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.75rem; opacity: 0.8;">${formatReason(secondReason.reason)}</p>` : ''}
                                 </div>
                             </div>
-                            ${oldReasons.length > 0 ? `<div class="card-section-gap space-y-1">${oldReasons.map((r, idx) => `<p class="text-xs" style="color: ${getReasonColor(r.reason)}; opacity: ${0.8 - (idx) * 0.1};">${formatReason(r.reason)}</p>`).join('')}</div>` : ''}
                         </div>`;
               }).join('');
         }
@@ -1909,7 +2744,55 @@
             let signals = AppState.data.liveFeed || [];
             if (!Array.isArray(signals)) signals = [];
             if (signals.length === 0) { container.innerHTML = '<p class="text-center text-secondary p-4 col-span-full">No signals yet for today.</p>'; return; }
-            signals = sortSignals(signals, 'livefeed');
+            
+            // Club signals by symbol
+            const clubbedSignals = {};
+            signals.forEach(signal => {
+                if (!clubbedSignals[signal.symbol]) {
+                    clubbedSignals[signal.symbol] = {
+                        symbol: signal.symbol,
+                        status: signal.status,
+                        syncReason: signal.syncReason || '', // Preserve syncReason
+                        reasons: []
+                    };
+                }
+                clubbedSignals[signal.symbol].reasons.push({
+                    reason: signal.reason,
+                    time: signal.time
+                });
+                // Update status and syncReason if any signal is synced
+                if (signal.status === 'Synced') {
+                    clubbedSignals[signal.symbol].status = 'Synced';
+                    // Keep the most recent sync reason
+                    if (signal.syncReason && (!clubbedSignals[signal.symbol].syncReason || signal.time > clubbedSignals[signal.symbol].latestTime)) {
+                        clubbedSignals[signal.symbol].syncReason = signal.syncReason;
+                    }
+                }
+            });
+            
+            // Convert to array and sort
+            let clubbedArray = Object.values(clubbedSignals);
+            clubbedArray = clubbedArray.map(signal => {
+                // Sort reasons by time descending
+                signal.reasons.sort((a, b) => b.time.localeCompare(a.time));
+                // Add latest time for sorting
+                signal.latestTime = signal.reasons[0].time;
+                return signal;
+            });
+            
+            // Sort by latest time or status based on current sort setting
+            const sortType = AppState.sortType['livefeed'];
+            const sortDirection = AppState.sortDirection['livefeed'];
+            const dir = sortDirection === 'asc' ? 1 : -1;
+            
+            clubbedArray.sort((a, b) => {
+                if (sortType === 'status') {
+                    const statusA = (a.status === 'Synced') ? 1 : 0;
+                    const statusB = (b.status === 'Synced') ? 1 : 0;
+                    if (statusA !== statusB) { return (statusA - statusB) * dir * -1; }
+                }
+                return a.latestTime.localeCompare(b.latestTime) * dir;
+            });
             
             const getReasonColor = (reason) => {
                  if (!reason) return 'var(--text-secondary)';
@@ -1922,18 +2805,34 @@
                  return 'var(--text-secondary)';
             };
             
-            container.innerHTML = signals.map(signal => {
+            const getGlowClass = (syncReason) => {
+                if (!syncReason) return '';
+                const r = syncReason.toLowerCase();
+                if (r.includes('hvd') || r.includes('significant deployed capital')) return 'card-glow-hvd';
+                if (r.includes('oversold')) return 'card-glow-oversold';
+                if (r.includes('overbought')) return 'card-glow-overbought';
+                return '';
+            };
+            
+            container.innerHTML = clubbedArray.map(signal => {
                  const statusLightClass = signal.status === 'Synced' ? 'status-light-synced' : 'status-light-awaiting';
-                 const reasonColor = getReasonColor(signal.reason);
-                 return `<div class="signal-card material material-regular interactive" onclick="showSignalDetail('${signal.symbol}', '${signal.time}')">
+                 const latestReason = signal.reasons[0];
+                 const secondReason = signal.reasons[1] || null;
+                 const reasonColor = getReasonColor(latestReason.reason);
+                 
+                 
+                 return `<div class="signal-card material material-regular interactive " onclick="showLiveFeedDetail('${signal.symbol}')">
                             <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 class="symbol-name">${signal.symbol}</h3>
-                                    <p class="text-xs mt-1" style="color: ${reasonColor};">${signal.reason}</p>
+                                <div class="flex-1">
+                                    <h3 class="symbol-name mb-2">${signal.symbol}</h3>
+                                    <p class="text-sm font-semibold mb-1" style="color: ${reasonColor};">${latestReason.reason}</p>
+                                    ${secondReason ? `<p class="text-xs font-medium" style="color: ${getReasonColor(secondReason.reason)}; opacity: 0.75;">${secondReason.reason}</p>` : ''}
                                 </div>
-                                <span class="status-light ${statusLightClass}"></span>
+                                <div class="flex flex-col items-end gap-3">
+                                    <span class="status-light ${statusLightClass}"></span>
+                                    <p class="text-sm font-medium text-secondary">${latestReason.time}</p>
+                                </div>
                             </div>
-                            <p class="text-xs text-secondary text-right">${signal.time}</p>
                         </div>`;
              }).join('');
             updateSortUI('livefeed');
@@ -2045,11 +2944,49 @@
              try { const dateObj = new Date(data.date + 'T12:00:00'); if(DOM.historical.dateTitle) DOM.historical.dateTitle.textContent = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); }
              catch(e) { console.error("Error formatting historical date title:", e); }
 
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+
              let signals = sortSignals(data.signals, 'historical');
              container.innerHTML = signals.map(signal => {
-                  const statusClass = signal.status === 'Synced' ? 'status-synced' : 'status-unsynced'; // Historical uses unsynced
-                  const statusText = signal.status === 'Synced' ? 'Synced' : 'Unsynced'; // Show "Unsynced" instead of "Awaiting" in historical
-                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol}', '${signal.time}')"><div class="flex justify-between items-start"><div><h3 class="symbol-name">${signal.symbol}</h3><p class="timestamp">${signal.time}</p></div><span class="status-badge ${statusClass}">${statusText}</span></div><p class="text-sm mt-2">${signal.reason}</p></div>`;
+                  const ind2Reasons = signal.ind2Reasons || [];
+                  const latestReason = ind2Reasons[0] || {};
+                  const secondReason = ind2Reasons[1] || null;
+                  
+                  const latestReasonText = formatReason(latestReason.reason);
+                  const latestReasonColor = getReasonColor(latestReason.reason);
+                  const ind1Color = getReasonColor(signal.reason);
+                  
+                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol}', '${signal.time}')">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h3 class="symbol-name mb-2">${signal.symbol}</h3>
+                                    ${signal.reason ? `<p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.reason}</p>` : ''}
+                                </div>
+                                ${signal.status === 'Synced' && latestReason.reason ? `
+                                <div class="text-right flex-shrink-0 ml-4">
+                                    <p class="text-xs text-secondary mb-1">${latestReason.time || ''}</p>
+                                    <p class="text-xs font-semibold" style="color: ${latestReasonColor}; font-size: 0.875rem;">${latestReasonText}</p>
+                                    ${secondReason ? `<p class="text-xs font-medium mt-1" style="color: ${getReasonColor(secondReason.reason)}; font-size: 0.75rem; opacity: 0.8;">${formatReason(secondReason.reason)}</p>` : ''}
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>`;
               }).join('');
              if(DOM.historical.dates) DOM.historical.dates.classList.add('hidden');
              if(DOM.historical.signalsSection) DOM.historical.signalsSection.classList.remove('hidden');
@@ -2153,6 +3090,50 @@
              showModal(content);
         }
 
+        function showLiveFeedDetail(symbol) {
+             const liveFeed = AppState.data.liveFeed || [];
+             // Get all signals for this symbol
+             const signals = liveFeed.filter(s => s.symbol === symbol);
+             if (signals.length === 0) { console.warn(`No signals found for: ${symbol}`); return; }
+             
+             // Determine status
+             const hasSync = signals.some(s => s.status === 'Synced');
+             const statusClass = hasSync ? 'status-synced' : 'status-awaiting';
+             const statusText = hasSync ? 'Synced' : 'Awaiting';
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             // Build trigger events (all indicator 1 reasons)
+             const triggerEventsHTML = signals.map(signal => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(signal.reason)};">${signal.reason}</span>
+                         <span class="sync-event-time">${signal.time}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <div class="trigger-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${triggerEventsHTML}
+                </div>`;
+             showModal(content);
+        }
+
         function showSignalDetail(symbol, time) {
              const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.liveFeed);
              if (!signal) { console.warn(`Signal not found: ${symbol} at ${time}`); return; }
@@ -2188,17 +3169,164 @@
              if (!AppState.data.currentHistoricalData || !AppState.data.currentHistoricalData.signals) return;
              const signal = getSignalBySymbolAndTime(symbol, time, AppState.data.currentHistoricalData.signals);
              if (!signal) { console.warn(`Historical signal not found: ${symbol} at ${time}`); return; }
-             const syncEvents = (signal.status === 'Synced' && signal.syncReason) ? [{ reason: signal.syncReason, time: signal.syncTime }] : [];
-             showDetailModal(signal, syncEvents, AppState.data.currentHistoricalData.date);
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+             
+             const statusClass = signal.status === 'Synced' ? 'status-synced' : 'status-unsynced';
+             const ind2Reasons = signal.ind2Reasons || [];
+             
+             // Build trigger event HTML
+             const triggerEventHTML = `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(signal.reason)};">${signal.reason}</span>
+                         <span class="sync-event-time">${signal.time}</span>
+                     </div>
+                 </div>
+             `;
+             
+             // Build sync events HTML
+             let syncEventsHTML = '';
+             if (signal.status === 'Synced' && ind2Reasons.length > 0) {
+                 syncEventsHTML = `
+                     <div class="sync-events-section p-4 material material-regular mb-4">
+                         <h3 class="font-semibold mb-3">Sync Events</h3>
+                         ${ind2Reasons.map(sync => `
+                             <div class="sync-event-item">
+                                 <div class="flex justify-between items-center">
+                                     <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${formatReason(sync.reason)}</span>
+                                     <span class="sync-event-time">${sync.time}</span>
+                                 </div>
+                             </div>
+                         `).join('')}
+                     </div>
+                 `;
+             }
+             
+             // Store data for Gemini analysis
+             if (signal.status === 'Synced') {
+                 window._tempSignalData = {
+                     symbol: signal.symbol,
+                     reason: signal.reason,
+                     syncEvents: ind2Reasons
+                 };
+             }
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
+                    <span class="status-badge ${statusClass}">${signal.status}</span>
+                </div>
+                <div class="trigger-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${triggerEventHTML}
+                </div>
+                ${syncEventsHTML}
+                ${signal.status === 'Synced' ? `
+                    <button onclick="analyzeWithGemini(window._tempSignalData.symbol, window._tempSignalData.reason, window._tempSignalData.syncEvents)" 
+                            class="w-full px-4 py-3 rounded-lg bg-gradient-theme text-white font-semibold interactive flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Analyze with Gemini AI
+                    </button>
+                    <div id="gemini-analysis" class="mt-4 hidden"></div>
+                ` : ''}`;
+             showModal(content);
         }
 
         function showDashboardSyncDetail(symbol) {
              const signalList = AppState.data.dashboardSyncedList || [];
              const signal = signalList.find(s => s.symbol === symbol);
              if (!signal) { console.warn(`Dashboard synced signal not found: ${symbol}`); return; }
-             const originalSignal = (AppState.data.liveFeed || []).find(s => s.symbol === symbol && s.reason === signal.ind1Reason);
-             const baseSignal = { symbol: signal.symbol, reason: signal.ind1Reason, time: originalSignal ? originalSignal.time : 'N/A', status: 'Synced' };
-             showDetailModal(baseSignal, signal.ind2Reasons, 'Today', true);
+             
+             // Get all Indicator 1 reasons for this symbol from liveFeed
+             const liveFeed = AppState.data.liveFeed || [];
+             const ind1Signals = liveFeed.filter(s => s.symbol === symbol);
+             
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('hvd')) return 'var(--orange)';
+                 if (r.includes('bullish')) return 'var(--green)';
+                 if (r.includes('bearish')) return 'var(--red)';
+                 if (r.includes('oversold')) return 'var(--blue)';
+                 if (r.includes('overbought')) return 'var(--violet)';
+                 return 'var(--text-secondary)';
+             };
+             
+             const formatReason = (reason) => {
+                 if (!reason) return 'N/A';
+                 const hvdMatch = reason.match(/HVD\s*\(([^)]+)\)/i);
+                 if (hvdMatch) return hvdMatch[1];
+                 return reason;
+             };
+             
+             // Build trigger events HTML (all indicator 1 reasons)
+             const triggerEventsHTML = ind1Signals.map(s => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(s.reason)};">${s.reason}</span>
+                         <span class="sync-event-time">${s.time}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
+             // Build sync events HTML (all indicator 2 reasons)
+             const syncEventsHTML = signal.ind2Reasons.map(sync => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${formatReason(sync.reason)}</span>
+                         <span class="sync-event-time">${sync.time}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
+             // Store data for Gemini analysis
+             window._tempSignalData = {
+                 symbol: signal.symbol,
+                 reason: signal.ind1Reason,
+                 syncEvents: signal.ind2Reasons
+             };
+             
+             const content = `
+                <div class="flex justify-between items-start mb-4">
+                    <div><h2 class="text-2xl font-bold tracking-tight">${signal.symbol}</h2></div>
+                    <span class="status-badge status-synced">Synced</span>
+                </div>
+                <div class="trigger-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Trigger Events</h3>
+                    ${triggerEventsHTML}
+                </div>
+                <div class="sync-events-section p-4 material material-regular mb-4">
+                    <h3 class="font-semibold mb-3">Sync Events</h3>
+                    ${syncEventsHTML}
+                </div>
+                <button onclick="analyzeWithGemini(window._tempSignalData.symbol, window._tempSignalData.reason, window._tempSignalData.syncEvents)" 
+                        class="w-full px-4 py-3 rounded-lg bg-gradient-theme text-white font-semibold interactive flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Analyze with Gemini AI
+                </button>
+                <div id="gemini-analysis" class="mt-4 hidden"></div>`;
+             showModal(content);
         }
 
         function showDetailModal(signal, syncEvents, dateStr = 'Today', isDashboard = false) {
@@ -2244,20 +3372,24 @@
                     <span class="status-badge ${statusClass}">${signal.status}</span>
                 </div>
                 ${ind1Reason ? `
-                <div class="p-4 material material-regular mb-4">
+                <div class="trigger-events-section p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Trigger Events</h3>
-                    <div class="flex justify-between items-center">
-                        <span style="color: ${getReasonColor(ind1Reason)}; font-size: 0.95rem; font-weight: 600;">${ind1Reason}</span>
-                        <span class="text-sm text-secondary">${signal.time || ''}</span>
+                    <div class="sync-event-item">
+                        <div class="flex justify-between items-center">
+                            <span class="sync-event-reason" style="color: ${getReasonColor(ind1Reason)};">${ind1Reason}</span>
+                            <span class="sync-event-time">${signal.time || ''}</span>
+                        </div>
                     </div>
                 </div>` : ''}
                 ${ind2Events.length > 0 ? `
-                <div class="p-4 material material-regular mb-4">
+                <div class="sync-events-section p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Sync Events</h3>
-                    ${ind2Events.map((sync, idx) => `
-                        <div class="flex justify-between items-center mb-2" style="${idx === 0 ? 'font-size: 0.95rem;' : ''}">
-                            <span style="color: ${getReasonColor(sync.reason)}; font-weight: ${idx === 0 ? '600' : '500'};">${formatReason(sync.reason)}</span>
-                            <span class="text-sm text-secondary">${sync.time}</span>
+                    ${ind2Events.map(sync => `
+                        <div class="sync-event-item">
+                            <div class="flex justify-between items-center">
+                                <span class="sync-event-reason" style="color: ${getReasonColor(sync.reason)};">${formatReason(sync.reason)}</span>
+                                <span class="sync-event-time">${sync.time}</span>
+                            </div>
                         </div>`).join('')}
                 </div>` : ''}
                 ${signal.status === 'Synced' ? `
@@ -2376,6 +3508,165 @@
                     analysisDiv.innerHTML = `<div class="material material-regular p-4 border border-red-500"><p class="text-sm text-red-500">Failed to analyze: ${error.message}</p></div>`;
                 })
                 .analyzeSignalWithGemini(symbol, ind1Reason, syncEvents);
+        }
+        
+        // --- CALCULATOR FUNCTIONS ---
+        
+        function toggleCalculator() {
+            AppState.calculatorOpen = !AppState.calculatorOpen;
+            if (AppState.calculatorOpen) {
+                DOM.calculatorPanel.style.opacity = '1';
+                DOM.calculatorPanel.style.pointerEvents = 'auto';
+                DOM.calculatorPanel.style.transform = 'scale(1)';
+                if (DOM.calculatorFloatButton) DOM.calculatorFloatButton.style.display = 'none';
+                // Focus on display for keyboard input
+                setTimeout(() => {
+                    if (DOM.calcDisplay) {
+                        DOM.calcDisplay.focus();
+                        DOM.calcDisplay.select();
+                    }
+                }, 300);
+                updateCalculatorDisplay();
+            } else {
+                DOM.calculatorPanel.style.opacity = '0';
+                DOM.calculatorPanel.style.pointerEvents = 'none';
+                DOM.calculatorPanel.style.transform = 'scale(0.5)';
+                if (DOM.calculatorFloatButton) DOM.calculatorFloatButton.style.display = 'flex';
+            }
+        }
+        
+        function checkCalculatorDayClear() {
+            const today = new Date().toDateString();
+            if (AppState.calculatorLastClear !== today) {
+                AppState.calculatorHistory = [];
+                AppState.calculatorExpression = '';
+                AppState.calculatorLastClear = today;
+                localStorage.setItem('calculatorHistory', JSON.stringify([]));
+                localStorage.setItem('calculatorLastClear', today);
+                updateCalculatorDisplay();
+                updateCalculatorHistory();
+            }
+        }
+        
+        function handleCalculatorInput(e) {
+            // Allow numbers, operators, backspace, enter, delete
+            const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
+                                '+', '-', '*', '/', '(', ')', '.', 'Backspace', 'Enter', 'Delete', 'Escape'];
+            
+            if (!allowedKeys.includes(e.key)) {
+                e.preventDefault();
+                return;
+            }
+            
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                calculateResult();
+                return;
+            }
+            
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                AppState.calculatorExpression = '';
+                updateCalculatorDisplay();
+                return;
+            }
+            
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                AppState.calculatorExpression = AppState.calculatorExpression.slice(0, -1);
+                updateCalculatorDisplay();
+                return;
+            }
+            
+            // Prevent default and manually add character
+            e.preventDefault();
+            AppState.calculatorExpression += e.key;
+            updateCalculatorDisplay();
+        }
+        
+        function calculateResult() {
+            if (!AppState.calculatorExpression) return;
+            
+            try {
+                // Safe eval using Function constructor
+                const result = Function('"use strict"; return (' + AppState.calculatorExpression + ')')();
+                
+                // Add to history
+                const calculation = {
+                    expression: AppState.calculatorExpression,
+                    result: result,
+                    timestamp: new Date().toLocaleTimeString()
+                };
+                
+                AppState.calculatorHistory.unshift(calculation);
+                if (AppState.calculatorHistory.length > 50) {
+                    AppState.calculatorHistory = AppState.calculatorHistory.slice(0, 50);
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('calculatorHistory', JSON.stringify(AppState.calculatorHistory));
+                
+                // Update display
+                DOM.calcHistory.textContent = `${AppState.calculatorExpression} =`;
+                AppState.calculatorExpression = result.toString();
+                updateCalculatorDisplay();
+                updateCalculatorHistory();
+                
+            } catch (error) {
+                DOM.calcHistory.textContent = 'Error';
+                console.error('Calculator error:', error);
+            }
+        }
+        
+        function updateCalculatorDisplay() {
+            if (DOM.calcDisplay) {
+                DOM.calcDisplay.value = AppState.calculatorExpression || '0';
+            }
+        }
+        
+        function updateCalculatorHistory() {
+            if (!DOM.calcHistoryList) return;
+            
+            if (AppState.calculatorHistory.length === 0) {
+                DOM.calcHistoryList.innerHTML = '<div class="text-center text-secondary opacity-50">No calculations yet</div>';
+                return;
+            }
+            
+            DOM.calcHistoryList.innerHTML = AppState.calculatorHistory.map(calc => `
+                <div class="flex justify-between items-center py-1 text-secondary hover:text-primary cursor-pointer" onclick="loadCalculation('${calc.expression}')">
+                    <span>${calc.expression} = ${calc.result}</span>
+                    <span class="text-xs opacity-50">${calc.timestamp}</span>
+                </div>
+            `).join('');
+        }
+        
+        function loadCalculation(expression) {
+            AppState.calculatorExpression = expression;
+            updateCalculatorDisplay();
+            if (DOM.calcDisplay) {
+                DOM.calcDisplay.focus();
+                DOM.calcDisplay.select();
+            }
+        }
+        
+        function clearCalculator() {
+            if (confirm('Clear all calculator history?')) {
+                AppState.calculatorHistory = [];
+                AppState.calculatorExpression = '';
+                DOM.calcHistory.textContent = '';
+                localStorage.setItem('calculatorHistory', JSON.stringify([]));
+                updateCalculatorDisplay();
+                updateCalculatorHistory();
+            }
+        }
+        
+        function clearCalculatorScreen() {
+            AppState.calculatorExpression = '';
+            DOM.calcHistory.textContent = '';
+            updateCalculatorDisplay();
+            if (DOM.calcDisplay) {
+                DOM.calcDisplay.focus();
+            }
         }
     </script>
 </body>
