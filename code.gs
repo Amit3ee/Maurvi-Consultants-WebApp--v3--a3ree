@@ -344,6 +344,11 @@ function doPost(e) {
       }
     }
     
+    // Safety check for e and e.postData
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error("Invalid request: missing postData or postData.contents");
+    }
+    
     const postData = e.postData.contents;
     if (!postData) { throw new Error("Received empty postData."); }
     const data = JSON.parse(postData);
@@ -1478,8 +1483,8 @@ function _getSheetData(sheetName) {
     if (lastRow > 0) { data = sheet.getDataRange().getDisplayValues(); }
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
     
-    // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    cache.put(cacheKey, JSON.stringify(data), 30);
+    // Use very short cache TTL for near real-time updates (10 seconds)
+    cache.put(cacheKey, JSON.stringify(data), 10);
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
@@ -1665,10 +1670,11 @@ function getDashboardData() {
     });
 
     // Calculate KPIs
-    const syncedSymbols = new Set(dashboardSyncedList.map(s => s.symbol));
+    // totalSignals: count of cards in live feed
+    // syncedSignals: count of cards in synced signals feed (dashboardSyncedList)
     const kpi = { 
       totalSignals: liveFeed.length, 
-      syncedSignals: syncedSymbols.size, 
+      syncedSignals: dashboardSyncedList.length, 
       latestSignal: liveFeed.length > 0 ? liveFeed[0].symbol : '-' 
     };
 
