@@ -484,11 +484,8 @@ function doPost(e) {
     }
     writeDataToRow(ind1Sheet, targetRow, indicatorType, reasonToWrite, time);
     
-    // Clear cache for both Indicator1 and Indicator2 sheets to ensure immediate updates
-    const cacheService = CacheService.getScriptCache();
-    cacheService.remove(`sheetData_Indicator1_${dateSuffix}`);
-    cacheService.remove(`sheetData_Indicator2_${dateSuffix}`);
-    Logger.log(`Cache cleared for immediate data refresh`);
+    // NOTE: No cache clearing needed since _getSheetData no longer uses cache
+    // This ensures all data is always fresh and prevents the 10:00 AM freeze issue
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: 'success', 
@@ -1419,11 +1416,9 @@ function verifyGuestOTP(otp) {
 
 /** Utility to get sheet data with caching - Enhanced with auto-creation */
 function _getSheetData(sheetName) {
-  const cache = CacheService.getScriptCache();
-  const cacheKey = `sheetData_${sheetName}`;
-  const cachedData = cache.get(cacheKey);
-  if (cachedData != null) { return JSON.parse(cachedData); }
-
+  // REMOVED CACHING: Always fetch fresh data to prevent 10:00 AM freeze issue
+  // Previous issue: Cached data prevented display of new signals after 10:00 AM IST
+  
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
     let sheet = ss.getSheetByName(sheetName);
@@ -1478,8 +1473,7 @@ function _getSheetData(sheetName) {
     if (lastRow > 0) { data = sheet.getDataRange().getDisplayValues(); }
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
     
-    // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    cache.put(cacheKey, JSON.stringify(data), 30);
+    // NO CACHING: Return fresh data immediately
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
