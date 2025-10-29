@@ -2642,6 +2642,18 @@
             renderHistoricalSignals();
         }
 
+        // --- UTILITY FUNCTIONS ---
+        
+        /**
+         * Escapes single quotes in strings to prevent breaking onclick handlers
+         * This fixes issues with symbols containing special characters like apostrophes
+         * Example: "McDonald's" becomes "McDonald\\'s"
+         */
+        function escapeForOnclick(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'");
+        }
+
         // --- VIEW RENDERING ---
 
         function renderCurrentView() {
@@ -2739,8 +2751,8 @@
                  const latestReasonColor = getReasonColor(latestReason.reason);
                  const ind1Color = getReasonColor(signal.ind1Reason);
                  
-                 const getGlowClass=(syncReason)=>{if(!syncReason)return "";const r=syncReason.toLowerCase();if(r.includes("hvd")||r.includes("significant deployed capital"))return "card-glow-hvd";if(r.includes("oversold"))return "card-glow-oversold";if(r.includes("overbought"))return "card-glow-overbought";return "";};const glowClass=getGlowClass(latestReason.reason);return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${signal.symbol}')">
-                            <div class="flex justify-between items-start">
+                 const getGlowClass=(syncReason)=>{if(!syncReason)return "";const r=syncReason.toLowerCase();if(r.includes("hvd")||r.includes("significant deployed capital"))return "card-glow-hvd";if(r.includes("oversold"))return "card-glow-oversold";if(r.includes("overbought"))return "card-glow-overbought";return "";};const glowClass=getGlowClass(latestReason.reason);return `<div class="signal-card material material-regular interactive ${glowClass}" onclick="showDashboardSyncDetail('${escapeForOnclick(signal.symbol)}')">
+                           <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
                                     ${signal.ind1Reason ? `<p class="text-xs font-semibold" style="color: ${ind1Color}; font-size: 0.875rem;">${signal.ind1Reason}</p>` : ''}
@@ -2838,8 +2850,8 @@
                  const reasonColor = getReasonColor(latestReason.reason);
                  
                  
-                 return `<div class="signal-card material material-regular interactive " onclick="showLiveFeedDetail('${signal.symbol}')">
-                            <div class="flex justify-between items-start mb-2">
+                 return `<div class="signal-card material material-regular interactive " onclick="showLiveFeedDetail('${escapeForOnclick(signal.symbol)}')">
+                           <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
                                     <p class="text-sm font-semibold mb-1" style="color: ${reasonColor};">${latestReason.reason}</p>
@@ -2989,7 +3001,7 @@
                   const latestReasonColor = getReasonColor(latestReason.reason);
                   const ind1Color = getReasonColor(signal.reason);
                   
-                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${signal.symbol}', '${signal.time}')">
+                  return `<div class="signal-card material material-regular interactive" onclick="showHistoricalSignalDetail('${escapeForOnclick(signal.symbol)}', '${escapeForOnclick(signal.time)}')">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <h3 class="symbol-name mb-2">${signal.symbol}</h3>
