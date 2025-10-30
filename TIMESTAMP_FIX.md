@@ -93,10 +93,12 @@ The fix supports multiple timestamp formats from TradingView:
 4. **Invalid formats**: Falls back to server time with logging
 
 ### Timezone Handling
-- All timestamps are formatted using the script's timezone (IST)
+- All timestamps are formatted using the script's configured timezone
+- The script timezone is set via `Session.getScriptTimeZone()` in Google Apps Script
 - TradingView's `{{timenow}}` placeholder sends timestamps in ISO 8601 format
 - JavaScript's `new Date()` constructor handles timezone conversion automatically
-- `Utilities.formatDate()` converts to the configured timezone (IST)
+- `Utilities.formatDate()` converts to the configured timezone
+- **Note**: Configure your script timezone in Google Apps Script settings to IST for accurate IST timestamps
 
 ### Validation and Fallback
 1. **Check if timestamp exists** in webhook payload
@@ -215,6 +217,6 @@ const time = Utilities.formatDate(timestamp, scriptTimeZone, 'HH:mm:ss');
 
 ## Version
 - **Fix Version**: 3.1.1
-- **Date**: October 30, 2025
+- **Date**: October 30, 2024
 - **Issue**: Data freeze at 10:00 AM IST
 - **Resolution**: Use TradingView timestamp instead of server time

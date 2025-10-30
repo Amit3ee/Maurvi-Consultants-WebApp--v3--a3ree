@@ -2716,9 +2716,10 @@ function testTimestampParsing() {
       expected: '10:00:00'
     },
     {
-      name: 'ISO 8601 without timezone',
+      name: 'ISO 8601 without timezone (local time)',
       timestamp: '2025-10-30T10:00:00',
-      expected: '10:00:00'
+      expected: null,  // Will be parsed as local time, depends on script timezone
+      note: 'Without timezone, parsed as local time'
     },
     {
       name: 'ISO 8601 with Z (UTC)',
@@ -2767,8 +2768,9 @@ function testTimestampParsing() {
     if (testCase.fallback) {
       Logger.log('✓ Successfully fell back to server time');
     } else if (testCase.expected) {
-      // Note: For UTC to IST conversion test, the actual time will depend on the script timezone
       Logger.log(`Expected: ${testCase.expected}, Got: ${time}`);
+    } else if (testCase.note) {
+      Logger.log(`Note: ${testCase.note}`);
     }
   });
   
