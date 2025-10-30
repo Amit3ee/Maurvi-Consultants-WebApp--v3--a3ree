@@ -309,7 +309,8 @@ function handleApprovalRequest(email, isApproval) {
  * - Indicator2 Pattern: {"timestamp": "...", "ticker": "SYMBOL", "reason": "Bullish Engulfing"}
  * - Indicator2 Standalone: {"timestamp": "...", "ticker": "SYMBOL", "reason": "Oversold - RSI Below 30"}
  * 
- * NOTE: Timestamps from indicators are IGNORED. Server time is used for all signals.
+ * NOTE: Timestamps from TradingView JSON are USED for accurate signal timing.
+ *       Falls back to server time only if timestamp is invalid or missing.
  * 
  * Data Flow:
  * - Indicator1 signals: Create row in Indicator1 sheet (columns B-K for signals)
@@ -350,9 +351,26 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.openById(SHEET_ID);
     
-    // Get current date suffix and time (ALWAYS use server time, ignore indicator timestamps)
+    // Use TradingView timestamp from JSON payload instead of server time
+    // This fixes the data freeze issue at 10:00 AM IST
     const scriptTimeZone = Session.getScriptTimeZone();
-    const timestamp = new Date();
+    let timestamp;
+    
+    if (data.timestamp) {
+      // Parse TradingView timestamp (format: "YYYY-MM-DDTHH:mm:ss" or ISO 8601)
+      timestamp = new Date(data.timestamp);
+      
+      // Validate timestamp is valid
+      if (isNaN(timestamp.getTime())) {
+        Logger.log(`Invalid timestamp received: ${data.timestamp}, falling back to server time`);
+        timestamp = new Date();
+      }
+    } else {
+      // Fallback to server time if timestamp not provided
+      Logger.log('No timestamp in payload, using server time');
+      timestamp = new Date();
+    }
+    
     const dateSuffix = Utilities.formatDate(timestamp, scriptTimeZone, 'yyyy-MM-dd');
     const time = Utilities.formatDate(timestamp, scriptTimeZone, 'HH:mm:ss');
     
