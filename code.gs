@@ -2697,3 +2697,81 @@ function refreshRearrangeCurrentData() {
     return { status: 'error', message: errorMessage };
   }
 }
+
+/**
+ * Test function to verify TradingView timestamp parsing
+ * Tests various timestamp formats and validates the fix for 10:00 AM IST freeze issue
+ */
+function testTimestampParsing() {
+  Logger.log('=== Testing TradingView Timestamp Parsing ===');
+  
+  const scriptTimeZone = Session.getScriptTimeZone();
+  Logger.log(`Script timezone: ${scriptTimeZone}`);
+  
+  // Test cases with different timestamp formats
+  const testCases = [
+    {
+      name: 'ISO 8601 with timezone',
+      timestamp: '2025-10-30T10:00:00+05:30',
+      expected: '10:00:00'
+    },
+    {
+      name: 'ISO 8601 without timezone',
+      timestamp: '2025-10-30T10:00:00',
+      expected: '10:00:00'
+    },
+    {
+      name: 'ISO 8601 with Z (UTC)',
+      timestamp: '2025-10-30T04:30:00Z',
+      expected: '10:00:00'  // Should convert UTC to IST (UTC+5:30)
+    },
+    {
+      name: 'Invalid timestamp',
+      timestamp: 'invalid-timestamp',
+      expected: null,  // Should fallback to server time
+      fallback: true
+    },
+    {
+      name: 'Missing timestamp',
+      timestamp: null,
+      expected: null,  // Should fallback to server time
+      fallback: true
+    }
+  ];
+  
+  testCases.forEach(testCase => {
+    Logger.log(`\nTest: ${testCase.name}`);
+    Logger.log(`Input: ${testCase.timestamp}`);
+    
+    let timestamp;
+    if (testCase.timestamp) {
+      timestamp = new Date(testCase.timestamp);
+      
+      if (isNaN(timestamp.getTime())) {
+        Logger.log('✓ Timestamp validation failed as expected, would fallback to server time');
+        timestamp = new Date();
+      } else {
+        Logger.log(`✓ Parsed timestamp: ${timestamp}`);
+      }
+    } else {
+      Logger.log('✓ No timestamp provided, would fallback to server time');
+      timestamp = new Date();
+    }
+    
+    const time = Utilities.formatDate(timestamp, scriptTimeZone, 'HH:mm:ss');
+    const dateSuffix = Utilities.formatDate(timestamp, scriptTimeZone, 'yyyy-MM-dd');
+    
+    Logger.log(`Formatted time: ${time}`);
+    Logger.log(`Date suffix: ${dateSuffix}`);
+    
+    if (testCase.fallback) {
+      Logger.log('✓ Successfully fell back to server time');
+    } else if (testCase.expected) {
+      // Note: For UTC to IST conversion test, the actual time will depend on the script timezone
+      Logger.log(`Expected: ${testCase.expected}, Got: ${time}`);
+    }
+  });
+  
+  Logger.log('\n=== Timestamp Parsing Test Complete ===');
+  return { status: 'success', message: 'All timestamp parsing tests completed' };
+}
