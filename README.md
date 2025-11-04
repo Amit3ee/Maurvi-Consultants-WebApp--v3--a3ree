@@ -247,7 +247,24 @@ testOpenSheet()
 - CSV/Excel export functionality
 - Advanced analytics and pattern recognition
 - Mobile apps (iOS/Android)
-- Migration path to Cloud Functions + Firebase for scale
+- Migration to Azure for enhanced scalability and features
+
+## ☁️ Azure Migration Path
+
+For deploying this application to Microsoft Azure:
+
+**👉 START HERE: [AZURE_MIGRATION_SUMMARY.md](AZURE_MIGRATION_SUMMARY.md)** - Executive summary and navigation guide
+
+### Complete Documentation Set:
+- **[AZURE_QUICK_START.md](AZURE_QUICK_START.md)** - 15-minute quick deployment guide
+- **[AZURE_MIGRATION_PLAN.md](AZURE_MIGRATION_PLAN.md)** - Comprehensive migration strategy and architecture
+- **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment with GitHub Actions
+- **[GAS_TO_AZURE_COMPARISON.md](GAS_TO_AZURE_COMPARISON.md)** - Code comparison and examples
+- **[azure-sample/](azure-sample/)** - Working sample Azure Functions code and database schema
+
+**Migration Benefits**: 10x performance improvement, auto-scaling, full monitoring, CI/CD automation  
+**Timeline**: 6 weeks from planning to production  
+**Cost**: ~$35-50/month (vs. free GAS with hard limits)
 
 ## 🤝 Contributing
 
