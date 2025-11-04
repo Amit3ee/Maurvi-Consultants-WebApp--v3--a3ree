@@ -1631,8 +1631,9 @@ function getDashboardData() {
       // Define bullish and bearish patterns
       // Explicit patterns for "Bullish Activity": Bullish Engulfing, Bullish Piercing, Morning Star
       // Explicit patterns for "Bearish Activity": Bearish Engulfing, Bearish Piercing, Evening Star
-      const bullishPatterns = ['bullish engulfing', 'bullish piercing', 'morning star', 'bullish', 'engulfing', 'pin bar', 'hammer', 'white soldiers', 'oversold'];
-      const bearishPatterns = ['bearish engulfing', 'bearish piercing', 'evening star', 'bearish', 'harami', 'shooting star', 'doji', 'overbought'];
+      // Note: More specific patterns (e.g., "bearish engulfing") must be checked before generic ones (e.g., "engulfing")
+      const bullishPatterns = ['bullish engulfing', 'bullish piercing', 'morning star', 'bullish', 'pin bar', 'hammer', 'white soldiers'];
+      const bearishPatterns = ['bearish engulfing', 'bearish piercing', 'evening star', 'bearish', 'harami', 'shooting star', 'doji'];
       
       if (reason.includes('hvd')) {
         logs.hvd.push(signal);
@@ -1643,14 +1644,18 @@ function getDashboardData() {
         // Overbought signals go to overbought category (standalone alerts)
         logs.overbought.push(signal);
       } else {
-        // Check for bullish or bearish patterns in the reason text
-        const isBullish = bullishPatterns.some(pattern => reason.includes(pattern));
+        // Check for bearish patterns first (more specific check)
         const isBearish = bearishPatterns.some(pattern => reason.includes(pattern));
         
-        if (isBullish) {
-          logs.bullish.push(signal);
-        } else if (isBearish) {
+        if (isBearish) {
           logs.bearish.push(signal);
+        } else {
+          // If not bearish, check for bullish patterns
+          const isBullish = bullishPatterns.some(pattern => reason.includes(pattern));
+          
+          if (isBullish) {
+            logs.bullish.push(signal);
+          }
         }
         // If neither bullish nor bearish, signal is not categorized in logs
       }
