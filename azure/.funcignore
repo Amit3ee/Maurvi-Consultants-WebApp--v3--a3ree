@@ -1,0 +1,49 @@
+# Azure FunctionsIgnores
+
+# Environment variables
+.env
+.env.*
+local.settings.json
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+
+# Testing
+coverage/
+*.test.js
+*.spec.js
+__tests__/
+__mocks__/
+
+# Build
+dist/
+build/
+
+# Documentation
+*.md
+docs/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+tmp/
+temp/
+.DS_Store
+
+# Scripts (if not needed in deployment)
+scripts/
+
+# Infrastructure
+infrastructure/
+
+# Web app (deployed separately)
+web/

@@ -1,0 +1,29 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    
+    "AZURE_COSMOS_ENDPOINT": "https://your-cosmos-account.documents.azure.com:443/",
+    "AZURE_COSMOS_KEY": "your-cosmos-key-here",
+    "AZURE_REDIS_CONNECTION_STRING": "localhost:6379",
+    
+    "ADMIN_EMAIL": "amit3ree@gmail.com",
+    "OTP_VALIDITY_MINUTES": "3",
+    "SESSION_VALIDITY_HOURS": "24",
+    "DATA_RETENTION_DAYS": "14",
+    
+    "GEMINI_API_KEY": "your-gemini-api-key-here",
+    "SENDGRID_API_KEY": "your-sendgrid-key",
+    "SENDER_EMAIL": "noreply@yourdomain.com",
+    
+    "LOG_LEVEL": "info"
+  },
+  "Host": {
+    "CORS": "*",
+    "CORSCredentials": false,
+    "LocalHttpPort": 7071
+  },
+  "ConnectionStrings": {}
+}
