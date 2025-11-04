@@ -1629,8 +1629,8 @@ function getDashboardData() {
       
       // Categorize based on reason
       // Define bullish and bearish patterns
-      const bullishPatterns = ['bullish', 'engulfing', 'pin bar', 'morning star', 'hammer', 'white soldiers', 'oversold'];
-      const bearishPatterns = ['bearish', 'harami', 'evening star', 'shooting star', 'doji', 'overbought'];
+      const bullishPatterns = ['bullish', 'engulfing', 'pin bar', 'morning star', 'hammer', 'white soldiers'];
+      const bearishPatterns = ['bearish', 'harami', 'evening star', 'shooting star', 'doji'];
       
       if (reason.includes('hvd')) {
         logs.hvd.push(signal);
@@ -1649,8 +1649,11 @@ function getDashboardData() {
           logs.bullish.push(signal);
         } else if (isBearish) {
           logs.bearish.push(signal);
+        } else {
+          // Fallback: categorize unmatched signals as bullish (since Indicator2 looks for opportunities)
+          // This ensures all Indicator2 signals are displayed in the logs tab
+          logs.bullish.push(signal);
         }
-        // If neither bullish nor bearish, signal is not categorized in logs
       }
     });
     
@@ -1713,19 +1716,24 @@ function getDashboardData() {
       patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time)).slice(0, 7)
     };
 
-    // Get latest Nifty data (from Indicator2 sheet, filtered by ticker name)
-    const latestNifty = niftyData.length > 0 ? 
-      niftyData.reduce((latest, current) => 
-        (_timeToSeconds(current[1]) > _timeToSeconds(latest[1]) ? current : latest), niftyData[0]) : null;
-    const niftyDataObj = latestNifty ? { 
-      ticker: latestNifty[2], 
-      timestamp: latestNifty[1], 
-      reason: latestNifty[3] 
-    } : null;
+    // Get all Nifty data (from Indicator2 sheet, filtered by ticker name)
+    // Return all signals, not just the latest one
+    const niftyDataArray = niftyData.map(row => ({
+      ticker: row[2],
+      timestamp: row[1],
+      reason: row[3],
+      capital: row[4]
+    }));
+    
+    // Sort by time descending (most recent first)
+    niftyDataArray.sort((a, b) => _timeToSeconds(b.timestamp) - _timeToSeconds(a.timestamp));
+    
+    // Get latest Nifty for dashboard display
+    const latestNifty = niftyDataArray.length > 0 ? niftyDataArray[0] : null;
 
     Logger.log('getDashboardData: Successfully processed all data.');
 
-    return { kpi, niftyData: niftyDataObj, tickers, dashboardSyncedList, liveFeed, logs };
+    return { kpi, niftyData: latestNifty, niftyDataArray: niftyDataArray, tickers, dashboardSyncedList, liveFeed, logs };
   } catch (err) {
     Logger.log(`getDashboardData CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, 'getDashboardData Error', err, '');
