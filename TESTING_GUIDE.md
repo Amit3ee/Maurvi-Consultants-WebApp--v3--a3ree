@@ -110,7 +110,7 @@ curl -X POST "YOUR_WEB_APP_URL" \
 1. Open Indicator1 sheet
 2. Find TESTSTOCK1 in a row
 3. Check that reason appears in column B
-4. Check that time in column C is server time (not 10:00:00)
+4. Check that time in column C matches the timestamp from TradingView (10:00:00 in IST)
 
 ### Test 5: Indicator 2 HVD Signal
 

@@ -31,10 +31,11 @@ Signals are distinguished by JSON keys:
 - This enables fast, direct indicator identification
 
 ### Timestamp Handling
-- **All timestamps use server time** (reduces latency)
-- Indicator timestamps in alerts are ignored
-- Ensures consistent time across all signals
-- Eliminates need for timestamp parsing
+- **All timestamps use TradingView timestamp from JSON** (accurate signal timing)
+- Timestamps are parsed from the `timestamp` field in webhook payload
+- Falls back to server time if timestamp is invalid or missing
+- Ensures accurate signal timing and prevents data freeze issues
+- Timestamps are validated before use
 
 ### Sheet Structure
 ```
@@ -145,7 +146,9 @@ DebugLogs_2025-01-15     [Error logging and debugging]
 ```
 
 **Important Notes:**
-- Timestamps in alerts are **ignored** - server time is used for all signals (reduces latency)
+- Timestamps from TradingView alerts are **used for accurate signal timing**
+- Timestamp format: ISO 8601 format from TradingView's {{timenow}} placeholder
+- Falls back to server time only if timestamp is invalid or missing
 - Indicator detection is based on JSON keys: `"scrip"` = Indicator1, `"ticker"` = Indicator2
 - Nifty signals use ticker values: "NIFTY", "Nifty", "NIFTY1!", or "Nifty1!"
 - Set webhook URL to your deployed Web app URL
@@ -225,7 +228,7 @@ testOpenSheet()
 1. **Dynamic Row Mapping**: Efficient system for correlating signals across indicators with up to 21 sync events per symbol
 2. **Date-Suffixed Architecture**: Self-maintaining, self-healing data organization
 3. **JSON Key-Based Detection**: Fast indicator identification using "scrip" vs "ticker" keys
-4. **Server-Side Timestamps**: All signals timestamped at server for reduced latency
+4. **TradingView Timestamps**: Accurate signal timing using timestamps directly from TradingView alerts
 5. **Unified Indicator2 Sheet**: Single sheet for all Indicator2 signals including Nifty
 6. **Voice Narration**: Accessibility feature with Indian English voice
 7. **Glassmorphic UI**: Modern design with smooth animations

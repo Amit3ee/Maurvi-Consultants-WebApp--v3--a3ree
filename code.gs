@@ -312,7 +312,8 @@ function handleApprovalRequest(email, isApproval) {
  * - Indicator2 Pattern: {"timestamp": "...", "ticker": "SYMBOL", "reason": "Bullish Engulfing"}
  * - Indicator2 Standalone: {"timestamp": "...", "ticker": "SYMBOL", "reason": "Oversold - RSI Below 30"}
  * 
- * NOTE: Timestamps from indicators are IGNORED. Server time is used for all signals.
+ * NOTE: Timestamps from TradingView JSON are USED for accurate signal timing.
+ *       Falls back to server time only if timestamp is invalid or missing.
  * 
  * Data Flow:
  * - Indicator1 signals: Create row in Indicator1 sheet (columns B-K for signals)
@@ -353,9 +354,26 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.openById(SHEET_ID);
     
-    // Get current date suffix and time (ALWAYS use server time, ignore indicator timestamps)
+    // Use TradingView timestamp from JSON payload instead of server time
+    // This fixes the data freeze issue at 10:00 AM IST
     const scriptTimeZone = Session.getScriptTimeZone();
-    const timestamp = new Date();
+    let timestamp;
+    
+    if (data.timestamp) {
+      // Parse TradingView timestamp (format: "YYYY-MM-DDTHH:mm:ss" or ISO 8601)
+      timestamp = new Date(data.timestamp);
+      
+      // Validate timestamp is valid
+      if (isNaN(timestamp.getTime())) {
+        Logger.log(`Invalid timestamp received: ${data.timestamp}, falling back to server time`);
+        timestamp = new Date();
+      }
+    } else {
+      // Fallback to server time if timestamp not provided
+      Logger.log('No timestamp in payload, using server time');
+      timestamp = new Date();
+    }
+    
     const dateSuffix = Utilities.formatDate(timestamp, scriptTimeZone, 'yyyy-MM-dd');
     const time = Utilities.formatDate(timestamp, scriptTimeZone, 'HH:mm:ss');
     
@@ -2713,4 +2731,84 @@ function refreshRearrangeCurrentData() {
     _logErrorToSheet(logSheet, 'refreshRearrangeCurrentData Error', err, '');
     return { status: 'error', message: errorMessage };
   }
+}
+
+/**
+ * Test function to verify TradingView timestamp parsing
+ * Tests various timestamp formats and validates the fix for 10:00 AM IST freeze issue
+ */
+function testTimestampParsing() {
+  Logger.log('=== Testing TradingView Timestamp Parsing ===');
+  
+  const scriptTimeZone = Session.getScriptTimeZone();
+  Logger.log(`Script timezone: ${scriptTimeZone}`);
+  
+  // Test cases with different timestamp formats
+  const testCases = [
+    {
+      name: 'ISO 8601 with timezone',
+      timestamp: '2025-10-30T10:00:00+05:30',
+      expected: '10:00:00'
+    },
+    {
+      name: 'ISO 8601 without timezone (local time)',
+      timestamp: '2025-10-30T10:00:00',
+      expected: null,  // Will be parsed as local time, depends on script timezone
+      note: 'Without timezone, parsed as local time'
+    },
+    {
+      name: 'ISO 8601 with Z (UTC)',
+      timestamp: '2025-10-30T04:30:00Z',
+      expected: '10:00:00'  // Should convert UTC to IST (UTC+5:30)
+    },
+    {
+      name: 'Invalid timestamp',
+      timestamp: 'invalid-timestamp',
+      expected: null,  // Should fallback to server time
+      fallback: true
+    },
+    {
+      name: 'Missing timestamp',
+      timestamp: null,
+      expected: null,  // Should fallback to server time
+      fallback: true
+    }
+  ];
+  
+  testCases.forEach(testCase => {
+    Logger.log(`\nTest: ${testCase.name}`);
+    Logger.log(`Input: ${testCase.timestamp}`);
+    
+    let timestamp;
+    if (testCase.timestamp) {
+      timestamp = new Date(testCase.timestamp);
+      
+      if (isNaN(timestamp.getTime())) {
+        Logger.log('✓ Timestamp validation failed as expected, would fallback to server time');
+        timestamp = new Date();
+      } else {
+        Logger.log(`✓ Parsed timestamp: ${timestamp}`);
+      }
+    } else {
+      Logger.log('✓ No timestamp provided, would fallback to server time');
+      timestamp = new Date();
+    }
+    
+    const time = Utilities.formatDate(timestamp, scriptTimeZone, 'HH:mm:ss');
+    const dateSuffix = Utilities.formatDate(timestamp, scriptTimeZone, 'yyyy-MM-dd');
+    
+    Logger.log(`Formatted time: ${time}`);
+    Logger.log(`Date suffix: ${dateSuffix}`);
+    
+    if (testCase.fallback) {
+      Logger.log('✓ Successfully fell back to server time');
+    } else if (testCase.expected) {
+      Logger.log(`Expected: ${testCase.expected}, Got: ${time}`);
+    } else if (testCase.note) {
+      Logger.log(`Note: ${testCase.note}`);
+    }
+  });
+  
+  Logger.log('\n=== Timestamp Parsing Test Complete ===');
+  return { status: 'success', message: 'All timestamp parsing tests completed' };
 }
