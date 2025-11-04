@@ -20,6 +20,9 @@ const MAX_CACHE_SIZE_BYTES = 90000; // 90KB limit with safety margin (Google App
 const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
+// --- TIMEZONE CONFIGURATION ---
+// Force all date calculations to use Indian Standard Time (IST) to prevent timezone-related bugs
+const TIME_ZONE = "Asia/Kolkata";
 
 // --- DAILY SETUP AND MAINTENANCE ---
 
@@ -33,16 +36,15 @@ function dailySetupAndMaintenance() {
     const ss = SpreadsheetApp.openById(SHEET_ID);
     logSheet = ss.getSheetByName(SHEET_LOGS);
     
-    const scriptTimeZone = Session.getScriptTimeZone();
     const today = new Date();
     
-    // Calculate current date suffix (YYYY-MM-DD)
-    const currentDateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    // Calculate current date suffix (YYYY-MM-DD) using IST timezone
+    const currentDateSuffix = Utilities.formatDate(today, TIME_ZONE, 'yyyy-MM-dd');
     
     // Calculate purge date (14 days old)
     const purgeDate = new Date(today);
     purgeDate.setDate(today.getDate() - 14);
-    const purgeDateSuffix = Utilities.formatDate(purgeDate, scriptTimeZone, 'yyyy-MM-dd');
+    const purgeDateSuffix = Utilities.formatDate(purgeDate, TIME_ZONE, 'yyyy-MM-dd');
     
     Logger.log(`Daily Setup: Current date: ${currentDateSuffix}, Purge date: ${purgeDateSuffix}`);
     
@@ -353,11 +355,10 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.openById(SHEET_ID);
     
-    // Get current date suffix and time (ALWAYS use server time, ignore indicator timestamps)
-    const scriptTimeZone = Session.getScriptTimeZone();
+    // Get current date suffix and time (ALWAYS use server time with IST timezone, ignore indicator timestamps)
     const timestamp = new Date();
-    const dateSuffix = Utilities.formatDate(timestamp, scriptTimeZone, 'yyyy-MM-dd');
-    const time = Utilities.formatDate(timestamp, scriptTimeZone, 'HH:mm:ss');
+    const dateSuffix = Utilities.formatDate(timestamp, TIME_ZONE, 'yyyy-MM-dd');
+    const time = Utilities.formatDate(timestamp, TIME_ZONE, 'HH:mm:ss');
     
     logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
     
@@ -545,8 +546,7 @@ function _logErrorToSheet(logSheet, context, error, details = '') {
     try {
         if (!logSheet) {
             const ss = SpreadsheetApp.openById(SHEET_ID);
-            const scriptTimeZone = Session.getScriptTimeZone();
-            const dateSuffix = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+            const dateSuffix = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
             logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
             if (!logSheet) {
                  Logger.log(`Cannot log error: DebugLogs_${dateSuffix} sheet not found.`);
@@ -1436,8 +1436,7 @@ function _getSheetData(sheetName) {
       Logger.log(`_getSheetData: Sheet not found - ${sheetName}. Attempting to create...`);
       
       // Extract date suffix and sheet type
-      const scriptTimeZone = Session.getScriptTimeZone();
-      const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+      const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
       
       // Only auto-create if it's today's sheet
       if (sheetName.includes(`_${today}`)) {
@@ -1527,8 +1526,7 @@ function _timeToSeconds(timeStr) {
 function getDashboardData() {
   try {
     Logger.log('getDashboardData: Function started.');
-    const scriptTimeZone = Session.getScriptTimeZone();
-    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
     Logger.log(`getDashboardData: Today's date is ${today}`);
 
     // Use date-suffixed sheet names (no separate Nifty sheet anymore)
@@ -1740,8 +1738,7 @@ function getHistoricalDates() {
     const allSheets = ss.getSheets();
     const dates = new Set();
     
-    const scriptTimeZone = Session.getScriptTimeZone();
-    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
     
     allSheets.forEach(sheet => {
       const name = sheet.getName();
@@ -1955,10 +1952,9 @@ function _getTodayAndYesterdayStrings() { /* ... (unchanged) ... */
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  const timezone = Session.getScriptTimeZone();
   return {
-    todayStr: Utilities.formatDate(today, timezone, 'yyyy-MM-dd'),
-    yestStr: Utilities.formatDate(yesterday, timezone, 'yyyy-MM-dd')
+    todayStr: Utilities.formatDate(today, TIME_ZONE, 'yyyy-MM-dd'),
+    yestStr: Utilities.formatDate(yesterday, TIME_ZONE, 'yyyy-MM-dd')
   };
 }
 function populateSheetWithMockData() { /* ... (unchanged) ... */
@@ -2019,9 +2015,8 @@ function testOpenSheet() { /* ... (unchanged) ... */
 function checkDailySheetSetup() {
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
     const today = new Date();
-    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    const dateSuffix = Utilities.formatDate(today, TIME_ZONE, 'yyyy-MM-dd');
     
     Logger.log(`=== Daily Sheet Setup Check (${dateSuffix}) ===`);
     
@@ -2060,7 +2055,7 @@ function checkDailySheetSetup() {
     // Check for old sheets that should be purged
     const purgeDate = new Date(today);
     purgeDate.setDate(today.getDate() - 14);
-    const purgeDateSuffix = Utilities.formatDate(purgeDate, scriptTimeZone, 'yyyy-MM-dd');
+    const purgeDateSuffix = Utilities.formatDate(purgeDate, TIME_ZONE, 'yyyy-MM-dd');
     
     const allSheets = ss.getSheets();
     const oldSheets = allSheets.filter(sheet => {
@@ -2117,8 +2112,7 @@ function testDailySetup() {
     
     // Verify sheets were created
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
-    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
     
     const sheetNames = [
       `Indicator1_${today}`,
@@ -2160,8 +2154,7 @@ function testDynamicRowMapping() {
     ];
     
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
-    const today = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+    const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
     const ind1Sheet = ss.getSheetByName(`Indicator1_${today}`);
     const ind2Sheet = ss.getSheetByName(`Indicator2_${today}`);
     
@@ -2186,7 +2179,7 @@ function testDynamicRowMapping() {
       Logger.log(`Processing signal ${index + 1}: ${JSON.stringify(data)}`);
       
       // Simulate the doPost logic
-      const time = Utilities.formatDate(new Date(), scriptTimeZone, 'HH:mm:ss');
+      const time = Utilities.formatDate(new Date(), TIME_ZONE, 'HH:mm:ss');
       
       // Determine indicator type by JSON keys
       let indicatorType = null;
@@ -2260,11 +2253,10 @@ function testDynamicRowMapping() {
 function analyzeDebugLogs(dateStr) {
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
     
     // Use today's date if not specified
     if (!dateStr) {
-      dateStr = Utilities.formatDate(new Date(), scriptTimeZone, 'yyyy-MM-dd');
+      dateStr = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
     }
     
     const logSheet = ss.getSheetByName(`DebugLogs_${dateStr}`);
@@ -2394,9 +2386,8 @@ function populateLargeMockData() {
   let logSheet;
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
     const today = new Date();
-    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    const dateSuffix = Utilities.formatDate(today, TIME_ZONE, 'yyyy-MM-dd');
     
     const ind1SheetName = `Indicator1_${dateSuffix}`;
     const ind2SheetName = `Indicator2_${dateSuffix}`;
@@ -2528,9 +2519,8 @@ function eraseMockData() {
   let logSheet;
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
     const today = new Date();
-    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    const dateSuffix = Utilities.formatDate(today, TIME_ZONE, 'yyyy-MM-dd');
     
     const ind1SheetName = `Indicator1_${dateSuffix}`;
     const ind2SheetName = `Indicator2_${dateSuffix}`;
@@ -2595,9 +2585,8 @@ function refreshRearrangeCurrentData() {
   let logSheet;
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
-    const scriptTimeZone = Session.getScriptTimeZone();
     const today = new Date();
-    const dateSuffix = Utilities.formatDate(today, scriptTimeZone, 'yyyy-MM-dd');
+    const dateSuffix = Utilities.formatDate(today, TIME_ZONE, 'yyyy-MM-dd');
     
     const ind1SheetName = `Indicator1_${dateSuffix}`;
     logSheet = ss.getSheetByName(`DebugLogs_${dateSuffix}`);
