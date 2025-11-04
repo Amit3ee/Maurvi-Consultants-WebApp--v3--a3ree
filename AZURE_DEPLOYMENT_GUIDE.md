@@ -96,7 +96,10 @@ az group create \
 # Set variables
 export SQL_SERVER_NAME="maurvi-sql-$(openssl rand -hex 4)"
 export SQL_ADMIN_USER="sqladmin"
-export SQL_ADMIN_PASSWORD="$(openssl rand -base64 16)P@ssw0rd!"  # Generate strong password
+# Generate strong password meeting Azure SQL requirements
+export SQL_ADMIN_PASSWORD="$(openssl rand -base64 16 | tr -d '/+' | cut -c1-16)Aa1!"
+# Ensures: uppercase, lowercase, numbers, special char, 16+ chars
+
 export DATABASE_NAME="maurvi_signals"
 
 # Create SQL Server
@@ -673,12 +676,25 @@ az staticwebapp hostname set \
 
 ### Step 2: Update TradingView Webhooks
 
-1. Login to TradingView
-2. Edit each alert
-3. Update webhook URL to:
+1. Get the function key:
+   ```bash
+   # Get webhook function key
+   az functionapp function keys list \
+     --name $FUNCTION_APP_NAME \
+     --resource-group $RESOURCE_GROUP \
+     --function-name webhook-handler \
+     --query default -o tsv
    ```
-   https://<FUNCTION_APP_NAME>.azurewebsites.net/api/webhook
+
+2. Login to TradingView
+3. Edit each alert
+4. Update webhook URL to include the function key:
    ```
+   https://<FUNCTION_APP_NAME>.azurewebsites.net/api/webhook?code=<FUNCTION_KEY>
+   ```
+   
+   **Security Note**: The `?code=` parameter is required for function-level authentication.
+   Keep this key secret and rotate it regularly.
 
 ### Step 3: Configure CORS
 

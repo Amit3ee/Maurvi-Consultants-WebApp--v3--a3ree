@@ -75,20 +75,28 @@ module.exports = async function (context, req) {
       `);
     
     // Query 3: Get synced signals (symbols with both indicators)
+    // Optimized with EXISTS instead of INNER JOIN for better performance
     const syncedResult = await pool.request()
       .input('today', sql.Date, today)
       .query(`
         SELECT DISTINCT
           s1.symbol,
-          MAX(s1.created_at) as last_ind1_time,
-          MAX(s2.created_at) as last_ind2_time
+          (SELECT MAX(created_at) FROM Signals 
+           WHERE symbol = s1.symbol AND date = @today AND indicator_type = 'Indicator1') as last_ind1_time,
+          (SELECT MAX(created_at) FROM Signals 
+           WHERE symbol = s1.symbol AND date = @today AND indicator_type = 'Indicator2') as last_ind2_time
         FROM Signals s1
-        INNER JOIN Signals s2 ON s1.symbol = s2.symbol AND s1.date = s2.date
         WHERE s1.date = @today
           AND s1.indicator_type = 'Indicator1'
-          AND s2.indicator_type = 'Indicator2'
+          AND EXISTS (
+            SELECT 1 FROM Signals s2 
+            WHERE s2.symbol = s1.symbol 
+              AND s2.date = @today 
+              AND s2.indicator_type = 'Indicator2'
+          )
         GROUP BY s1.symbol
-        ORDER BY MAX(s2.created_at) DESC
+        ORDER BY (SELECT MAX(created_at) FROM Signals 
+                  WHERE symbol = s1.symbol AND date = @today AND indicator_type = 'Indicator2') DESC
       `);
     
     // Query 4: Get NIFTY signals

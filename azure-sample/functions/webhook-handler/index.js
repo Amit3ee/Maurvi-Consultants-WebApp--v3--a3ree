@@ -3,6 +3,13 @@
  * Receives TradingView alerts and stores them in Azure SQL Database
  * 
  * This replaces the doPost() function from Google Apps Script
+ * 
+ * SECURITY NOTE: This function uses 'function' auth level.
+ * When calling from TradingView, append the function key to the URL:
+ * https://your-function-app.azurewebsites.net/api/webhook?code=YOUR_FUNCTION_KEY
+ * 
+ * Get the function key from Azure Portal:
+ * Function App → Your Function → Function Keys → default
  */
 
 const sql = require('mssql');

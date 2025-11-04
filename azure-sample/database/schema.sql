@@ -15,6 +15,7 @@ CREATE TABLE Signals (
     -- Indexes for performance
     INDEX idx_date_symbol (date, symbol),
     INDEX idx_date_indicator (date, indicator_type),
+    INDEX idx_date_symbol_indicator (date, symbol, indicator_type),  -- Composite index for synced queries
     INDEX idx_created_at (created_at DESC)
 );
 
