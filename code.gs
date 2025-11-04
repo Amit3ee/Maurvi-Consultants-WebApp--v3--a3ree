@@ -11,6 +11,9 @@ const OTP_VALIDITY_MINUTES = 3;
 const SESSION_VALIDITY_HOURS = 24; // 1 day session
 const ADMIN_EMAIL = 'amit3ree@gmail.com'; // OTPs will be sent here
 
+// Cache configuration
+const MAX_CACHE_SIZE_BYTES = 90000; // 90KB limit with safety margin (Google Apps Script limit is 100KB)
+
 // --- !!! GEMINI API KEY !!! ---
 // Replace "YOUR_GEMINI_API_KEY" with your actual Gemini API Key
 // Get one here: https://aistudio.google.com/app/apikey
@@ -1479,13 +1482,45 @@ function _getSheetData(sheetName) {
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
     
     // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    cache.put(cacheKey, JSON.stringify(data), 30);
+    // Only cache if data is small enough to avoid "Argument too large" error
+    try {
+      const dataString = JSON.stringify(data);
+      const dataSize = dataString.length;
+      if (dataSize < MAX_CACHE_SIZE_BYTES) {
+        cache.put(cacheKey, dataString, 30);
+        Logger.log(`_getSheetData: Cached ${sheetName} (${dataSize} bytes)`);
+      } else {
+        Logger.log(`_getSheetData: Data too large to cache for ${sheetName} (${dataSize} bytes). Skipping cache.`);
+      }
+    } catch (cacheErr) {
+      Logger.log(`_getSheetData: Failed to cache ${sheetName}: ${cacheErr.message}. Continuing without cache.`);
+    }
     return data;
   } catch (err) {
     Logger.log(`_getSheetData CRITICAL ERROR for ${sheetName}: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, '_getSheetData Error', err, `Sheet: ${sheetName}`);
     return { error: `Server error in _getSheetData: ${err.message}`, stack: err.stack };
   }
+}
+
+/**
+ * Helper function to convert time string (HH:mm:ss) to a comparable numeric value
+ * Fixes the issue where "10:55" appears before "9:58" in string sorting
+ * 
+ * Note: This function is intentionally duplicated in index.html (as timeToSeconds)
+ * to ensure consistent time sorting behavior on both server-side and client-side.
+ * 
+ * @param {string} timeStr - Time string in format "HH:mm:ss"
+ * @return {number} - Numeric value for comparison (seconds since midnight)
+ */
+function _timeToSeconds(timeStr) {
+  if (!timeStr || timeStr === '') return 0;
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return 0;
+  const hours = parseInt(parts[0], 10) || 0;
+  const minutes = parseInt(parts[1], 10) || 0;
+  const seconds = parts.length > 2 ? (parseInt(parts[2], 10) || 0) : 0;
+  return hours * 3600 + minutes * 60 + seconds;
 }
 
 /** Gets all data for the dashboard - uses today's date-suffixed sheets */
@@ -1553,8 +1588,8 @@ function getDashboardData() {
       }
     });
     
-    // Sort by time descending
-    liveFeed.sort((a, b) => b.time.localeCompare(a.time));
+    // Sort by time descending (fix for 10am appearing before 9am issue)
+    liveFeed.sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time));
 
     // Build logs from Indicator2 data (categorize by reason pattern)
     // Show ALL Indicator2 signals regardless of sync status
@@ -1620,7 +1655,7 @@ function getDashboardData() {
     });
     
     for (const key in logs) { 
-      logs[key].sort((a, b) => b.time.localeCompare(a.time)); 
+      logs[key].sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time)); 
     }
 
     // Build dashboard synced list (symbols with sync events from Indicator2)
@@ -1645,7 +1680,7 @@ function getDashboardData() {
         const ind1Reason = row[1] || '';
         const ind1Time = row[2] || '';
         
-        ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
+        ind2Reasons.sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time));
         dashboardSyncedList.push({
           symbol: symbol,
           ind1Reason: ind1Reason,
@@ -1674,14 +1709,14 @@ function getDashboardData() {
 
     // Build tickers (HVD and patterns)
     const tickers = {
-      hvd: logs.hvd.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 7),
-      patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => b.time.localeCompare(a.time)).slice(0, 7)
+      hvd: logs.hvd.sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time)).slice(0, 7),
+      patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time)).slice(0, 7)
     };
 
     // Get latest Nifty data (from Indicator2 sheet, filtered by ticker name)
     const latestNifty = niftyData.length > 0 ? 
       niftyData.reduce((latest, current) => 
-        (current[1] > latest[1] ? current : latest), niftyData[0]) : null;
+        (_timeToSeconds(current[1]) > _timeToSeconds(latest[1]) ? current : latest), niftyData[0]) : null;
     const niftyDataObj = latestNifty ? { 
       ticker: latestNifty[2], 
       timestamp: latestNifty[1], 
@@ -1763,7 +1798,7 @@ function getSignalsForDate(dateStr) {
           }
           
           // Sort sync events by time descending
-          ind2Reasons.sort((a, b) => b.time.localeCompare(a.time));
+          ind2Reasons.sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time));
           
           const signal = {
             symbol: symbol,
@@ -1785,7 +1820,7 @@ function getSignalsForDate(dateStr) {
     });
     
     const signals = Object.values(signalsBySymbol);
-    signals.sort((a, b) => b.time.localeCompare(a.time));
+    signals.sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time));
     Logger.log(`getSignalsForDate: Found ${signals.length} signals for ${dateStr}`);
     return { date: dateStr, signals: signals };
   } catch (err) {
