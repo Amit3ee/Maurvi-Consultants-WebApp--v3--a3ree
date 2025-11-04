@@ -3112,18 +3112,37 @@
          }
 
         function showNiftyDetail() {
-             const { niftyData } = AppState.data; if (!niftyData) return;
+             const { niftyData, niftySyncEvents } = AppState.data; 
+             if (!niftyData) return;
+             
+             // Build sync events HTML - show all historical Nifty events
+             let syncEventsHTML = '';
+             if (niftySyncEvents && niftySyncEvents.length > 0) {
+                 syncEventsHTML = niftySyncEvents.map(event => `
+                     <div class="sync-event-item">
+                         <div class="flex justify-between items-center">
+                             <span class="sync-event-reason">${event.reason || 'N/A'}</span>
+                             <span class="sync-event-time">${event.time || ''}</span>
+                         </div>
+                     </div>
+                 `).join('');
+             } else {
+                 // Fallback to showing single event if niftySyncEvents is not available
+                 syncEventsHTML = `
+                     <div class="flex justify-between items-center">
+                         <span>${niftyData.reason || 'N/A'}</span>
+                         <span class="text-sm text-secondary">${niftyData.timestamp || ''}</span>
+                     </div>`;
+             }
+             
              // Candlestick patterns should be under sync events, not trigger events
              const content = `
                 <div class="flex justify-between items-start mb-4">
                     <div><h2 class="text-2xl font-bold tracking-tight">${niftyData.ticker || 'NIFTY 50'}</h2></div>
                 </div>
                 <div class="p-4 material material-regular mb-4">
-                    <h3 class="font-semibold mb-3">Sync Events</h3>
-                    <div class="flex justify-between items-center">
-                        <span>${niftyData.reason || 'N/A'}</span>
-                        <span class="text-sm text-secondary">${niftyData.timestamp || ''}</span>
-                    </div>
+                    <h3 class="font-semibold mb-3">Past Sync Events</h3>
+                    ${syncEventsHTML}
                 </div>`;
              showModal(content);
         }

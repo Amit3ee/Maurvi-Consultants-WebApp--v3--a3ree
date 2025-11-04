@@ -1629,8 +1629,10 @@ function getDashboardData() {
       
       // Categorize based on reason
       // Define bullish and bearish patterns
-      const bullishPatterns = ['bullish', 'engulfing', 'pin bar', 'morning star', 'hammer', 'white soldiers', 'oversold'];
-      const bearishPatterns = ['bearish', 'harami', 'evening star', 'shooting star', 'doji', 'overbought'];
+      // Explicit patterns for "Bullish Activity": Bullish Engulfing, Bullish Piercing, Morning Star
+      // Explicit patterns for "Bearish Activity": Bearish Engulfing, Bearish Piercing, Evening Star
+      const bullishPatterns = ['bullish engulfing', 'bullish piercing', 'morning star', 'bullish', 'engulfing', 'pin bar', 'hammer', 'white soldiers', 'oversold'];
+      const bearishPatterns = ['bearish engulfing', 'bearish piercing', 'evening star', 'bearish', 'harami', 'shooting star', 'doji', 'overbought'];
       
       if (reason.includes('hvd')) {
         logs.hvd.push(signal);
@@ -1723,9 +1725,16 @@ function getDashboardData() {
       reason: latestNifty[3] 
     } : null;
 
+    // Build array of all Nifty sync events sorted by time (descending)
+    const niftySyncEvents = niftyData.map(row => ({
+      ticker: row[2],
+      time: row[1],
+      reason: row[3]
+    })).sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time));
+
     Logger.log('getDashboardData: Successfully processed all data.');
 
-    return { kpi, niftyData: niftyDataObj, tickers, dashboardSyncedList, liveFeed, logs };
+    return { kpi, niftyData: niftyDataObj, niftySyncEvents, tickers, dashboardSyncedList, liveFeed, logs };
   } catch (err) {
     Logger.log(`getDashboardData CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, 'getDashboardData Error', err, '');
