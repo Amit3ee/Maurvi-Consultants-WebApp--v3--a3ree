@@ -1425,6 +1425,27 @@
             bear: '▼'
         };
 
+        // --- HELPER FUNCTIONS ---
+        /**
+         * Helper function to convert time string (HH:mm:ss) to a comparable numeric value
+         * Fixes the issue where "10:55" appears before "9:58" in string sorting
+         * 
+         * Note: This function is intentionally duplicated in code.gs (as _timeToSeconds)
+         * to ensure consistent time sorting behavior on both server-side and client-side.
+         * 
+         * @param {string} timeStr - Time string in format "HH:mm:ss"
+         * @return {number} - Numeric value for comparison (seconds since midnight)
+         */
+        function timeToSeconds(timeStr) {
+            if (!timeStr || timeStr === '') return 0;
+            const parts = timeStr.split(':');
+            if (parts.length < 2) return 0;
+            const hours = parseInt(parts[0], 10) || 0;
+            const minutes = parseInt(parts[1], 10) || 0;
+            const seconds = parts.length > 2 ? (parseInt(parts[2], 10) || 0) : 0;
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+
         // --- APPLICATION STATE ---
          const AppState = {
             theme: localStorage.getItem('theme') || 'dark',
@@ -2710,7 +2731,7 @@
              if (!container) { console.warn("Dashboard signals container not found."); return; }
              if (!Array.isArray(signals)) signals = [];
              if (signals.length === 0) { container.innerHTML = '<p class="text-center text-secondary p-4 col-span-full">No synced signals yet for today.</p>'; return; }
-             signals.sort((a,b) => (b.ind2Reasons[0]?.time || '0').localeCompare(a.ind2Reasons[0]?.time || '0'));
+             signals.sort((a,b) => timeToSeconds(b.ind2Reasons[0]?.time || '0') - timeToSeconds(a.ind2Reasons[0]?.time || '0'));
              
              const getReasonColor = (reason) => {
                  if (!reason) return 'var(--text-secondary)';
@@ -2781,7 +2802,7 @@
                 if (signal.status === 'Synced') {
                     clubbedSignals[signal.symbol].status = 'Synced';
                     // Keep the most recent sync reason
-                    if (signal.syncReason && (!clubbedSignals[signal.symbol].syncReason || signal.time > clubbedSignals[signal.symbol].latestTime)) {
+                    if (signal.syncReason && (!clubbedSignals[signal.symbol].syncReason || timeToSeconds(signal.time) > timeToSeconds(clubbedSignals[signal.symbol].latestTime))) {
                         clubbedSignals[signal.symbol].syncReason = signal.syncReason;
                     }
                 }
@@ -2791,7 +2812,7 @@
             let clubbedArray = Object.values(clubbedSignals);
             clubbedArray = clubbedArray.map(signal => {
                 // Sort reasons by time descending
-                signal.reasons.sort((a, b) => b.time.localeCompare(a.time));
+                signal.reasons.sort((a, b) => timeToSeconds(b.time) - timeToSeconds(a.time));
                 // Add latest time for sorting
                 signal.latestTime = signal.reasons[0].time;
                 return signal;
@@ -2886,7 +2907,7 @@
             if (!container) { console.warn(`Logs container not found for type: ${type}`); return; }
              if (!Array.isArray(signals)) signals = [];
              if (signals.length === 0) { container.innerHTML = `<p class="text-center text-secondary p-4">No ${type} data available</p>`; return; }
-             signals.sort((a,b) => b.time.localeCompare(a.time));
+             signals.sort((a,b) => timeToSeconds(b.time) - timeToSeconds(a.time));
              
              const getReasonColor = (reason) => {
                  if (!reason) return 'var(--text-secondary)';
@@ -3068,7 +3089,7 @@
                      const statusB = (b.status === 'Synced') ? 1 : 0;
                      if (statusA !== statusB) { return (statusA - statusB) * dir * -1; }
                  }
-                 return (a.time || '').localeCompare(b.time || '') * dir;
+                 return (timeToSeconds(a.time || '') - timeToSeconds(b.time || '')) * dir;
             });
         }
 
