@@ -1,0 +1,19 @@
+{
+  "name": "maurvi-azure-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions for Maurvi Consultants Trading Signals",
+  "scripts": {
+    "start": "func start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "mssql": "^10.0.1",
+    "redis": "^4.6.10",
+    "@sendgrid/mail": "^7.7.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@azure/functions": "^4.0.0",
+    "jest": "^29.7.0"
+  }
+}

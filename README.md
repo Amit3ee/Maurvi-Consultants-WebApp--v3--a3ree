@@ -247,7 +247,15 @@ testOpenSheet()
 - CSV/Excel export functionality
 - Advanced analytics and pattern recognition
 - Mobile apps (iOS/Android)
-- Migration path to Cloud Functions + Firebase for scale
+- Migration to Azure for enhanced scalability and features
+
+## ☁️ Azure Migration Path
+
+For deploying this application to Microsoft Azure, see:
+- **[AZURE_MIGRATION_PLAN.md](AZURE_MIGRATION_PLAN.md)** - Comprehensive migration strategy and architecture
+- **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)** - Step-by-step deployment instructions with GitHub Actions
+- **[GAS_TO_AZURE_COMPARISON.md](GAS_TO_AZURE_COMPARISON.md)** - Detailed comparison and code examples
+- **[azure-sample/](azure-sample/)** - Sample Azure Functions code and database schema
 
 ## 🤝 Contributing
 
