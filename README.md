@@ -2,6 +2,17 @@
 
 A real-time trading signal aggregation and synchronization system that processes webhooks from TradingView indicators and displays data through an intelligent web interface.
 
+## 📦 Repository Structure
+
+This repository contains **two versions** of the application:
+
+1. **[Google Apps Script Version](apps-script/)** - Original implementation (currently deployed)
+2. **[Azure Functions Version](azure/)** - Cloud-native version for Azure deployment (planned/in development)
+
+Choose the version that fits your deployment needs:
+- **Apps Script**: Quick setup, no infrastructure management, Google Sheets integration
+- **Azure**: Enterprise-grade scalability, professional-grade infrastructure, no quota limits
+
 ## 🎯 Features
 
 - **Real-time Signal Processing**: Webhook-based integration with TradingView alerts
@@ -154,8 +165,19 @@ For detailed alert format specifications, see [ALERT_FORMATS.md](ALERT_FORMATS.m
 
 ## 📚 Documentation
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide with step-by-step instructions
+### Google Apps Script Version
+- **[apps-script/README.md](apps-script/README.md)** - Apps Script version overview
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Apps Script deployment guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture and design decisions
+
+### Azure Functions Version
+- **[azure/README.md](azure/README.md)** - Azure version overview
+- **[AZURE_MIGRATION_PLAN.md](AZURE_MIGRATION_PLAN.md)** - Complete migration strategy and plan
+- **[docs/AZURE_DEPLOYMENT.md](docs/AZURE_DEPLOYMENT.md)** - Step-by-step Azure deployment guide
+
+### Additional Documentation
+- **[ALERT_FORMATS.md](ALERT_FORMATS.md)** - TradingView alert format specifications
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Testing procedures
 
 ## 🔧 Testing
 
@@ -239,15 +261,23 @@ testOpenSheet()
 - **Concurrent webhooks**: Queued via script lock
 - **Google Apps Script quotas**: 6-minute execution time, 20K URL fetches/day
 
-## 🚀 Future Enhancements
+## 🚀 Deployment Options & Future Enhancements
 
+### Current: Google Apps Script
+The application is currently deployed using Google Apps Script with Google Sheets as the database. See [DEPLOYMENT.md](DEPLOYMENT.md) for setup instructions.
+
+### Future: Microsoft Azure
+A comprehensive migration plan to Azure Functions is available:
+- **[AZURE_MIGRATION_PLAN.md](AZURE_MIGRATION_PLAN.md)** - Complete migration guide with folder structure, step-by-step deployment process, code examples, and cost estimation
+- **Benefits**: No quota limits, enterprise-grade scalability, professional infrastructure, advanced monitoring
+
+### Planned Features
 - Multi-user support with role-based access
 - Custom retention periods per user
 - Email/SMS alerts for specific signals
 - CSV/Excel export functionality
 - Advanced analytics and pattern recognition
 - Mobile apps (iOS/Android)
-- Migration path to Cloud Functions + Firebase for scale
 
 ## 🤝 Contributing
 
