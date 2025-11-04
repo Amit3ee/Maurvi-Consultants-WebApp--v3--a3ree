@@ -3112,18 +3112,32 @@
          }
 
         function showNiftyDetail() {
-             const { niftyData } = AppState.data; if (!niftyData) return;
-             // Candlestick patterns should be under sync events, not trigger events
+             const niftyDataArray = AppState.data.niftyDataArray || [];
+             if (niftyDataArray.length === 0) {
+                 showModal('<div class="p-4"><p class="text-secondary">No Nifty data available</p></div>');
+                 return;
+             }
+             
+             // Get the ticker name from the first entry
+             const tickerName = niftyDataArray[0].ticker || 'NIFTY 50';
+             
+             // Build sync events HTML for all Nifty signals
+             const syncEventsHTML = niftyDataArray.map(signal => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason">${signal.reason || 'N/A'}</span>
+                         <span class="sync-event-time">${signal.timestamp || ''}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
              const content = `
                 <div class="flex justify-between items-start mb-4">
-                    <div><h2 class="text-2xl font-bold tracking-tight">${niftyData.ticker || 'NIFTY 50'}</h2></div>
+                    <div><h2 class="text-2xl font-bold tracking-tight">${tickerName}</h2></div>
                 </div>
                 <div class="p-4 material material-regular mb-4">
-                    <h3 class="font-semibold mb-3">Sync Events</h3>
-                    <div class="flex justify-between items-center">
-                        <span>${niftyData.reason || 'N/A'}</span>
-                        <span class="text-sm text-secondary">${niftyData.timestamp || ''}</span>
-                    </div>
+                    <h3 class="font-semibold mb-3">Sync Events (${niftyDataArray.length})</h3>
+                    ${syncEventsHTML}
                 </div>`;
              showModal(content);
         }
