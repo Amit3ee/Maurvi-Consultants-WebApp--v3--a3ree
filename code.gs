@@ -1713,19 +1713,19 @@ function getDashboardData() {
       patterns: [...logs.bullish, ...logs.bearish].sort((a, b) => _timeToSeconds(b.time) - _timeToSeconds(a.time)).slice(0, 7)
     };
 
-    // Get latest Nifty data (from Indicator2 sheet, filtered by ticker name)
-    const latestNifty = niftyData.length > 0 ? 
-      niftyData.reduce((latest, current) => 
-        (_timeToSeconds(current[1]) > _timeToSeconds(latest[1]) ? current : latest), niftyData[0]) : null;
-    const niftyDataObj = latestNifty ? { 
-      ticker: latestNifty[2], 
-      timestamp: latestNifty[1], 
-      reason: latestNifty[3] 
-    } : null;
+    // Get all Nifty data (from Indicator2 sheet, filtered by ticker name), sorted by time descending
+    const niftyDataArray = niftyData.map(row => ({
+      ticker: row[2],
+      timestamp: row[1],
+      reason: row[3]
+    })).sort((a, b) => _timeToSeconds(b.timestamp) - _timeToSeconds(a.timestamp));
+    
+    // Also keep the latest one for backward compatibility with other parts of the code
+    const niftyDataObj = niftyDataArray.length > 0 ? niftyDataArray[0] : null;
 
     Logger.log('getDashboardData: Successfully processed all data.');
 
-    return { kpi, niftyData: niftyDataObj, tickers, dashboardSyncedList, liveFeed, logs };
+    return { kpi, niftyData: niftyDataObj, niftyDataArray: niftyDataArray, tickers, dashboardSyncedList, liveFeed, logs };
   } catch (err) {
     Logger.log(`getDashboardData CRITICAL ERROR: ${err.message} Stack: ${err.stack}`);
     _logErrorToSheet(null, 'getDashboardData Error', err, '');

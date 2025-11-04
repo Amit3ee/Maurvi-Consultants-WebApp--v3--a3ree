@@ -3112,18 +3112,46 @@
          }
 
         function showNiftyDetail() {
-             const { niftyData } = AppState.data; if (!niftyData) return;
-             // Candlestick patterns should be under sync events, not trigger events
+             const { niftyData, niftyDataArray } = AppState.data;
+             if (!niftyData && (!niftyDataArray || niftyDataArray.length === 0)) {
+                 console.warn('No Nifty data available');
+                 return;
+             }
+             
+             // Use niftyDataArray if available (all events), otherwise fall back to single niftyData
+             const allNiftyEvents = niftyDataArray && niftyDataArray.length > 0 ? niftyDataArray : [niftyData];
+             
+             // Helper function to get color based on reason
+             const getReasonColor = (reason) => {
+                 if (!reason) return 'var(--text-secondary)';
+                 const r = reason.toLowerCase();
+                 if (r.includes('gap up') || r.includes('bullish') || r.includes('support')) return 'var(--green)';
+                 if (r.includes('gap down') || r.includes('bearish') || r.includes('resistance')) return 'var(--red)';
+                 if (r.includes('reversal')) return 'var(--orange)';
+                 if (r.includes('breakout')) return 'var(--blue)';
+                 return 'var(--text-secondary)';
+             };
+             
+             // Build sync events HTML - show all past events
+             const syncEventsHTML = allNiftyEvents.map(event => `
+                 <div class="sync-event-item">
+                     <div class="flex justify-between items-center">
+                         <span class="sync-event-reason" style="color: ${getReasonColor(event.reason)};">${event.reason || 'N/A'}</span>
+                         <span class="sync-event-time">${event.timestamp || ''}</span>
+                     </div>
+                 </div>
+             `).join('');
+             
              const content = `
                 <div class="flex justify-between items-start mb-4">
-                    <div><h2 class="text-2xl font-bold tracking-tight">${niftyData.ticker || 'NIFTY 50'}</h2></div>
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">${allNiftyEvents[0].ticker || 'NIFTY 50'}</h2>
+                        <p class="text-sm text-secondary mt-1">${allNiftyEvents.length} sync event${allNiftyEvents.length !== 1 ? 's' : ''} today</p>
+                    </div>
                 </div>
                 <div class="p-4 material material-regular mb-4">
                     <h3 class="font-semibold mb-3">Sync Events</h3>
-                    <div class="flex justify-between items-center">
-                        <span>${niftyData.reason || 'N/A'}</span>
-                        <span class="text-sm text-secondary">${niftyData.timestamp || ''}</span>
-                    </div>
+                    ${syncEventsHTML}
                 </div>`;
              showModal(content);
         }
