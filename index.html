@@ -1429,6 +1429,10 @@
         /**
          * Helper function to convert time string (HH:mm:ss) to a comparable numeric value
          * Fixes the issue where "10:55" appears before "9:58" in string sorting
+         * 
+         * Note: This function is intentionally duplicated in code.gs (as _timeToSeconds)
+         * to ensure consistent time sorting behavior on both server-side and client-side.
+         * 
          * @param {string} timeStr - Time string in format "HH:mm:ss"
          * @return {number} - Numeric value for comparison (seconds since midnight)
          */

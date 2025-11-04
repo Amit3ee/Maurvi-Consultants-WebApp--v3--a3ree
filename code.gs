@@ -11,6 +11,9 @@ const OTP_VALIDITY_MINUTES = 3;
 const SESSION_VALIDITY_HOURS = 24; // 1 day session
 const ADMIN_EMAIL = 'amit3ree@gmail.com'; // OTPs will be sent here
 
+// Cache configuration
+const MAX_CACHE_SIZE_BYTES = 90000; // 90KB limit with safety margin (Google Apps Script limit is 100KB)
+
 // --- !!! GEMINI API KEY !!! ---
 // Replace "YOUR_GEMINI_API_KEY" with your actual Gemini API Key
 // Get one here: https://aistudio.google.com/app/apikey
@@ -1479,11 +1482,11 @@ function _getSheetData(sheetName) {
     else { Logger.log(`_getSheetData: Sheet ${sheetName} is empty.`); }
     
     // Use shorter cache TTL for faster updates (30 seconds instead of 60)
-    // Only cache if data is small enough (less than 90KB when stringified to avoid 100KB limit)
+    // Only cache if data is small enough to avoid "Argument too large" error
     try {
       const dataString = JSON.stringify(data);
       const dataSize = dataString.length;
-      if (dataSize < 90000) { // Safe margin below 100KB limit
+      if (dataSize < MAX_CACHE_SIZE_BYTES) {
         cache.put(cacheKey, dataString, 30);
         Logger.log(`_getSheetData: Cached ${sheetName} (${dataSize} bytes)`);
       } else {
@@ -1503,6 +1506,10 @@ function _getSheetData(sheetName) {
 /**
  * Helper function to convert time string (HH:mm:ss) to a comparable numeric value
  * Fixes the issue where "10:55" appears before "9:58" in string sorting
+ * 
+ * Note: This function is intentionally duplicated in index.html (as timeToSeconds)
+ * to ensure consistent time sorting behavior on both server-side and client-side.
+ * 
  * @param {string} timeStr - Time string in format "HH:mm:ss"
  * @return {number} - Numeric value for comparison (seconds since midnight)
  */
